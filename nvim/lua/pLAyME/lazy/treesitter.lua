@@ -17,10 +17,6 @@ return {
 
                 -- ensure these languages parsers are installed
                 ensure_installed = {
-                    "php",
-                    "php_only",
-                    "php_doc",
-                    "blade",
                     "json",
                     "javascript",
                     "typescript",
@@ -39,7 +35,6 @@ return {
                     "bash",
                     "lua",
                     "vim",
-                    "vimdoc",
                     "dockerfile",
                     "gitignore",
                     "query",
@@ -65,15 +60,7 @@ return {
     {
         "windwp/nvim-ts-autotag",
         enabled = true,
-        ft = {
-            "html",
-            "xml",
-            "javascript",
-            "typescript",
-            "javascriptreact",
-            "typescriptreact",
-            "svelte"
-        },
+        ft = { "html", "xml", "javascript", "typescript", "javascriptreact", "typescriptreact", "svelte" },
         config = function()
             -- Independent nvim-ts-autotag setup
             require("nvim-ts-autotag").setup({
