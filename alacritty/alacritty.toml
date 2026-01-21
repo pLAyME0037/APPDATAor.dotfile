@@ -1,139 +1,139 @@
-[general]  
-import = []  
-live_config_reload = true  
-working_directory = "C:\\"  
-ipc_socket = true  
-  
-[env]  
-TERM = "alacritty"  
-# Windows-specific environment variables  
-WINIT_X11_SCALE_FACTOR = "1.0"  
-  
-[window]  
-opacity = 0.95  
-dynamic_title = true  
-title = "Alacritty"  
-startup_mode = "Windowed"  
-decorations = "None"  
-decorations_theme_variant = "Dark"  
-dynamic_padding = true  
-padding = { x = 4, y = 0 }  
-dimensions = { columns = 100, lines = 25 }  
-position = { x = 300, y = 150 }  
-# Windows 11 specific: enable window blur for transparency  
-blur = true  
-  
-[scrolling]  
-history = 10000  
-multiplier = 3  
-  
-[font]  
-size = 14.0  
-offset = { x = 0, y = 0 }  
-glyph_offset = { x = 0, y = 0 }  
-builtin_box_drawing = false  
-  
-[font.normal]  
-family = "CaskaydiaMono NF"  
-style = "Regular"  
-  
-[font.bold]  
-family = "CaskaydiaMono NF SemiBold"  
-style = "Bold"  
-  
-[font.italic]  
-family = "CaskaydiaMono NF"  
-style = "Italic"  
-  
-[font.bold_italic]  
-family = "CaskaydiaMono NF SemiBold"  
-style = "Bold Italic" 
+[general]
+import = []
+live_config_reload = true
+working_directory = "C:\\"
+ipc_socket = true
 
-[colors]  
-# Windows 11 inspired dark theme  
-primary = { background = "#0c0c0c", foreground = "#cccccc" }  
-draw_bold_text_with_bright_colors = true  
-  
-[colors.normal]  
-black = "#0c0c0c"  
-red = "#c50f1f"  
-green = "#13a10e"  
-yellow = "#c19c00"  
-blue = "#0037da"  
-magenta = "#881798"  
-cyan = "#3a96dd"  
-white = "#cccccc"  
-  
-[colors.bright]  
-black = "#767676"  
-red = "#e74856"  
-green = "#16c60c"  
-yellow = "#f9f1a5"  
-blue = "#3b78ff"  
-magenta = "#b4009e"  
-cyan = "#61d6d6"  
-white = "#f2f2f2"  
-[bell]  
-animation = "EaseOutExpo"  
-color = "#ffffff"  
-duration = 0  
-command = "None"  
-  
-[selection]  
-save_to_clipboard = true  
-semantic_escape_chars = ",│`|:\"' ()[]{}<>\t"  
-  
-[cursor]  
-style = { shape = "Block", blinking = "On" }  
-blink_interval = 650  
-blink_timeout = 5  
-thickness = 0.25  
-unfocused_hollow = true  
-vi_mode_style = { shape = "Block", blinking = "Never" }  
-  
-[terminal]  
-# Use PowerShell Core if available, fallback to regular PowerShell  
-shell = { program = "pwsh", args = [] }  
-# Enable OSC52 for clipboard operations over SSH  
-osc52 = "CopyPaste"  
-  
-[mouse]  
-hide_when_typing = true  
-bindings = [  
-  { mouse = "Middle", action = "PasteSelection" }  
-]  
-  
-[keyboard]  
-bindings = [  
-  { key = "V", mods = "Control|Shift", action = "Paste" },  
-  { key = "C", mods = "Control|Shift", action = "Copy" },  
-  { key = "PageUp", mods = "Shift", action = "ScrollPageUp" },  
-  { key = "PageDown", mods = "Shift", action = "ScrollPageDown" },  
-  { key = "Home", mods = "Shift", action = "ScrollToTop" },  
-  { key = "End", mods = "Shift", action = "ScrollToBottom" },  
-  { key = "Return", mods = "Control|Shift", action = "SpawnNewInstance" },  
-  { key = "Equals", mods = "Control", action = "IncreaseFontSize" },  
-  { key = "Minus", mods = "Control", action = "DecreaseFontSize" },  
-  { key = "L", mods = "Control", action = "ClearLogNotice" },  
-  { key = "L", mods = "Control", chars = "\f" },  
-  # Windows 11 specific: Ctrl+Shift+O to open URLs  
-  { key = "O", mods = "Control|Shift", action = "Open" }  
-]  
-  
-[hints]  
-alphabet = "jfkdls;ahgurieowpq"  
-[[hints.enabled]]  
-regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\\u0000-\\u001F\\u007F-\\u009F<>\"\\s{-}\\^⟨⟩`\\\\]+"  
-command = { program = "cmd", args = [ "/c", "start", "" ] }  
-hyperlinks = true  
-post_processing = true  
-persist = false  
-mouse = { enabled = true }  
-binding = { key = "O", mods = "Control|Shift" }  
-  
-[debug]  
-highlight_damage = false  
-log_level = "Warn"  
-persistent_logging = false  
-print_events = false  
+[env]
+TERM = "alacritty"
+# Windows-specific environment variables
+WINIT_X11_SCALE_FACTOR = "1.0"
+
+[window]
+opacity = 0.95
+dynamic_title = true
+title = "Alacritty"
+startup_mode = "Windowed"
+decorations = "None"
+decorations_theme_variant = "Dark"
+dynamic_padding = true
+padding = { x = 4, y = 0 }
+dimensions = { columns = 100, lines = 25 }
+position = { x = 300, y = 150 }
+# Windows 11 specific: enable window blur for transparency
+blur = true
+
+[scrolling]
+history = 10000
+multiplier = 3
+
+[font]
+size = 14.0
+offset = { x = 0, y = 0 }
+glyph_offset = { x = 0, y = 0 }
+builtin_box_drawing = false
+
+[font.normal]
+family = "CaskaydiaMono NF"
+style = "Regular"
+
+[font.bold]
+family = "CaskaydiaMono NF SemiBold"
+style = "Bold"
+
+[font.italic]
+family = "CaskaydiaMono NF"
+style = "Italic"
+
+[font.bold_italic]
+family = "CaskaydiaMono NF SemiBold"
+style = "Bold Italic"
+
+[colors]
+# Windows 11 inspired dark theme
+primary = { background = "#0c0c0c", foreground = "#cccccc" }
+draw_bold_text_with_bright_colors = true
+
+[colors.normal]
+black = "#0c0c0c"
+red = "#c50f1f"
+green = "#13a10e"
+yellow = "#c19c00"
+blue = "#0037da"
+magenta = "#881798"
+cyan = "#3a96dd"
+white = "#cccccc"
+
+[colors.bright]
+black = "#767676"
+red = "#e74856"
+green = "#16c60c"
+yellow = "#f9f1a5"
+blue = "#3b78ff"
+magenta = "#b4009e"
+cyan = "#61d6d6"
+white = "#f2f2f2"
+[bell]
+animation = "EaseOutExpo"
+color = "#ffffff"
+duration = 0
+command = "None"
+
+[selection]
+save_to_clipboard = true
+semantic_escape_chars = ",│`|:\"' ()[]{}<>\t"
+
+[cursor]
+style = { shape = "Block", blinking = "On" }
+blink_interval = 650
+blink_timeout = 5
+thickness = 0.25
+unfocused_hollow = true
+vi_mode_style = { shape = "Block", blinking = "Never" }
+
+[terminal]
+# Use PowerShell Core if available, fallback to regular PowerShell
+shell = { program = "pwsh", args = [] }
+# Enable OSC52 for clipboard operations over SSH
+osc52 = "CopyPaste"
+
+[mouse]
+hide_when_typing = true
+bindings = [
+  { mouse = "Middle", action = "PasteSelection" }
+]
+
+[keyboard]
+bindings = [
+  { key = "V", mods = "Control|Shift", action = "Paste" },
+  { key = "C", mods = "Control|Shift", action = "Copy" },
+  { key = "PageUp", mods = "Shift", action = "ScrollPageUp" },
+  { key = "PageDown", mods = "Shift", action = "ScrollPageDown" },
+  { key = "Home", mods = "Shift", action = "ScrollToTop" },
+  { key = "End", mods = "Shift", action = "ScrollToBottom" },
+  { key = "Return", mods = "Control|Shift", action = "SpawnNewInstance" },
+  { key = "Equals", mods = "Control", action = "IncreaseFontSize" },
+  { key = "Minus", mods = "Control", action = "DecreaseFontSize" },
+  { key = "L", mods = "Control", action = "ClearLogNotice" },
+  { key = "L", mods = "Control", chars = "\f" },
+  # Windows 11 specific: Ctrl+Shift+O to open URLs
+  { key = "O", mods = "Control|Shift", action = "Open" }
+]
+
+[hints]
+alphabet = "jfkdls;ahgurieowpq"
+[[hints.enabled]]
+regex = "(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https://|http://|news:|file:|git://|ssh:|ftp://)[^\\u0000-\\u001F\\u007F-\\u009F<>\"\\s{-}\\^⟨⟩`\\\\]+"
+command = { program = "cmd", args = [ "/c", "start", "" ] }
+hyperlinks = true
+post_processing = true
+persist = false
+mouse = { enabled = true }
+binding = { key = "O", mods = "Control|Shift" }
+
+[debug]
+highlight_damage = false
+log_level = "Warn"
+persistent_logging = false
+print_events = false
 render_timer = false
