@@ -18,9 +18,10 @@ vim.opt.showbreak = "↳ "
 
 vim.opt.swapfile = false
 vim.opt.backup = false
--- vim.opt.undodir = os.getenv("HOME") .. "/.vim/undodir" -- for Unix
-vim.opt.undodir = vim.fn.stdpath("data") .. "/undodir" -- for Windows
 vim.opt.undofile = true
+vim.opt.undodir = os.getenv("HOME") .. "/.nvim/undodir" -- for Unix
+-- vim.opt.undodir = vim.fn.stdpath("data") .. "/undodir" -- for Windows
+vim.g.sqlite_clib_path = "/usr/lib/x86_64-linux-gnu/libsqlite3.so"
 
 vim.opt.incsearch = true
 vim.opt.inccommand = "split"

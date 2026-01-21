@@ -1,4 +1,4 @@
-return {
+ return {
     {
         "adalessa/laravel.nvim",
         dependencies = {
@@ -22,28 +22,38 @@ return {
             { "<leader>lc", function() Laravel.pickers.commands() end,             desc = "Laravel: Open Commands Picker" },
             { "<leader>lo", function() Laravel.pickers.resources() end,            desc = "Laravel: Open Resources Picker" },
             { "<leader>lp", function() Laravel.commands.run("command_center") end, desc = "Laravel: Open Command Center" },
-            {
-                "gf",
-                function()
-                    local ok, res = pcall(function()
-                        if Laravel.app("gf").cursorOnResource() then
-                            return "<cmd>lua Laravel.commands.run('gf')<cr>"
-                        end
-                    end)
-                    if not ok or not res then
-                        return "gf"
-                    end
-                    return res
-                end,
-                expr = true,
-                noremap = true,
-            },
+            -- {
+            --     "gf",
+            --     function()
+            --         local ok, res = pcall(function()
+            --             if Laravel.app("gf").cursorOnResource() then
+            --                 return "<cmd>lua Laravel.commands.run('gf')<cr>"
+            --             end
+            --         end)
+            --         if not ok or not res then
+            --             return "gf"
+            --         end
+            --         return res
+            --     end,
+            --     expr = true,
+            --     noremap = true,
+            -- },
         },
         opts = {
+            lsp_server = "intelephense",
+            enviroment = {
+                enviroments =  { "local" },
+            },
+            commands_options = {
+                ["artisan"] = { timeout = 10000 },
+            },
             features = {
                 pickers = {
-                    provider = "snacks", -- "snacks | telescope | fzf-lua | ui-select"
+                    provider = "telescope", -- "snacks | telescope | fzf-lua | ui-select"
                 },
+                route_info = { enable = true },
+                model_info = { enable = true },
+                diagnostics = false,
             },
         },
     },

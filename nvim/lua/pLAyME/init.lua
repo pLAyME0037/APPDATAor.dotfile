@@ -16,42 +16,42 @@ end
 -- ==========================================================
 --  1. CONFIGURATION FOR PHP / BLADE (Laravel)
 -- ==========================================================
--- autocmd("FileType", {
---     pattern = { "php", "blade" },
---     callback = function()
---         local root = vim.fn.getcwd():gsub("\\", "/")
---
---         -- 1. Set the Search Path
---         vim.opt_local.path:append(root .. "/resources/views")
---
---         -- 2. Add the extension
---         vim.opt_local.suffixesadd:append(".blade.php")
---
---         -- 3. THE FIX: Use 'tr' instead of 'substitute'
---         -- This simply turns every dot (.) into a slash (/) without complex regex
---         vim.opt_local.includeexpr = [[tr(v:fname, '.', '/')]]
---
---         vim.keymap.set("n", "gf", function()
---             local line = vim.fn.expand("<cfile>")
---             -- Convert dot to slash
---             local file = line:gsub("%.", "/")
---             -- Add extension and views folder
---             local filepath = "resources/views/" .. file .. ".blade.php"
---             -- Open it
---             vim.cmd("edit " .. filepath)
---         end, { buffer = true, desc = "Go to Laravel View" })
---
---         -- 4. Ensure dots are considered part of the filename so 'gf' grabs the whole string
---         vim.opt_local.isfname:append("@-@")
---     end,
--- })
+autocmd("FileType", {
+    pattern = { "php", "blade" },
+    callback = function()
+        local root = vim.fn.getcwd():gsub("\\", "/")
+
+        -- 1. Set the Search Path
+        vim.opt_local.path:append(root .. "/resources/views")
+
+        -- 2. Add the extension
+        vim.opt_local.suffixesadd:append(".blade.php")
+
+        -- 3. THE FIX: Use 'tr' instead of 'substitute'
+        -- This simply turns every dot (.) into a slash (/) without complex regex
+        vim.opt_local.includeexpr = [[tr(v:fname, '.', '/')]]
+
+        vim.keymap.set("n", "gf", function()
+            local line = vim.fn.expand("<cfile>")
+            -- Convert dot to slash
+            local file = line:gsub("%.", "/")
+            -- Add extension and views folder
+            local filepath = "resources/views/" .. file .. ".blade.php"
+            -- Open it
+            vim.cmd("edit " .. filepath)
+        end, { buffer = true, desc = "Go to Laravel View" })
+
+        -- 4. Ensure dots are considered part of the filename so 'gf' grabs the whole string
+        vim.opt_local.isfname:append("@-@")
+    end,
+})
 
 -- Force .blade.php files to be recognized as 'blade' filetype
--- vim.filetype.add({
---     pattern = {
---         ['.*%.blade%.php'] = 'blade',
---     },
--- })
+vim.filetype.add({
+    pattern = {
+        ['.*%.blade%.php'] = 'blade',
+    },
+})
 
 -- ==========================================================
 -- Other CONFIGURATION 
