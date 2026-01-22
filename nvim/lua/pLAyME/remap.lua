@@ -58,7 +58,7 @@ vim.keymap.set("n", "<leader>j", "<cmd>lprev<CR>zz")
 
 vim.keymap.set(
     "n", 
-    "<leader>s", 
+    "<leader>grm", 
     [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], 
     { desc = "Replace word cursor is on globally"}
 )
@@ -106,3 +106,4 @@ end)
 vim.keymap.set("n", "<leader><leader>", function()
     vim.cmd("so")
 end)
+

@@ -14,8 +14,6 @@ return {
             local actions = require("telescope.actions")
             local builtin = require("telescope.builtin")
 
-            telescope.load_extension("fzf")
-            telescope.load_extension("themes")
 
             telescope.setup({
                 defaults = {
@@ -37,11 +35,25 @@ return {
                         },
                     },
                 },
+                pickers = {
+                    buffers = {
+                        ignore_current_buffer = true,
+                        sort_mru = true, -- Sort by Most recently use
+                        mappings = {
+                            i = { ["<C-d>"] = actions.delete_buffer, },
+                            n = { ["dd"] = actions.delete_buffer, },
+                        }
+                    }
+                },
             })
+
+        telescope.load_extension("fzf")
+        telescope.load_extension("themes")
 
             -- Keymaps
         vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
         vim.keymap.set('n', '<C-p>', builtin.git_files, {})
+        vim.keymap.set('n', '<leader>bf', builtin.buffers, { desc = "[B]uffer Lists"})
         vim.keymap.set('n', '<leader>pws', function()
             local word = vim.fn.expand("<cword>")
             builtin.grep_string({ search = word })
@@ -61,10 +73,10 @@ return {
         })
         end,
     },
-    
-   {
-        'nvim-telescope/telescope-fzf-native.nvim',
-        -- If you have CMake and Visual Studio installed, use this:
-        build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build'
-    }
+
+   -- {
+   --      'nvim-telescope/telescope-fzf-native.nvim',
+   --      -- If you have CMake and Visual Studio installed, use this:
+   --      build = 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release && cmake --install build --prefix build'
+   --  }
 }

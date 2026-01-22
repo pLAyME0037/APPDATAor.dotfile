@@ -241,14 +241,15 @@ return {
 			},
 			-- autocompletion sources
 			sources = cmp.config.sources({
-				{ name = "luasnip" }, -- snippets
-				{ name = "lazydev" },
-				{ name = "nvim_lsp" },
-				{ name = "buffer" }, -- text within current buffer
-				{ name = "path" }, -- file system paths
-				{ name = "tailwindcss-colorizer-cmp" },
+                { name = "nvim_lsp", priority = 1000 },
+				{ name = "luasnip", priority = 750 }, -- snippets
+                { name = "tailwindcss-colorizer-cmp", priority = 700 },
+				{ name = "lazydev", priority = 650 },
+                { name = "path", priority = 500 }, -- file system paths
+				{ name = "buffer", priority = 250 }, -- text within current buffer
 				{
-					name = "spell", -- for markdown spellchecks completions
+					name = "spell",
+                    priority = 250, -- for markdown spellchecks completions
 					option = {
 						enable_in_context = function()
 							local ft = vim.bo.filetype

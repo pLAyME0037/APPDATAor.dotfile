@@ -31,11 +31,13 @@ return {
 		require("mason").setup()
 		require("mason-lspconfig").setup({
 			ensure_installed = {
+				"intelephense",
 				"lua_ls",
 				"rust_analyzer",
 				"gopls",
 				"vtsls",
 				"tailwindcss",
+				"html",
 			},
 			handlers = {
 				function(server_name) -- default handler (optional)
@@ -58,6 +60,15 @@ return {
 					})
 					vim.g.zig_fmt_parse_errors = 0
 					vim.g.zig_fmt_autosave = 0
+				end,
+                ["intelephense"] = function()
+                    local lspconfig = require("lspconfig")
+                    lspconfig.intelephense.setup({
+                        capabilities = capabilities,
+                        settings = {
+                            intelephense = { files = { maxSize = 5000000; } },
+                        },
+                    })
 				end,
 				["lua_ls"] = function()
 					local lspconfig = require("lspconfig")
