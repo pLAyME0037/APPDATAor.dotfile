@@ -1,15 +1,14 @@
- return {
+return {
     {
         "adalessa/laravel.nvim",
+        enable = false,
         dependencies = {
             "MunifTanjim/nui.nvim",
             "nvim-lua/plenary.nvim",
             "nvim-neotest/nvim-nio",
         },
         ft = { "php", "blade" },
-        event = {
-            "BufEnter composer.json",
-        },
+        event = { "BufEnter composer.json" },
         cmd = { "Laravel" },
         keys = {
             {
@@ -62,27 +61,12 @@
                 function() Laravel.commands.run("command_center") end,
                 desc = "Laravel: Open Command Center"
             },
-            -- {
-            --     "gf",
-            --     function()
-            --         local ok, res = pcall(function()
-            --             if Laravel.app("gf").cursorOnResource() then
-            --                 return "<cmd>lua Laravel.commands.run('gf')<cr>"
-            --             end
-            --         end)
-            --         if not ok or not res then
-            --             return "gf"
-            --         end
-            --         return res
-            --     end,
-            --     expr = true,
-            --     noremap = true,
-            -- },
+
         },
         opts = {
             lsp_server = "intelephense",
-            enviroment = {
-                enviroments =  { "local" },
+            environment = {
+                environments =  { "local" },
             },
             commands_options = {
                 ["artisan"] = { timeout = 10000 },
@@ -92,10 +76,18 @@
                     provider = "telescope", -- "snacks | telescope | fzf-lua | ui-select"
                 },
                 route_info = { enable = true },
-                model_info = { enable = true },
+                model_info = { enable = false },
                 diagnostics = false,
             },
         },
+        config = function(_, opts)
+            require("laravel").setup(opts)
+            local ok, _ = pcall(require("telescope").load_extension, "laravel")
+
+            if not ok then
+                vim.notify("Laravel telescope extension could not load.", vim.log.levels.WARN)
+            end
+        end,
     },
 
     -- Blade filetype detection
@@ -111,9 +103,7 @@
     },
 
     -- Syntax Highlighting for Blade (No compile needed)
-    {
-        "jwalton512/vim-blade",
-    },
+    { "jwalton512/vim-blade" },
 
     -- Add Laravel to nvim-cmp sources safely
     {

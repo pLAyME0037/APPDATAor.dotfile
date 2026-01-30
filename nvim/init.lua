@@ -1,2 +1,2 @@
 require("pLAyME")
-require("current-theme")
+require("colorscheme")
