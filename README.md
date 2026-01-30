@@ -9,3 +9,7 @@
 - No 4
 ![Project Image](YASB/image/image_4.png)
 
+## Alacritty 
+- Currenty for Windows 
+## Nvim 
+- Nvim config is for Linux or Wsl 
