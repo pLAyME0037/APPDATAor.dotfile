@@ -1,0 +1,18 @@
+[config.wallpaper]
+set = true 
+command = 'swww'
+arguments = ["~/wallpaper/wallpaper/b-782.jpg", "--transition-type", "center"]
+
+[templates.hyprland]
+input_path = '~/.config/matugen/templates/hyprland-colors.conf'
+output_path = '~/.config/hypr/colors.conf'
+
+[templates.kitty]
+input_path = '~/.config/matugen/templates/kitty-colors.conf'
+output_path = '~/.config/kitty/colors.conf'
+
+[templates.waybar]
+input_path = '~/.config/matugen/templates/colors.css'
+output_path = '~/.config/waybar/colors.css'
+
+post_hook = 'pkill waybar; waybar &'
