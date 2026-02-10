@@ -90,18 +90,6 @@ return {
         end,
     },
 
-    -- Blade filetype detection
-    {
-        "nathom/filetype.nvim",
-        opts = {
-            overrides = {
-                complex = {
-                    [".*%.blade%.php"] = "blade",
-                },
-            },
-        },
-    },
-
     -- Syntax Highlighting for Blade (No compile needed)
     { "jwalton512/vim-blade" },
 
