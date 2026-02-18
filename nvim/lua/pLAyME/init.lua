@@ -56,6 +56,60 @@ vim.filetype.add({
 -- ==========================================================
 -- Other CONFIGURATION 
 -- ==========================================================
+local function compile()
+  vim.cmd("write") -- Always save before running
+  
+  local ft = vim.bo.filetype
+  local file = vim.fn.expand("%")          -- full/path/to/file.cs
+  local target = vim.fn.expand("%:p:r")    -- full/path/to/file (no ext)
+  local dir = vim.fn.expand("%:p:h")       -- directory of current file
+
+  -- 1. PROJECT-LEVEL DETECTION (The "Smart" part)
+  -- Checks for build files in the current working directory
+  if vim.fn.filereadable("Makefile") == 1 then
+    vim.cmd("!make && ./example")
+    return
+  elseif vim.fn.filereadable("Cargo.toml") == 1 then
+    vim.cmd("!cargo run")
+    return
+  elseif vim.fn.glob("*.csproj") ~= "" then
+    -- If a C# project file exists, use dotnet run
+    vim.cmd("!dotnet run")
+    return
+  elseif vim.fn.filereadable("build.sh") == 1 then
+    vim.cmd("!./build.sh && ./example")
+    return
+  end
+
+  -- 2. SINGLE-FILE FALLBACKS (The "Dynamic" part)
+  local runners = {
+    -- C# (cs): Use dotnet run if possible, else try to compile single file
+    cs     = string.format("dotnet run --project %s || (csc %s && mono %s.exe)", dir, file, target),
+    
+    -- C++ / C
+    cpp    = string.format("g++ %s -o %s && %s", file, target, target),
+    c      = string.format("gcc %s -o %s && %s", file, target, target),
+    
+    -- Interpreted Languages
+    python = string.format("python3 %s", file),
+    php    = string.format("php %s", file),
+    
+    -- Compiled/VM Languages
+    java   = string.format("javac %s && java -cp %s %s", file, dir, vim.fn.expand("%:t:r")),
+    rust   = string.format("rustc %s -o %s && %s", file, target, target),
+  }
+
+  -- Execute if we have a command for this filetype
+  if runners[ft] then
+    vim.cmd("!" .. runners[ft])
+  else
+    print("No runner configured for: " .. ft)
+  end
+end
+
+-- Map it to something fast
+vim.keymap.set('n', '<leader>r', compile, { desc = "Build and Run Dispatcher" })
+
 vim.filetype.add({
     extension = {
         templ = 'templ',
@@ -90,6 +144,7 @@ autocmd('LspAttach', {
     end
 })
 
+vim.g.do_filetype_lua = 1
 vim.g.netrw_browse_split = 0
 vim.g.netrw_banner = 0
 vim.g.netrw_winsize = 25

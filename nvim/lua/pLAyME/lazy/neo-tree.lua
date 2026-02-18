@@ -85,6 +85,20 @@ return {
                     enabled = true,
                     leave_dirs_open = false, 
                 },
+                filtered_items = {
+                    visible = true,
+                    show_hidden_count = true,
+                    hide_dotfiles = false,
+                    hide_gitignored = false,
+                    hide_by_name = {
+                        -- ".DS_Store",
+                        -- "thumbs.db"
+                    },
+                    never_show = {
+                        ".DS_Store",
+                        "thumbs.db"
+                    },
+                },
                 hijack_netrw_behavior = "open_default",
                 use_libuv_file_watcher = true,
             },
