@@ -116,6 +116,64 @@ vim.filetype.add({
     }
 })
 
+vim.api.nvim_create_user_command("Vrn", function(opts)
+    -- 1. Get the range of the visual selection
+    -- '< and '> marks are updated after leaving visual mode (which happens when you press :)
+    local vstart = vim.fn.getpos("'<")
+    local vend = vim.fn.getpos("'>")
+
+    local line_start = vstart[2] - 1
+    local col_start = vstart[3] - 1
+    local line_end = vend[2] - 1
+    local col_end = vend[3] -- get_text is exclusive at end, but getpos is inclusive, adjustments handled below
+
+    -- 2. Get the actual text from the buffer
+    -- We use nvim_buf_get_text for character-wise precision
+    local lines = vim.api.nvim_buf_get_text(0, line_start, col_start, line_end, col_end, {})
+    local selection = table.concat(lines, "\n")
+
+    -- If selection is empty, stop
+    if selection == "" then
+        print("No text selected")
+        return
+    end
+
+    -- 3. Prepare the Search Pattern
+    -- We replace actual newlines with "\n" for the regex to work across lines if needed
+    selection = selection:gsub("\n", "\\n")
+    -- \V (very nomagic) tells Vim to treat characters like '.', '*', '[' as literal text, not regex
+    -- We only need to escape '\' and the delimiter '/'
+    local search_pattern = "\\V" .. vim.fn.escape(selection, "/\\")
+
+    -- 4. Prepare the Replacement String
+    -- The user input (opts.args) becomes the replacement.
+    -- We must escape the delimiter '/' here as well.
+    local replacement = vim.fn.escape(opts.args, "/")
+
+    -- 5. Construct and Execute the Command
+    -- Structure: %s / {search} / {replacement} / gc
+    -- % = whole file
+    -- g = global (all occurrences on a line)
+    -- c = confirm (ask yes/no)
+    local cmd = string.format("%%s/%s/%s/gc", search_pattern, replacement)
+
+    -- Print info and execute
+    vim.cmd(cmd)
+
+end, {
+nargs = '+', -- Requires at least one argument (the new name)
+range = true, -- Allows the command to be run while a range is active
+desc = "Visual Rename: Replace selected text with arg across whole file with confirmation"
+})
+
+-- Optional: Create a lowercase alias ':vrn' that triggers ':Vrn'
+vim.cmd([[cnoreabbrev <expr> vrn (getcmdtype() == ':' && getcmdline() == 'vrn') ? 'Vrn' : 'vrn']])
+
+vim.filetype.add({
+    extension = {
+        templ = 'templ',
+    }
+})
 autocmd('TextYankPost', {
     group = yank_group,
     pattern = '*',
