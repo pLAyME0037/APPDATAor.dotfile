@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 iatest=$(expr index "$-" i)
 #######################################################
-# SOURCED ALIAS'S AND SCRIPTS BY zachbrowne.me
-#######################################################
+# SOURCED ALIAS'S AND SCRIPTS BY zachbrowne.me #######################################################
 # Auto-start Hyprland on tty1
 if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
   exec Hyprland
@@ -216,8 +215,9 @@ alias checkcommand="type -t"
 alias openports='netstat -nape --inet'
 
 # Alias's for safe and forced reboots
-alias rebootsafe='sudo shutdown -r now'
-alias rebootforce='sudo shutdown -r -n now'
+alias shutd='sudo shutdown now'
+alias reboot='sudo shutdown -r now'
+alias rebootf='sudo shutdown -r -n now'
 
 # Alias's to show disk space and space used in a folder
 alias diskspace="du -S | sort -n -r |more"
@@ -297,7 +297,7 @@ ftext() {
 }
 
 # Copy file with a progress bar
-cpp() {
+cpb() {
   set -e
   strace -q -ewrite cp -- "${1}" "${2}" 2>&1 |
     awk '{
@@ -305,14 +305,14 @@ cpp() {
       if (count % 10 == 0) {
         percent = count / total_size * 100
         printf "%3d%% [", percent
-        for (i=0;i<=percent;i++)
+        for (i=0;i<=percent;i++) 
           printf "="
           printf ">"
           for (i=percent;i<100;i++)
             printf " "
             printf "]\r"
-}
-}
+        }
+    }
 END { print "" }' total_size="$(stat -c '%s' "${1}")" count=0
 }
 
@@ -627,13 +627,17 @@ function hb {
     else
       echo "Failed to upload the document."
     fi
-}
+  }
 
 # Search from Home directory
 fh() {
   local dir
-  if command -v fd >/dev/null 2>&1; then
-    dir=$(fd . ~ --type d --hidden 2>/dev/null | fzf)
+  local cmd
+  if command -v fd >/dev/null 2>&1; then cmd="fd";
+  elif command -v fdfind >/dev/null 2>&1; then cmd="fdfind";
+  fi 
+  if [[ -n "$cmd" ]]; then
+    dir=$($cmd . ~ --type d --hidden 2>/dev/null | fzf)
   else
     dir=$(find ~ -maxdepth 6 -type d 2>/dev/null | fzf)
   fi
@@ -645,11 +649,13 @@ fh() {
 # Search from Root (/) directory
 fr() {
   local dir
-  if command -v fd >/dev/null 2>&1; then
+  local cmd
+  if command -v fd >/dev/null 2>&1; then cmd="fd";
+  elif command -v fdfind >/dev/null 2>&1; then cmd="fdfind";
     # Added --one-file-system to avoid hanging on network mounts or huge external drives
-    dir=$(fd . / --type d --hidden --one-file-system --exclude '{proc,dev,sys,run,tmp}' 2>/dev/null | fzf)
+    dir=$($cmd . / --type d --hidden --one-file-system --exclude '{proc,dev,sys,run,tmp}' 2>/dev/null | fzf)
   else
-    dir=$(find / -maxdepth 6 -type d 2>/dev/null | fzf)
+    dir=$(fdfind / -maxdepth 6 -type d 2>/dev/null | fzf)
   fi
 
   [ -n "$dir" ] && cd "$dir"
@@ -674,4 +680,5 @@ eval "$(starship init bash)"
 eval "$(zoxide init bash)"
 . "$HOME/.cargo/env"
 
+export PATH="$HOME/myThings/devs/flutter/bin:$PATH"
 
