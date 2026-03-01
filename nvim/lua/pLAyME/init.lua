@@ -76,7 +76,7 @@ local function compile()
     if vim.fn.filereadable("Makefile") == 1 then
         cmd = "make && ./example"
     elseif vim.fn.filereadable("build.sh") == 1 then
-        cmd = "build.sh && ./example"
+        cmd = string.format("./build.sh && %s", s_target)
     elseif vim.fn.filereadable("Cargo.toml") == 1 then
         cmd = "cargo run"
     elseif vim.fn.glob("*.csproj") ~= "" then
@@ -101,12 +101,30 @@ local function compile()
         return
     end
 
-    -- 3. THE "CLEAN" EXECUTION (Terminal Split)
+    -- Remove previous output buffer if exists
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_loaded(buf) then
+            local name = vim.api.nvim_buf_get_name(buf)
+            if name:find("CompileOutput") then
+                vim.api.nvim_buf_delete(buf, { force = true })
+            end
+        end
+    end
+
     -- This opens a split, runs the command, and stays clean.
-    vim.cmd("split")
-    vim.cmd("term " .. cmd)
-    vim.cmd("resize 10") -- Make the output window small (10 lines)
-    vim.cmd("startinsert") -- Focus the terminal so you can hit a key to close if needed
+    vim.cmd("botright split")
+    vim.cmd("enew")
+    vim.api.nvim_buf_set_name(0, "CompileOutput")
+    vim.cmd("terminal " .. cmd)
+    vim.cmd("resize 10") 
+    vim.cmd("startinsert") 
+
+    vim.api.nvim_buf_set_keymap(0, "t", "jk", [[<C-\><C-n>]], {
+        noremap = true, silent = true
+    })
+    vim.api.nvim_buf_set_keymap(0, "n", "q", ":bd!<CR>", {
+        noremap = true, silent = true
+    })
 end
 
 vim.keymap.set('n', '<leader>r', compile, { desc = "Clean Build and Run" })
@@ -207,4 +225,3 @@ vim.g.do_filetype_lua = 1
 vim.g.netrw_browse_split = 0
 vim.g.netrw_banner = 0
 vim.g.netrw_winsize = 25
-
