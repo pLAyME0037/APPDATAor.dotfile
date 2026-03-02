@@ -11,6 +11,7 @@ vim.opt.expandtab = true
 
 vim.opt.smartindent = true
 vim.opt.autoindent = true
+vim.opt.autochdir = true
 
 vim.opt.cursorline = true
 -- vim.api.nvim_set_hl(0, "Cursorline", { bg = "#292e42" })
@@ -53,3 +54,4 @@ vim.opt.colorcolumn = "80"
 vim.opt.clipboard:append("unnamedplus")
 vim.opt.mouse = "a"
 vim.g.editorconfig = true
+
