@@ -61,12 +61,14 @@ local function compile()
 
     local ft = vim.bo.filetype
     local file = vim.fn.expand("%:p")
+    local filename = vim.fn.expand("%:t")
     local target = vim.fn.expand("%:p:r")
     local dir = vim.fn.expand("%:p:h")
     local class_name = vim.fn.expand("%:t:r")
 
     -- Shellescape everything for safety
     local s_file = vim.fn.shellescape(file)
+    local s_filename = vim.fn.shellescape(filename)
     local s_target = vim.fn.shellescape(target)
     local s_dir = vim.fn.shellescape(dir)
 
@@ -74,7 +76,7 @@ local function compile()
 
     -- 1. PROJECT DETECTION
     if vim.fn.filereadable("Makefile") == 1 then
-        cmd = "make && ./example"
+        cmd = string.format("make && %s", s_target)
     elseif vim.fn.filereadable("build.sh") == 1 then
         cmd = string.format("./build.sh && %s", s_target)
     elseif vim.fn.filereadable("Cargo.toml") == 1 then
@@ -93,7 +95,7 @@ local function compile()
     elseif ft == "c" then
         cmd = string.format("gcc -Wall -Wextra -ggdb %s -o %s && %s", s_file, s_target, s_target)
     elseif ft == "java" then
-        cmd = string.format("javac %s && java -cp %s %s", s_file, s_dir, class_name)
+        cmd = string.format("cd %s && javac %s && java %s", s_dir, s_filename, class_name)
     elseif ft == "rust" then
         cmd = string.format("rustc %s -o %s && %s", s_file, s_target, s_target)
     else
@@ -225,3 +227,5 @@ vim.g.do_filetype_lua = 1
 vim.g.netrw_browse_split = 0
 vim.g.netrw_banner = 0
 vim.g.netrw_winsize = 25
+
+
