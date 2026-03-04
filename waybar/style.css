@@ -110,8 +110,12 @@ window#waybar {
     color: @foreground;
 }
 
+#language {
+    min-width: 20px; /* Ensure there is enough room for "KH" or "US" */
+}
+
 /* Common module styling with border-bottom */
-#mode, #mpd, #custom-weather, #custom-playerctl, #clock, #cpu,
+#language, #mode, #mpd, #custom-weather, #custom-playerctl, #clock, #cpu,
 #memory, #temperature, #battery, #network, #pulseaudio,
 #backlight, #disk, #custom-uptime, #custom-updates, #custom-quote,
 #idle_inhibitor, #tray, #window {
@@ -230,6 +234,12 @@ window#waybar.empty #window {
 }
 
 #temperature.critical {
+    color: @temperature-critical-color;
+    border-bottom-color: @temperature-critical-color;
+    border-top-color: @temperature-critical-color; 
+}
+
+#language {
     color: @temperature-critical-color;
     border-bottom-color: @temperature-critical-color;
     border-top-color: @temperature-critical-color; 
