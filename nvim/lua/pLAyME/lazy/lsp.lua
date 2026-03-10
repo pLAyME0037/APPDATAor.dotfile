@@ -32,10 +32,10 @@ return {
         require("mason").setup()
 
         require("mason-lspconfig").setup({
+            automatic_installation = true,
             ensure_installed = {
                 "intelephense",
                 "lua_ls",
-                "rust_analyzer",
                 "gopls",
                 "vtsls",
                 "tailwindcss",
@@ -93,7 +93,10 @@ return {
                     lspconfig.tailwindcss.setup({
                         capabilities = capabilities,
                         filetypes = {
-                            "html", "css", "scss", "javascript", "typescript", "vue", "php", "blade",
+                                "html", "css", "scss",
+                                "javascript", "typescript",
+                                -- "vue", "angular", "react"
+                                "php", "blade",
                         },
                     })
                 end,
