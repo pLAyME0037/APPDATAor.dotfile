@@ -37,7 +37,7 @@ return {
                 "intelephense",
                 "lua_ls",
                 "gopls",
-                "vtsls",
+                -- "vtsls",
                 "tailwindcss",
                 "html",
             },

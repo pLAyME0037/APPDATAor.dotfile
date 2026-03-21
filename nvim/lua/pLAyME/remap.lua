@@ -28,19 +28,20 @@ vim.keymap.set("v", ">", ">gv", opts)
 
 vim.keymap.set("n", "=ap", "ma=ap'a")
 
-
 vim.keymap.set("n", "<leader>fm", vim.lsp.buf.format)
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
-vim.keymap.set("n", "<leader>a", "ggVG")
-vim.keymap.set("n", "<leader>zig", "<cmd>LspRestart<cr>")
 vim.keymap.set("n", "<leader>lt", function()
     vim.cmd [[ PlenaryBustedFile % ]]
 end)
 
+vim.keymap.set("n", "<leader>a", "mzggVGy`z")
+vim.keymap.set("n", "<C-a>", "mzggVG")
+
 vim.keymap.set("x", "<leader>p", [["_dP]])
 vim.keymap.set("v", "p", '"_dP', opts)
 
-vim.keymap.set('n', 'gUw', ':gUw<CR>')
+vim.keymap.set('n', 'tuc', 'gUw')
+vim.keymap.set('n', 'tlc', 'guw')
 
 vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
 vim.keymap.set("n", "<leader>Y", [["+Y]])
@@ -52,7 +53,7 @@ vim.keymap.set("n", "Q", "<nop>")
 -- vim.keymap.set("n", "<M-Tab>", "<C-w>w", { desc = "Cycle Split Windows" })
 vim.keymap.set("n", "<M-w>", "<C-w>w", { desc = "Cycle Split Windows" })
 
-vim.keymap.set("n", "<leader>pbf", "<C-^>", { desc = "Switch to Previous Buffer" })
+vim.keymap.set("n", "<leader>pb", "<C-^>", { desc = "Switch to Previous Buffer" })
 
 vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
 vim.keymap.set("n", "<M-h>", "<cmd>silent !tmux-sessionizer -s 0 --vsplit<CR>")
@@ -65,7 +66,7 @@ vim.keymap.set("n", "<leader>j", "<cmd>lprev<CR>zz")
 
 vim.keymap.set(
     "n",
-    "<leader>grm",
+    "<leader>grn",
     [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]],
     { desc = "Replace word cursor is on globally"}
 )
@@ -81,6 +82,45 @@ vim.keymap.set("n", "<leader>fp", function ()
     vim.fn.setreg("+", filePath)
     print("File path copied to clipboard: " .. filePath)
 end, { desc = "Copy file path to cilpboard."})
+
+vim.keymap.set( "n", "<leader>nl", "082lF i<CR><Esc>")
+
+-- Simple function to align based on a pattern
+local function align_to_char()
+    local char = vim.fn.input("Align to character: ")
+    if char == "" then return end
+
+    -- Get range from visual selection or motion
+    local start_line = vim.fn.line("'<")
+    local end_line = vim.fn.line("'>")
+    local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
+
+    local max_pos = 0
+    -- First pass: find the furthest position of the character
+    for _, line in ipairs(lines) do
+        local pos = line:find(char, 1, true)
+        if pos and pos > max_pos then max_pos = pos end
+    end
+
+    -- Second pass: pad with spaces
+    local new_lines = {}
+    for _, line in ipairs(lines) do
+        local pos = line:find(char, 1, true)
+        if pos then
+            local before = line:sub(1, pos - 1):gsub("%s+$", "") -- strip trailing spaces
+            local after = line:sub(pos)
+            local padding = string.rep(" ", max_pos - #before - 1)
+            table.insert(new_lines, before .. padding .. after)
+        else
+            table.insert(new_lines, line)
+        end
+    end
+
+    vim.api.nvim_buf_set_lines(0, start_line - 1, end_line, false, new_lines)
+end
+
+-- Map it to a key (Visual Mode)
+vim.keymap.set("v", "<leader>a=", align_to_char, { desc = "Align selection to char" })
 
 vim.keymap.set(
     "n",
@@ -105,10 +145,6 @@ vim.keymap.set(
     "<leader>el",
     "oif err != nil {<CR>}<Esc>O.logger.Error(\"error\", \"error\", err)<Esc>F.;i"
 )
-
-vim.keymap.set("n", "<leader>ca", function()
-    require("cellular-automaton").start_animation("make_it_rain")
-end)
 
 vim.keymap.set("n", "<leader><leader>", function()
     vim.cmd("so")
