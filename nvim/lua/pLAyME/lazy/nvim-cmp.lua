@@ -1,22 +1,19 @@
 return {
 	"hrsh7th/nvim-cmp",
 	event = "InsertEnter",
-	branch = "main", -- fix for deprecated functions coming in nvim 0.13
 	dependencies = {
-		"hrsh7th/cmp-buffer", -- source for text in buffer
-		"hrsh7th/cmp-path", -- source for file system paths
+		"hrsh7th/cmp-buffer",
+		"hrsh7th/cmp-path",
 		"f3fora/cmp-spell",
+		"hrsh7th/cmp-nvim-lsp",
 		{
 			"L3MON4D3/LuaSnip",
-			-- follow latest release.
-			version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
-			-- install jsregexp (optional!).
+			version = "v2.*",
 			build = "make install_jsregexp",
 		},
-		"saadparwaiz1/cmp_luasnip", -- autocompletion
-		"rafamadriz/friendly-snippets", -- snippets
-		"nvim-treesitter/nvim-treesitter",
-		"onsails/lspkind.nvim", -- vs-code pictograms
+		"saadparwaiz1/cmp_luasnip",
+		"rafamadriz/friendly-snippets",
+		"onsails/lspkind.nvim",
 		"roobert/tailwindcss-colorizer-cmp.nvim",
 	},
 	config = function()
@@ -27,7 +24,7 @@ return {
 		local colorizer = require("tailwindcss-colorizer-cmp").formatter
 
 		local rhs = function(keys)
-			return vim.api.nvim_replace_termcodes(keys, true, true, true)
+			return vim.keycode(keys)
 		end
 
 		local lsp_kinds = {

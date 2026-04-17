@@ -18,7 +18,9 @@ local function compile()
 
     -- 1. PROJECT DETECTION
     if vim.fn.filereadable("Makefile") == 1 then
-        cmd = string.format("make && %s", s_target)
+        cmd = string.format("make")
+    elseif vim.fn.filereadable("CMakeLists.txt") == 1 then
+        cmd = string.format("mkdir build && cd build && make .. && make -j `nproc`") -- && make install
     elseif vim.fn.filereadable("build.sh") == 1 then
         cmd = string.format("./build.sh")
     elseif vim.fn.filereadable("Cargo.toml") == 1 then
@@ -40,7 +42,12 @@ local function compile()
         cmd = string.format("gcc -Wall -Wextra -ggdb -fdiagnostics-color=always %s -o %s && %s",
                             s_file, s_target, s_target)
     elseif ft == "java" then
-        local awk_colors = [[awk '{ gsub(/error:/, "\033[1;31merror:\033[0m"); gsub(/warning:/, "\033[1;33mwarning:\033[0m"); gsub(/\^/, "\033[1;32m^\033[0m"); print}']]
+        local awk_colors = [[awk '{ 
+            gsub(/error:/, "\033[1;31merror:\033[0m");
+            gsub(/warning:/, "\033[1;33mwarning:\033[0m");
+            gsub(/\:/, "\033[1;32m^\034[0m");
+            gsub(/\^/, "\033[1;32m^\033[0m"); print
+        }']]
         cmd = string.format("cd %s && rm -f %s.class && javac %s 2>&1 | %s ; if [ -f %s.class ]; then java %s; fi",
                             s_dir, class_name, s_filename, awk_colors, class_name, class_name)
         -- cmd = string.format("cd %s && javac %s && java %s", s_dir, s_filename, class_name)
@@ -73,7 +80,7 @@ local function compile()
             PYTHONUNBUFFERED = "1"
         }
     })
-    pcall(vim.api.nvim_buf_set_name, new_buf, "CompileOutput")
+    pcall(vim.api.nvim_buf_set_name, new_buf, "Compile Output")
     vim.cmd("resize 10")
     vim.cmd("startinsert")
 

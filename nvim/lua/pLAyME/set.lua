@@ -1,4 +1,8 @@
-vim.cmd("let g:netrw_banner = 0")
+vim.g.netrw_banner = 0
+vim.g.netrw_sort_sequence = [[[\/]\($\|\s\),[\/]$,*]]
+vim.g.netrw_sort_by = "name"
+vim.g.netrw_sort_options = "i"
+vim.g.netrw_liststyle = 1
 vim.opt.guicursor = "n-v-c:block,i-ci:ver25"
 
 vim.opt.nu = true

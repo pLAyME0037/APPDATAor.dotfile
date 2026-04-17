@@ -313,59 +313,17 @@ vim.api.nvim_create_user_command("SmartListToggleVisual", SmartListToggleVisualS
 
 -- Keymaps for Bullet, Checkbox, Number list
 -- visual mode keymaps (use commands to preserve selection)
-vim.keymap.set("v", "tn", ":<C-u>ToggleNumberVisual<CR>", {
-    desc = "Toggle numbers on selected lines",
-    buffer = true,
-})
+vim.keymap.set("v", "tn", ":<C-u>ToggleNumberVisual<CR>", { desc = "Toggle numbers on selected lines" })
+vim.keymap.set("v", "tb", ":<C-u>ToggleBulletVisual<CR>", { desc = "Toggle bullets on selected lines" })
+vim.keymap.set("v", "tc", ":<C-u>ToggleCheckboxVisual<CR>", { desc = "Toggle checkboxes on selected lines" })
+vim.keymap.set("v", "tt", ":<C-u>ToggleTaskStateVisual<CR>", { desc = "Toggle task state on selected lines" })
+vim.keymap.set("v", "tl", ":<C-u>SmartListToggleVisual<CR>", { desc = "Smart list toggle on selected lines" })
 
-vim.keymap.set("v", "tb", ":<C-u>ToggleBulletVisual<CR>", {
-    desc = "Toggle bullets on selected lines",
-    buffer = true,
-})
-
-vim.keymap.set("v", "tc", ":<C-u>ToggleCheckboxVisual<CR>", {
-    desc = "Toggle checkboxes on selected lines",
-    buffer = true,
-})
-
-vim.keymap.set("v", "tt", ":<C-u>ToggleTaskStateVisual<CR>", {
-    desc = "Toggle task state on selected lines",
-    buffer = true,
-})
-
-vim.keymap.set("v", "tl", ":<C-u>SmartListToggleVisual<CR>", {
-    desc = "Smart list toggle on selected lines",
-    buffer = true,
-})
-
--- normal mode keymaps (call functions directly)
-vim.keymap.set("n", "tn", ToggleNumberCurrentLine, {
-    desc = "Toggle numbers on current line",
-    buffer = true,
-})
-
-vim.keymap.set("n", "tb", ToggleBulletCurrentLine, {
-    desc = "Toggle bullets on current line",
-    buffer = true,
-})
-
-vim.keymap.set("n", "tc", ToggleCheckboxCurrentLine, {
-    desc = "Toggle checkboxes on current line",
-    buffer = true,
-})
-
-vim.keymap.set("n", "tt", ToggleTaskStateCurrentLine, {
-    desc = "Toggle task state on current line",
-    buffer = true,
-})
-
-vim.keymap.set("n", "tl", SmartListToggleCurrentLine, {
-    desc = "Smart list toggle on current line",
-    buffer = true,
-})
-
--- Task management keymaps (buffer-local)
-local opts = { buffer = 0, silent = true }
+vim.keymap.set("n", "tn", ToggleNumberCurrentLine, { desc = "Toggle numbers on current line" })
+vim.keymap.set("n", "tb", ToggleBulletCurrentLine, { desc = "Toggle bullets on current line" })
+vim.keymap.set("n", "tc", ToggleCheckboxCurrentLine, { desc = "Toggle checkboxes on current line" })
+vim.keymap.set("n", "tt", ToggleTaskStateCurrentLine, { desc = "Toggle task state on current line" })
+vim.keymap.set("n", "tl", SmartListToggleCurrentLine, { desc = "Smart list toggle on current line" })
 
 -- Status message
 local function safe_markdown_cmd(cmd, success_msg)
@@ -388,11 +346,11 @@ end
 
 vim.keymap.set("n", "<leader>tc",
     safe_markdown_cmd("g/- \\[ \\]/s/\\[ \\]/[x]/", "Marked all tasks as done"),
-    vim.tbl_extend("force", opts, { desc = "Mark all tasks done" }))
+    { desc = "Mark all tasks done" })
 
 vim.keymap.set("n", "<leader>tu",
     safe_markdown_cmd("g/- \\[x\\]/s/\\[x\\]/[ ]/", "Marked all tasks as undone"),
-    vim.tbl_extend("force", opts, { desc = "Mark all tasks undone" }))
+    { desc = "Mark all tasks undone" })
 
 -- Toggle headings 
 local function toggle_heading(level)
@@ -424,35 +382,31 @@ vim.keymap.set("n", "<leader>h2", function() toggle_heading(2) end, { buffer = t
 vim.keymap.set("n", "<leader>h3", function() toggle_heading(3) end, { buffer = true, desc = "Toggle H3" })
 vim.keymap.set("n", "<leader>h4", function() toggle_heading(4) end, { buffer = true, desc = "Toggle H4" })
 vim.keymap.set("n", "<leader>h5", function() toggle_heading(5) end, { buffer = true, desc = "Toggle H5" })
-vim.keymap.set("n", "<leader>h6", function() toggle_heading(6) end, { buffer = true, desc = "Toggle H6" })
+vim.keymap.set("n", "<leader>h6", function() toggle_heading(6) end, { desc = "Toggle H6" })
 
--- ** Header Colors **
--- highlights for markdown files to render highlights properly
--- thx to Linkarzu for this
-
-local color1_bg = "#ff757f"
-local color2_bg = "#4fd6be"
-local color3_bg = "#7dcfff"
-local color4_bg = "#ff9e64"
-local color5_bg = "#7aa2f7"
-local color6_bg = "#c0caf5"
-local color_fg = "#1F2335"
+local color_red_bg    = "#ff757f"
+local color_green_bg  = "#4fd6be"
+local color_cyan_bg   = "#7dcfff"
+local color_orange_bg = "#ff9e64"
+local color_blue_bg   = "#7aa2f7"
+local color_grey_bg   = "#c0caf5"
+local color_fg        = "#1F2335"
 
 vim.cmd(
-    string.format([[highlight @markup.heading.1.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color1_bg)
+    string.format([[highlight @markup.heading.1.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color_red_bg)
 )
 vim.cmd(
-    string.format([[highlight @markup.heading.2.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color2_bg)
+    string.format([[highlight @markup.heading.2.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color_green_bg)
 )
 vim.cmd(
-    string.format([[highlight @markup.heading.3.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color3_bg)
+    string.format([[highlight @markup.heading.3.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color_cyan_bg)
 )
 vim.cmd(
-    string.format([[highlight @markup.heading.4.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color4_bg)
+    string.format([[highlight @markup.heading.4.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color_orange_bg)
 )
 vim.cmd(
-    string.format([[highlight @markup.heading.5.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color5_bg)
+    string.format([[highlight @markup.heading.5.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color_blue_bg)
 )
 vim.cmd(
-    string.format([[highlight @markup.heading.6.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color6_bg)
+    string.format([[highlight @markup.heading.6.markdown cterm=bold gui=bold guifg=%s guibg=%s]], color_fg, color_grey_bg)
 )

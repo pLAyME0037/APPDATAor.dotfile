@@ -57,12 +57,6 @@ vim.filetype.add({
 -- ==========================================================
 -- Other CONFIGURATION
 -- ==========================================================
-vim.filetype.add({
-    extension = {
-        templ = 'templ',
-    }
-})
-
 vim.api.nvim_create_user_command("Vrn", function(opts)
     -- 1. Get the range of the visual selection
     -- '< and '> marks are updated after leaving visual mode (which happens when you press :)
@@ -116,16 +110,11 @@ desc = "Visual Rename: Replace selected text with arg across whole file with con
 -- Optional: Create a lowercase alias ':vrn' that triggers ':Vrn'
 vim.cmd([[cnoreabbrev <expr> vrn (getcmdtype() == ':' && getcmdline() == 'vrn') ? 'Vrn' : 'vrn']])
 
-vim.filetype.add({
-    extension = {
-        templ = 'templ',
-    }
-})
 autocmd('TextYankPost', {
     group = yank_group,
     pattern = '*',
     callback = function()
-        vim.highlight.on_yank({
+        vim.hl.on_yank({
             higroup = 'IncSearch',
             timeout = 40,
         })
@@ -135,7 +124,7 @@ autocmd('TextYankPost', {
 autocmd('LspAttach', {
     group = pLAyMEGroup,
     callback = function(e)
-        local opts = { buffer = e.buf }
+        local opts = { buf = e.buf }
         vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, opts)
         vim.keymap.set("n", "K", function() vim.lsp.buf.hover() end, opts)
         vim.keymap.set("n", "<leader>vws", function() vim.lsp.buf.workspace_symbol() end, opts)
@@ -151,7 +140,5 @@ autocmd('LspAttach', {
 
 vim.g.do_filetype_lua = 1
 vim.g.netrw_browse_split = 0
-vim.g.netrw_banner = 0
 vim.g.netrw_winsize = 25
-
 

@@ -4,8 +4,7 @@ return {
 	config = function()
 		local lint = require("lint")
 		local lint_augroup = vim.api.nvim_create_augroup("lint", { clear = true })
-		local eslint = lint.linters.eslint_d
-		-- if Eslint error configuration not found : change MasonInstall eslint@version or npm i -g eslint at a specific version
+
 		lint.linters_by_ft = {
 			javascript = { "biomejs" },
 			typescript = { "biomejs" },
@@ -13,18 +12,7 @@ return {
 			typescriptreact = { "biomejs" },
 			svelte = { "biomejs" },
 			python = { "pylint" },
-            php = { "phpstan" },
-		}
-
-		eslint.args = {
-			"--no-warn-ignored",
-			"--format",
-			"json",
-			"--stdin",
-			"--stdin-filename",
-			function()
-				return vim.fn.expand("%:p")
-			end,
+			php = { "phpstan" },
 		}
 
 		vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
