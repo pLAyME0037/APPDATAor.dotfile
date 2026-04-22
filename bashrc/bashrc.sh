@@ -1,5 +1,6 @@
-#!/usr/bin/env bash
-iatest=$(expr index "$-" i)
+#!/usr/bin/env bash iatest=$(expr index "$-" i)
+#######################################################
+# SOURCED ALIAS'S AND SCRIPTS BY zachbrowne.me
 #######################################################
 # Auto-start Hyprland on tty1
 if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
@@ -173,16 +174,15 @@ alias lk='ls -lSrh'               # sort by size
 alias lc='ls -ltcrh'              # sort by change time
 alias lu='ls -lturh'              # sort by access time
 alias lr='ls -lRh'                # recursive ls
-# alias lt='ls -ltrh'               # sort by date
-alias lt='lsd -tree'               # sort by date
-alias lm='ls -alh |more'          # pipe through 'more'
+alias lst='ls -ltrh'              # sort by date
+alias lt='lsd -tree'
 alias lm='ls -alh |more'          # pipe through 'more'
 alias lw='ls -xAh'                # wide listing format
 alias ll='ls -Fls'                # long listing format
 alias labc='ls -lap'              # alphabetical sort
 alias lf="ls -l | egrep -v '^d'"  # files only
 alias ldir="ls -l | egrep '^d'"   # directories only
-alias lla='lsd -la'                # List and Hidden Files
+alias lla='lsd -la'               # List and Hidden Files
 alias las='ls -A'                 # Hidden Files
 alias lls='ls -l'                 # List
 
@@ -217,6 +217,7 @@ alias openports='netstat -nape --inet'
 alias shutd='sudo shutdown now'
 alias reboot='sudo shutdown -r now'
 alias rebootf='sudo shutdown -r -n now'
+alias sleep='systemctl suspend'
 
 # Alias's to show disk space and space used in a folder
 alias diskspace="du -S | sort -n -r |more"
@@ -296,23 +297,23 @@ ftext() {
 }
 
 # Copy file with a progress bar
-cpb() {
+cpp() {
   set -e
   strace -q -ewrite cp -- "${1}" "${2}" 2>&1 |
-    awk '{
-      count += $NF
-      if (count % 10 == 0) {
-        percent = count / total_size * 100
-        printf "%3d%% [", percent
-        for (i=0;i<=percent;i++) 
-          printf "="
-          printf ">"
-          for (i=percent;i<100;i++)
-            printf " "
-            printf "]\r"
-        }
+  awk '{
+    count += $NF
+    if (count % 10 == 0) {
+      percent = count / total_size * 100
+      printf "%3d%% [", percent
+      for (i=0;i<=percent;i++)
+        printf "="
+        printf ">"
+        for (i=percent;i<100;i++)
+          printf " "
+          printf "]\r"
     }
-END { print "" }' total_size="$(stat -c '%s' "${1}")" count=0
+  }
+  END { print "" }' total_size="$(stat -c '%s' "${1}")" count=0
 }
 
 # Copy and go to the directory
@@ -428,12 +429,12 @@ distribution () {
 }
 
 
-DISTRIBUTION=$(distribution)
-if [ "$DISTRIBUTION" = "redhat" ] || [ "$DISTRIBUTION" = "arch" ]; then
-  alias cat='bat'
-else
-  alias cat='batcat'
-fi 
+# DISTRIBUTION=$(distribution)
+# if [ "$DISTRIBUTION" = "redhat" ] || [ "$DISTRIBUTION" = "arch" ]; then
+#   alias cat='bat'
+# else
+#   alias cat='batcat'
+# fi
 
 # Show the current version of the operating system
 ver() {
@@ -626,7 +627,7 @@ function hb {
     else
       echo "Failed to upload the document."
     fi
-  }
+}
 
 # Search from Home directory
 fh() {
@@ -634,7 +635,7 @@ fh() {
   local cmd
   if command -v fd >/dev/null 2>&1; then cmd="fd";
   elif command -v fdfind >/dev/null 2>&1; then cmd="fdfind";
-  fi 
+  fi
   if [[ -n "$cmd" ]]; then
     dir=$($cmd . ~ --type d --hidden 2>/dev/null | fzf)
   else
@@ -651,13 +652,116 @@ fr() {
   local cmd
   if command -v fd >/dev/null 2>&1; then cmd="fd";
   elif command -v fdfind >/dev/null 2>&1; then cmd="fdfind";
+  fi
+  if command -v fd >/dev/null 2>&1; then
     # Added --one-file-system to avoid hanging on network mounts or huge external drives
     dir=$($cmd . / --type d --hidden --one-file-system --exclude '{proc,dev,sys,run,tmp}' 2>/dev/null | fzf)
   else
-    dir=$(fdfind / -maxdepth 6 -type d 2>/dev/null | fzf)
+    dir=$(find / -maxdepth 6 -type d 2>/dev/null | fzf)
   fi
 
   [ -n "$dir" ] && cd "$dir"
+}
+
+ytdlv() {
+  local q="${1:-1080}"
+  shift
+
+  local dir="/mnt/disk3/img-mp3-mp4/videos/youtube"
+  if [[ -n "$1" && "$1" != http* ]]; then
+    dir="$1"
+    shift
+  fi
+
+  yt-dlp \
+    -f "bestvideo[height<=${q}]+bestaudio/best[height<=${q}]" \
+    --cookies-from-browser brave \
+    --extractor-args "youtube:player_client=default,-android_sdkless" \
+    --embed-subs --sub-langs "en.*" \
+    --merge-output-format mp4 \
+    --downloader-args "ffmpeg_i:-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" \
+    -o "${dir}/%(title)s.%(ext)s" \
+    "$@"
+}
+
+ytdlm() {
+    local dir="/mnt/disk3/img-mp3-mp4/musics"
+    local imgcmd="convert"
+
+    if command -v convert >/dev/null 2>&1; then
+      imgcmd="convert"
+    elif command -v magick >/dev/null 2>&1; then
+      imgcmd="magick"
+    else
+      echo "Error: Install ImageMagick" >&2
+      return 1
+    fi
+
+    if [[ -n "$1" &&
+          "$1" != http* &&
+          "$1" != -* &&
+          -d "$1" ]]; then
+        dir="$1"
+        shift
+    fi
+    mkdir -p -- "$dir"
+
+    yt-dlp \
+        -f 'ba[acodec^=mp3]/ba/b' -x --audio-format mp3 \
+        --write-thumbnail --convert-thumbnails jpg \
+        -o "${dir}/%(title)s.%(ext)s" "$@"
+
+    local current_shopt=$(shopt -p nullglob)
+    shopt -s nullglob
+    
+    local mp3 base jpg webp thumb
+    for mp3 in "$dir"/*.mp3; do
+        base="${mp3%.mp3}"
+        jpg="${base}.jpg"
+        webp="${base}.webp"
+        thumb=""
+
+        if [[ -f "$jpg" ]]; then
+            thumb="$jpg"
+        elif [[ -f "$webp" ]]; then
+            thumb="${base}_tmp.jpg"
+            "$imgcmd" "$webp" "$thumb" || continue
+        else
+            continue
+        fi
+
+        "$imgcmd" "$thumb"       \
+          -fuzz 5% -trim +repage \
+          -resize '900x900^'   \
+          -gravity center        \
+          -extent 900x900      \
+          "$thumb" || { echo "Failed to crop $thumb"; continue; }
+
+        ffmpeg -y -v quiet -i "$mp3" -i "$thumb" -map 0:0 -map 1:0 -c copy \
+            -id3v2_version 3 -metadata:s:v title="Album cover" \
+            -metadata:s:v comment="Cover (front)" \
+            -disposition:v attached_pic "${base}_tmp.mp3"
+
+        if [[ -f "${base}_tmp.mp3" ]]; then
+            mv -f "${base}_tmp.mp3" "$mp3"
+            rm -f "$jpg" "$webp" "${base}_tmp.jpg"
+        fi
+
+        if [[ -f "${base}_tmp.mp3" ]]; then
+          mv -f "${base}_tmp.mp3" "$mp3"
+        fi
+
+        \rm -f "$jpg" "$webp" "${base}_orig.jpg" "${base}_trimmed.jpg" "${base}_bg.jpg" "${base}_fg.jpg" "$out_img"
+    done
+
+
+    if [[ -d "$HOME/.cache/thumbnails" ]]; then
+        \rm -rf "$HOME/.cache/thumbnails"/*
+        echo "System thumbnails cache cleared."
+    fi
+
+    eval "$current_shopt"
+    echo "Done!"
 }
 
 #######################################################
@@ -673,11 +777,14 @@ if [[ $- == *i* ]]; then
   bind '"\C-f":"zi\n"'
 fi
 
-export PATH=$PATH:"$HOME/.local/bin:$HOME/.cargo/bin:/var/lib/flatpak/exports/bin:/.local/share/flatpak/exports/bin"
-
 eval "$(starship init bash)"
 eval "$(zoxide init bash)"
-. "$HOME/.cargo/env"
 
-export PATH="$HOME/myThings/devs/flutter/bin:$PATH"
-
+#######################################################
+# EXPORTS ENV
+#######################################################
+export PATH="$HOME/mythings/devs/flutter/bin:$PATH"
+export PATH=/home/playme/.local/bin:$PATH
+# export PATH=$HOME/opt/SDL3/include/SDL3:$PATH
+export PATH="/home/playme/.config/herd-lite/bin:$PATH"
+export PHP_INI_SCAN_DIR="/home/playme/.config/herd-lite/bin:$PHP_INI_SCAN_DIR"
