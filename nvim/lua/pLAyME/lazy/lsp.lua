@@ -22,12 +22,17 @@ return {
                 "gopls",
                 "tailwindcss",
                 "html",
+                "cssls",
                 "ts_ls",
+                "emmet_ls",
+                "marksman",
+                "jdtls",
             },
             handlers = {
                 function(server_name)
                     require("lspconfig")[server_name].setup({
                         capabilities = capabilities,
+                        autostart = true,
                     })
                 end,
 
@@ -35,6 +40,7 @@ return {
                     local lspconfig = require("lspconfig")
                     lspconfig.lua_ls.setup({
                         capabilities = capabilities,
+                        autostart = true,
                         settings = {
                             Lua = {
                                 diagnostics = {
@@ -56,6 +62,7 @@ return {
                     local lspconfig = require("lspconfig")
                     lspconfig.intelephense.setup({
                         capabilities = capabilities,
+                        autostart = true,
                         settings = {
                             intelephense = {
                                 files = { maxSize = 5000000 },
@@ -68,11 +75,20 @@ return {
                     local lspconfig = require("lspconfig")
                     lspconfig.tailwindcss.setup({
                         capabilities = capabilities,
+                        autostart = true,
                         filetypes = {
                             "html", "css", "scss",
                             "javascript", "typescript",
                             "php", "blade",
                         },
+                    })
+                end,
+
+                ["jdtls"] = function()
+                    local lspconfig = require("lspconfig")
+                    lspconfig.jdtls.setup({
+                        capabilities = capabilities,
+                        autostart = true,
                     })
                 end,
             },

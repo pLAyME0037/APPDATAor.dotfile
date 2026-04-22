@@ -8,26 +8,27 @@ local function compile()
     local dir = vim.fn.expand("%:p:h")
     local class_name = vim.fn.expand("%:t:r")
 
-    -- Shellescape everything for safety
     local s_file = vim.fn.shellescape(file)
     local s_filename = vim.fn.shellescape(filename)
     local s_target = vim.fn.shellescape(target)
     local s_dir = vim.fn.shellescape(dir)
+    local s_class = vim.fn.shellescape(class_name)
 
     local cmd = ""
+    local cwd = dir
 
-    -- 1. PROJECT DETECTION
-    if vim.fn.filereadable("Makefile") == 1 then
-        cmd = string.format("make")
-    elseif vim.fn.filereadable("CMakeLists.txt") == 1 then
-        cmd = string.format("mkdir build && cd build && make .. && make -j `nproc`") -- && make install
-    elseif vim.fn.filereadable("build.sh") == 1 then
-        cmd = string.format("./build.sh")
-    elseif vim.fn.filereadable("Cargo.toml") == 1 then
+    if vim.fn.filereadable(dir .. "/Makefile") == 1 then
+        cmd = "make"
+    elseif vim.fn.filereadable(dir .. "/CMakeLists.txt") == 1 then
+        cmd = "mkdir -p build && cd build && cmake .. && cmake --build . -j $(nproc)"
+    elseif vim.fn.filereadable(dir .. "/build.sh") == 1 then
+        cmd = "./build.sh"
+    elseif vim.fn.filereadable(dir .. "/Cargo.toml") == 1 then
         cmd = "cargo run --color=always"
-    elseif vim.fn.glob("*.csproj") ~= "" then
+        cwd = dir
+    elseif vim.fn.glob(dir .. "/*.csproj") ~= "" then
         cmd = "dotnet run"
-    -- 2. SINGLE FILE RUNNERS
+        cwd = dir
     elseif ft == "cs" then
         cmd = string.format("dotnet run --project %s || (csc %s && mono %s.exe)",
                             s_dir, s_file, s_target)
@@ -36,43 +37,46 @@ local function compile()
     elseif ft == "php" then
         cmd = string.format("php %s", s_file)
     elseif ft == "cpp" then
-        cmd = string.format("g++ -Wall -Wextra -ggdb -fdiagnostics-color=always %s -o %s && %s",
-                            s_file, s_target, s_target)
+        cmd = string.format("g++ -Wall -Wextra -ggdb -fdiagnostics-color=always %s -o %s && %s/%s",
+                            s_file, s_target, s_dir, s_class)
     elseif ft == "c" then
-        cmd = string.format("gcc -Wall -Wextra -ggdb -fdiagnostics-color=always %s -o %s && %s",
-                            s_file, s_target, s_target)
+        cmd = string.format("gcc -Wall -Wextra -ggdb -fdiagnostics-color=always %s -o %s && %s/%s",
+                            s_file, s_target, s_dir, s_class)
     elseif ft == "java" then
-        local awk_colors = [[awk '{ 
+        local awk_colors = [[awk '{
             gsub(/error:/, "\033[1;31merror:\033[0m");
             gsub(/warning:/, "\033[1;33mwarning:\033[0m");
-            gsub(/\:/, "\033[1;32m^\034[0m");
             gsub(/\^/, "\033[1;32m^\033[0m"); print
         }']]
         cmd = string.format("cd %s && rm -f %s.class && javac %s 2>&1 | %s ; if [ -f %s.class ]; then java %s; fi",
-                            s_dir, class_name, s_filename, awk_colors, class_name, class_name)
-        -- cmd = string.format("cd %s && javac %s && java %s", s_dir, s_filename, class_name)
+                            s_dir, s_class, s_filename, awk_colors, s_class, s_class)
     elseif ft == "rust" then
-        cmd = string.format("rustc --color=always %s -o %s && %s",
-                            s_file, s_target, s_target)
+        cmd = string.format("rustc --color=always %s -o %s && %s/%s",
+                            s_file, s_target, s_dir, s_class)
     else
         print("No runner for: " .. ft)
         return
     end
 
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_valid(buf) then
-            local ok, is_compile = pcall(vim.api.nvim_buf_get_var, buf, "is_compile_output")
-            if ok and is_compile then
-                vim.api.nvim_buf_delete(buf, { force = true })
-            end
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        local buf = vim.api.nvim_win_get_buf(win)
+        if vim.b[buf].is_compile_output then
+            vim.api.nvim_win_close(win, true)
         end
     end
 
-    vim.cmd("botright split")
-    vim.cmd("enew")
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.b[buf].is_compile_output and vim.api.nvim_buf_is_valid(buf) then
+            vim.api.nvim_buf_delete(buf, { force = true })
+        end
+    end
+
+    vim.cmd("botright 10new")
     local new_buf = vim.api.nvim_get_current_buf()
-    vim.api.nvim_buf_set_var(new_buf, "is_compile_output", true)
+    vim.b[new_buf].is_compile_output = true
+
     vim.fn.jobstart(cmd, {
+        cwd = cwd,
         term = true,
         env = {
             FORCE_COLOR = "1",
@@ -80,16 +84,11 @@ local function compile()
             PYTHONUNBUFFERED = "1"
         }
     })
-    pcall(vim.api.nvim_buf_set_name, new_buf, "Compile Output")
-    vim.cmd("resize 10")
+
     vim.cmd("startinsert")
 
-    vim.api.nvim_buf_set_keymap(new_buf, "t", "jk", [[<C-\><C-n>]], {
-        noremap = true, silent = true
-    })
-    vim.api.nvim_buf_set_keymap(new_buf, "n", "q", ":bd!<CR>", {
-        noremap = true, silent = true
-    })
+    vim.keymap.set("t", "jk", "<C-\\><C-n>", { buffer = new_buf, noremap = true, silent = true })
+    vim.keymap.set("n", "q", ":bd!<CR>", { buffer = new_buf, noremap = true, silent = true })
 end
 
-vim.keymap.set('n', '<leader>r', compile, { desc = "Clean Build and Run" })
+vim.keymap.set("n", "<leader>r", compile, { desc = "Clean Build and Run" })

@@ -21,7 +21,7 @@ return {
         })
 
         mason_lspconfig.setup({
-            automatic_enable = false,
+            automatic_enable = true,
             ensure_installed = {
                 "lua_ls",
                 "intelephense",
@@ -32,6 +32,7 @@ return {
                 "gopls",
                 "emmet_ls",
                 "marksman",
+                "jdtls",
             },
         })
 

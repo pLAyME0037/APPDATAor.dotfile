@@ -67,7 +67,7 @@ return {
                         }
                     },
                     telescope = {
-                        reverse = true, -- set to false for search bar to be on top 
+                        reverse = true, -- set to false for search bar to be on top
                         layout = {
                             box = "horizontal",
                             backdrop = false,
@@ -127,7 +127,7 @@ return {
             --     },
             --     img_dirs = { "img", "images", "assets", "static", "public", "media", "attachments","Archives/All-Vault-Images/", "~/Library", "~/Downloads" },
             -- },
-            
+
             -- dashboard = {
             --     enabled = true,
             --     sections = {

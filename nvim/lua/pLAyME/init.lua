@@ -19,16 +19,13 @@ end
 -- ==========================================================
 autocmd("FileType", {
     pattern = { "php", "blade" },
-    callback = function()
+    callback = function(args)
         local root = vim.fn.getcwd():gsub("\\", "/")
 
-        -- 1. Set the Search Path
         vim.opt_local.path:append(root .. "/resources/views")
 
-        -- 2. Add the extension
         vim.opt_local.suffixesadd:append(".blade.php")
 
-        -- 3. THE FIX: Use 'tr' instead of 'substitute'
         -- This simply turns every dot (.) into a slash (/) without complex regex
         vim.opt_local.includeexpr = [[tr(v:fname, '.', '/')]]
 
@@ -38,11 +35,10 @@ autocmd("FileType", {
             local file = line:gsub("%.", "/")
             -- Add extension and views folder
             local filepath = "resources/views/" .. file .. ".blade.php"
-            -- Open it
             vim.cmd("edit " .. filepath)
-        end, { buffer = true, desc = "Go to Laravel View" })
+        end, { buf = args.buf, desc = "Go to Laravel View" })
 
-        -- 4. Ensure dots are considered part of the filename so 'gf' grabs the whole string
+        -- Ensure dots are considered part of the filename so 'gf' grabs the whole string
         vim.opt_local.isfname:append("@-@")
     end,
 })
@@ -102,9 +98,9 @@ vim.api.nvim_create_user_command("Vrn", function(opts)
     vim.cmd(cmd)
 
 end, {
-nargs = '+', -- Requires at least one argument (the new name)
-range = true, -- Allows the command to be run while a range is active
-desc = "Visual Rename: Replace selected text with arg across whole file with confirmation"
+    nargs = '+', -- Requires at least one argument (the new name)
+    range = true, -- Allows the command to be run while a range is active
+    desc = "Visual Rename: Replace selected text with arg across whole file with confirmation"
 })
 
 -- Optional: Create a lowercase alias ':vrn' that triggers ':Vrn'
@@ -114,7 +110,7 @@ autocmd('TextYankPost', {
     group = yank_group,
     pattern = '*',
     callback = function()
-        vim.hl.on_yank({
+        vim.highlight.on_yank({
             higroup = 'IncSearch',
             timeout = 40,
         })
@@ -133,12 +129,10 @@ autocmd('LspAttach', {
         vim.keymap.set("n", "<leader>vrr", function() vim.lsp.buf.references() end, opts)
         vim.keymap.set("n", "<leader>vrn", function() vim.lsp.buf.rename() end, opts)
         vim.keymap.set("i", "<C-h>", function() vim.lsp.buf.signature_help() end, opts)
-        vim.keymap.set("n", "[d", function() vim.diagnostic.goto_next() end, opts)
-        vim.keymap.set("n", "]d", function() vim.diagnostic.goto_prev() end, opts)
+        vim.keymap.set("n", "[d", function() vim.diagnostic.jump({ count = 1, float = true }) end, opts)
+        vim.keymap.set("n", "]d", function() vim.diagnostic.jump({ count = -1, float = true }) end, opts)
     end
 })
 
-vim.g.do_filetype_lua = 1
 vim.g.netrw_browse_split = 0
-vim.g.netrw_winsize = 25
-
+vim.g.netrw_winsize = 30
