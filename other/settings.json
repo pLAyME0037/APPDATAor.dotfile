@@ -1,0 +1,203 @@
+{
+    // Editor
+    "editor.fontSize": 17,
+    "editor.smoothScrolling": true,
+    "editor.mouseWheelZoom": true,
+    "editor.renderWhitespace": "none",
+    "editor.wordWrapColumn": 80,
+    "editor.tabSize": 3,
+    "editor.stickyScroll.enabled": false,
+    "editor.cursorBlinking": "expand",
+    "editor.cursorStyle": "line",
+    "editor.linkedEditing": true,
+    "editor.formatOnSave": true,
+    "editor.lineHeight": 25,
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.glyphMargin": false,
+    "editor.fontLigatures": true,
+    "editor.wordWrap": "on",
+    "editor.fontFamily": "'Cascadia Mono Semibold', 'CaskaydiaMono NF', Consolas",
+    "editor.rulers": [
+        80
+    ],
+    // --- HIGH CONTRAST EDITOR SYNTAX (TOKEN) CUSTOMIZATIONS ---
+    // Uses White, Yellow, Magenta, and Green against a Black background.
+    "editor.tokenColorCustomizations": {
+        "comments": "#808080",
+        "strings": "#FFFF00",
+        "keywords": "#bf56d1",
+        "numbers": "#ffbb3e",
+        "types": "#e5c878",
+        "variables": "#E06C75",
+        "functions": "#61afef",
+        "textMateRules": [
+            {
+                // General plain text/fallback color
+                "scope": "meta.embedded, source.groovy.embedded, string, constant.numeric.json, support.type.primitive.typescript",
+                "settings": {
+                    "foreground": "#98c379"
+                }
+            },
+            {
+                // Specific high-contrast color for Operators (=, +, -, etc.)
+                "scope": "keyword.operator",
+                "settings": {
+                    "foreground": "#ffffffc0"
+                }
+            },
+            {
+                // High-contrast color for Punctuation (braces, brackets)
+                // "scope": "punctuation",
+                // "settings": {
+                //     "foreground": "#898989be"
+                // }
+            },
+        ]
+    },
+    "editor.semanticTokenColorCustomizations": {
+        "[One Dark Pro Night Flat]": {
+            "rules": {}
+        },
+    },
+    "[php]": {
+        "editor.defaultFormatter": "kokororin.vscode-phpfmt"
+    },
+    "[blade]": {
+        "editor.defaultFormatter": "shufo.vscode-blade-formatter"
+    },
+    "files.watcherInclude": [
+        "**/.env",
+        "**/vite.config.js",
+        "**/tailwind.config.js",
+        "**/webpack.mix.js",
+        "**/.git/objects/**",
+        "**/.git/subtree-cache/**",
+        "**/node_modules/*/**",
+        "**/.hg/store/**",
+        "**/node_modules/**",
+    ],
+    // Workbench
+    "workbench.colorTheme": "One Dark Pro Night Flat",
+    "workbench.iconTheme": "material-icon-theme",
+    "workbench.editor.empty.hint": "hidden",
+    "workbench.startupEditor": "none",
+    // Chat
+    "chat.editor.wordWrap": "on",
+    "chat.fontSize": 16,
+    // BladeFormatter
+    "bladeFormatter.format.indentSize": 4,
+    "bladeFormatter.format.wrapAttributes": "force",
+    // Html
+    "html.format.wrapAttributesIndentSize": 4,
+    "html.format.wrapAttributes": "force",
+    "css.styleSheets": [
+        // "https://unpkg.com/tailwindcss@1.9.6/dist/tailwind.min.css",
+        // "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css",
+    ],
+    // Terminal
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell",
+            "args": [
+                "-NoLogo"
+            ]
+        },
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.fontFamily": "'CaskaydiaCove Nerd Font', \"JetBrainsMono Nerd Font\"",
+    "terminal.integrated.stickyScroll.enabled": false,
+    "terminal.integrated.fontSize": 19,
+    // Window
+    "window.zoomLevel": -1,
+    "window.menuBarVisibility": "classic",
+    "window.density.editorTabHeight": "compact",
+    "window.restoreWindows": "none",
+    "window.titleBarStyle": "custom",
+    // other
+    "code-runner.runInTerminal": true,
+    "explorer.confirmDelete": false,
+    "inlineChat.lineNaturalLanguageHint": false,
+    "explorer.confirmDragAndDrop": false,
+    "extensions.ignoreRecommendations": true,
+    "debug.disassemblyView.showSourceCode": false,
+    "diffEditor.wordWrap": "on",
+    "files.watcherExclude": {
+        "**/node_modules/*/**": true
+    },
+    "breadcrumbs.enabled": false,
+    "diffEditor.ignoreTrimWhitespace": true,
+    "git.openRepositoryInParentFolders": "never",
+    "explorer.fileNesting.patterns": {
+        "*.ts": "${capture}.js",
+        "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
+        "*.jsx": "${capture}.js",
+        "*.tsx": "${capture}.ts",
+        "tsconfig.json": "tsconfig.*.json",
+        "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, bun.lock",
+        "*.sqlite": "${capture}.${extname}-*",
+        "*.db": "${capture}.${extname}-*",
+        "*.sqlite3": "${capture}.${extname}-*",
+        "*.db3": "${capture}.${extname}-*",
+        "*.sdb": "${capture}.${extname}-*",
+        "*.s3db": "${capture}.${extname}-*"
+    },
+    "glassit.alpha": 226,
+    "glassit.step": 5,
+    // --- HIGH CONTRAST THEME TUNER COLORS ---
+    // This is a placeholder structure for the Theme Tuner extension.
+    "themeTuner.colors": {},
+    "workbench.colorCustomizations": {
+        // --- Base Colors ---
+        "focusBorder": "#9500ff", // Border color for focused elements
+        "foreground": "#8f8f8f", // Overall foreground color
+        "widget.shadow": "#000000",
+        "contrastActiveBorder": "#9500ff", // Extra border around active elements
+        "contrastBorder": "#9500ff", // Extra border around elements
+        // --- Editor and Editor Group Colors ---
+        "editor.background": "#000000",
+        "editor.foreground": "#ffffffcc",
+        "editor.lineHighlightBackground": "#2a2a2a99", // Highlight for the current line
+        "editor.selectionBackground": "#8b8b8b55", // Selection background (translucent cyan)
+        "editorGroupHeader.tabsBackground": "#000000",
+        // --- Activity Bar (Icons on the far left) ---
+        "activityBar.background": "#000000",
+        "activityBar.foreground": "#ffffff",
+        "activityBar.border": "#9500ff",
+        "activityBarBadge.background": "#ffffff",
+        "activityBarBadge.foreground": "#000000",
+        // --- Side Bar (Explorer, Search, etc.) ---
+        "sideBar.background": "#000000",
+        "sideBar.foreground": "#ffffff",
+        "sideBar.border": "#9500ff",
+        // --- Status Bar (Bottom bar) ---
+        "statusBar.background": "#000000",
+        "statusBar.foreground": "#FFFFFF",
+        "statusBar.border": "#9500ff",
+        "statusBar.debuggingBackground": "#FF0000", // Highlighting debugging state
+        "statusBar.debuggingForeground": "#FFFFFF",
+        // --- Buttons and Notifications ---
+        "button.background": "#9500ff",
+        "button.foreground": "#000000",
+        "notificationCenterHeader.background": "#000000",
+        "notificationCenterHeader.foreground": "#FFFFFF",
+        // terminal
+        "terminal.background": "#000000",
+        // titlbar
+        "titleBar.activeBackground": "#000000",
+        "titleBar.inactiveBackground": "#c26cff",
+        "titleBar.border": "#9500ff",
+        // 
+        "statusBar.noFolderForeground": "#dcdcdc",
+        "statusBar.debuggingBorder": "#9500ff",
+        "statusBar.focusBorder": "#9500ff",
+        // 
+        "panel.border": "#9500ff",
+    },
+    "[css]": {
+        "editor.defaultFormatter": "mblode.pretty-formatter"
+    },
+    "files.autoSave": "afterDelay",
+    "redhat.telemetry.enabled": false,
+    "editor.minimap.enabled": false
+}

@@ -1,0 +1,200 @@
+{
+    // Editor
+    "editor.fontSize": 17,
+    "editor.smoothScrolling": true,
+    "editor.mouseWheelZoom": true,
+    "editor.renderWhitespace": "none",
+    "editor.wordWrapColumn": 80,
+    "editor.tabSize": 3,
+    "editor.stickyScroll.enabled": false,
+    "editor.cursorBlinking": "expand",
+    "editor.cursorStyle": "line",
+    "editor.linkedEditing": true,
+    "editor.formatOnSave": true,
+    "editor.lineHeight": 25,
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.glyphMargin": false,
+    "editor.fontLigatures": true,
+    "editor.wordWrap": "on",
+    "editor.fontFamily": "'Cascadia Mono Semibold', 'CaskaydiaMono NF', Consolas",
+    "editor.rulers": [
+        80
+    ],
+
+    // --- CATPPUCCIN MOCHA EDITOR SYNTAX (TOKEN) CUSTOMIZATIONS ---
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": "active",
+    "editor.tokenColorCustomizations": {
+        "comments": "#6c7086", // Overlay0
+        "strings": "#a6e3a1",  // Green
+        "keywords": "#cba6f7", // Mauve
+        "numbers": "#fab387",  // Peach
+        "types": "#f9e2af",    // Yellow
+        "variables": "#cdd6f4", // Text
+        "functions": "#89b4fa", // Blue
+        "textMateRules": [
+            {
+                "name": "General Fallback (Green)",
+                "scope": "meta.embedded, source.groovy.embedded, string, constant.numeric.json, support.type.primitive.typescript",
+                "settings": { "foreground": "#98c379" }
+            },
+            {
+                "name": "Operators (White)",
+                "scope": "keyword.operator",
+                "settings": { "foreground": "#FFFFFF" }
+            },
+            {
+                "name": "Punctuation & Brackets (Bright White)",
+                "scope": [
+                    "punctuation", 
+                    "meta.brace", 
+                    "punctuation.definition.parameters",
+                    "punctuation.definition.block",
+                    "punctuation.definition.dictionary",
+                    "punctuation.definition.array",
+                    "punctuation.section.method",
+                    "punctuation.section.class",
+                    "punctuation.section.inner-class",
+                    "punctuation.separator",
+                    "punctuation.terminator"
+                ],
+                "settings": { 
+                    "foreground": "#FFFFFF",
+                    "fontStyle": "bold" 
+                }
+            }
+        ]
+    }, // <--- THIS BRACE WAS MISSING
+
+    "editor.semanticTokenColorCustomizations": {
+        "[One Dark Pro Night Flat]": {
+            "rules": {}
+        }
+    },
+    "[php]": {
+        "editor.defaultFormatter": "kokororin.vscode-phpfmt"
+    },
+    "[blade]": {
+        "editor.defaultFormatter": "shufo.vscode-blade-formatter"
+    },
+    "files.watcherInclude": [
+        "**/.env",
+        "**/vite.config.js",
+        "**/tailwind.config.js",
+        "**/webpack.mix.js",
+        "**/.git/objects/**",
+        "**/.git/subtree-cache/**",
+        "**/node_modules/*/**",
+        "**/.hg/store/**",
+        "**/node_modules/**"
+    ],
+    // Workbench
+    "workbench.colorTheme": "One Dark Pro Night Flat",
+    "workbench.iconTheme": "material-icon-theme",
+    "workbench.editor.empty.hint": "hidden",
+    "workbench.startupEditor": "none",
+    // Chat
+    "chat.editor.wordWrap": "on",
+    "chat.fontSize": 16,
+    // BladeFormatter
+    "bladeFormatter.format.indentSize": 4,
+    "bladeFormatter.format.wrapAttributes": "force",
+    // Html
+    "html.format.wrapAttributesIndentSize": 4,
+    "html.format.wrapAttributes": "force",
+    "css.styleSheets": [],
+    // Terminal
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "icon": "terminal-powershell",
+            "args": [
+                "-NoLogo"
+            ]
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.fontFamily": "'CaskaydiaCove Nerd Font', \"JetBrainsMono Nerd Font\"",
+    "terminal.integrated.stickyScroll.enabled": false,
+    "terminal.integrated.fontSize": 19,
+    // Window
+    "window.zoomLevel": -1,
+    "window.menuBarVisibility": "classic",
+    "window.density.editorTabHeight": "compact",
+    "window.restoreWindows": "none",
+    "window.titleBarStyle": "custom",
+    // other
+    "code-runner.runInTerminal": true,
+    "explorer.confirmDelete": false,
+    "inlineChat.lineNaturalLanguageHint": false,
+    "explorer.confirmDragAndDrop": false,
+    "extensions.ignoreRecommendations": true,
+    "debug.disassemblyView.showSourceCode": false,
+    "diffEditor.wordWrap": "on",
+    "files.watcherExclude": {
+        "**/node_modules/*/**": true
+    },
+    "breadcrumbs.enabled": false,
+    "diffEditor.ignoreTrimWhitespace": true,
+    "git.openRepositoryInParentFolders": "never",
+    "explorer.fileNesting.patterns": {
+        "*.ts": "${capture}.js",
+        "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
+        "*.jsx": "${capture}.js",
+        "*.tsx": "${capture}.ts",
+        "tsconfig.json": "tsconfig.*.json",
+        "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, bun.lock",
+        "*.sqlite": "${capture}.${extname}-*",
+        "*.db": "${capture}.${extname}-*",
+        "*.sqlite3": "${capture}.${extname}-*",
+        "*.db3": "${capture}.${extname}-*",
+        "*.sdb": "${capture}.${extname}-*",
+        "*.s3db": "${capture}.${extname}-*"
+    },
+    "glassit.alpha": 226,
+    "glassit.step": 5,
+    "themeTuner.colors": {},
+    "workbench.colorCustomizations": {
+        "focusBorder": "#9500ff",
+        "foreground": "#8f8f8f",
+        "widget.shadow": "#000000",
+        "contrastActiveBorder": "#9500ff",
+        "contrastBorder": "#9500ff",
+        "editor.background": "#000000",
+        "editor.foreground": "#ffffffcc",
+        "editor.lineHighlightBackground": "#2a2a2a99",
+        "editor.selectionBackground": "#8b8b8b55",
+        "editorGroupHeader.tabsBackground": "#000000",
+        "activityBar.background": "#000000",
+        "activityBar.foreground": "#ffffff",
+        "activityBar.border": "#9500ff",
+        "activityBarBadge.background": "#ffffff",
+        "activityBarBadge.foreground": "#000000",
+        "sideBar.background": "#000000",
+        "sideBar.foreground": "#ffffff",
+        "sideBar.border": "#9500ff",
+        "statusBar.background": "#000000",
+        "statusBar.foreground": "#FFFFFF",
+        "statusBar.border": "#9500ff",
+        "statusBar.debuggingBackground": "#FF0000",
+        "statusBar.debuggingForeground": "#FFFFFF",
+        "button.background": "#9500ff",
+        "button.foreground": "#000000",
+        "notificationCenterHeader.background": "#000000",
+        "notificationCenterHeader.foreground": "#FFFFFF",
+        "terminal.background": "#000000",
+        "titleBar.activeBackground": "#000000",
+        "titleBar.inactiveBackground": "#c26cff",
+        "titleBar.border": "#9500ff",
+        "statusBar.noFolderForeground": "#dcdcdc",
+        "statusBar.debuggingBorder": "#9500ff",
+        "statusBar.focusBorder": "#9500ff",
+        "panel.border": "#9500ff"
+    },
+    "[css]": {
+        "editor.defaultFormatter": "mblode.pretty-formatter"
+    },
+    "files.autoSave": "afterDelay",
+    "redhat.telemetry.enabled": false,
+    "editor.minimap.enabled": false
+}
