@@ -1,0 +1,43 @@
+# =============================================================================
+# /etc/default/grub
+# =============================================================================
+
+# Static information about the filesystems.
+# See fstab(5) for details.
+
+# <file system> <dir> <type> <options> <dump> <pass>
+# /dev/sda2
+UUID=db851ff2-5daf-4d9c-b394-f6d1f524a774	/         	ext4      	rw,relatime	0 1
+
+# /dev/sda1
+UUID=4907-B00B      	/boot     	vfat      	rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro	0 2
+
+# /dev/sda7
+UUID=ad83cbd7-9209-4bc8-8350-d4945a1c1e42	/home     	ext4      	rw,relatime	0 2
+
+# /dev/sdb3
+UUID=E2104F23104EFDD3  /mnt/disk2  ntfs-3g  defaults,uid=1000,gid=1000,dmask=027,fmask=137  0  0
+
+# /dev/sdb3
+UUID=72A458ACA4587517  /mnt/disk3  ntfs-3g  defaults,uid=1000,gid=1000,dmask=027,fmask=137  0  0
+
+# /dev/windows
+UUID=BEDEEA9BDEEA4B6B  /mnt/windows  ntfs-3g  defaults,uid=1000,gid=1000,dmask=027,fmask=137  0  0
+
+# /dev/efi
+UUID=462EDD4C5F5DA5E1  /mnt/efi  ntfs-3g  defaults,uid=1000,gid=1000,dmask=027,fmask=137  0  0
+
+
+# =============================================================================
+# /etc/grub.d/40_custom
+# =============================================================================
+
+#!/bin/sh
+exec tail -n +3 $0
+# This file provides an easy way to add custom menu entries.  Simply type the
+# menu entries you want to add after this comment.  Be careful not to change
+# the 'exec tail' line above.
+menuentry "Windows 11" {
+	search --set=root --fs-uuid 462EDD4C5F5DA5E1
+	chainloader /EFI/Microsoft/Boot/bootmgfw.efi
+}
