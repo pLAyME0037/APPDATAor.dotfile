@@ -3,13 +3,18 @@
 # SOURCED ALIAS'S AND SCRIPTS BY zachbrowne.me
 #######################################################
 # Auto-start Hyprland on tty1
-if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
-  exec Hyprland
-fi
+# if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+#   exec Hyprland
+# fi
 
-# start fastfetch on terminal open
+# start fastfetch on terminal open if uptime > 5 min (300 seconds)
 if [ -f /usr/bin/fastfetch ]; then
-  fastfetch
+  # Read uptime in seconds, defaulting to 0 if the file can't be read
+  uptime_seconds=$(cut -d'.' -f1 /proc/uptime 2>/dev/null || echo 0)
+
+  if [ "${uptime_seconds:-0}" -gt 300 ]; then
+    fastfetch
+  fi
 fi
 
 # Source global definitions

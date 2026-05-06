@@ -37,18 +37,18 @@ local function compile()
     elseif ft == "php" then
         cmd = string.format("php %s", s_file)
     elseif ft == "cpp" then
-        cmd = string.format("g++ -Wall -Wextra -ggdb -fdiagnostics-color=always %s -o %s && %s/%s",
-                            s_file, s_target, s_dir, s_class)
+        cmd = string.format("cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
+                            s_dir, s_class, s_filename, s_class)
     elseif ft == "c" then
-        cmd = string.format("gcc -Wall -Wextra -ggdb -fdiagnostics-color=always %s -o %s && %s/%s",
-                            s_file, s_target, s_dir, s_class)
+        cmd = string.format("cd %s && mkdir -p ./bin && gcc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
+                            s_dir, s_class, s_filename, s_class)
     elseif ft == "java" then
         local awk_colors = [[awk '{
             gsub(/error:/, "\033[1;31merror:\033[0m");
             gsub(/warning:/, "\033[1;33mwarning:\033[0m");
             gsub(/\^/, "\033[1;32m^\033[0m"); print
         }']]
-        cmd = string.format("cd %s && rm -f %s.class && javac %s 2>&1 | %s ; if [ -f %s.class ]; then java %s; fi",
+        cmd = string.format("cd %s && rm -f ./bin/%s.class && javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then java -cp ./bin %s; fi",
                             s_dir, s_class, s_filename, awk_colors, s_class, s_class)
     elseif ft == "rust" then
         cmd = string.format("rustc --color=always %s -o %s && %s/%s",
