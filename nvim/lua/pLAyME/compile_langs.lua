@@ -36,16 +36,20 @@ local function compile()
         cmd = string.format("python3 %s", s_file)
     elseif ft == "php" then
         cmd = string.format("php %s", s_file)
-    elseif ft == "cpp" then
+    elseif ft == "cpp" or ft == "cc" then
         cmd = string.format("cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
                             s_dir, s_class, s_filename, s_class)
     elseif ft == "c" then
-        cmd = string.format("cd %s && mkdir -p ./bin && gcc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
+        cmd = string.format("cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
                             s_dir, s_class, s_filename, s_class)
     elseif ft == "java" then
         local awk_colors = [[awk '{
-            gsub(/error:/, "\033[1;31merror:\033[0m");
+            gsub(/[^ \t:]+\.java/, "\033[1;33m&\033[0m");
+            gsub(/errors|error:/, "\033[1;31m&\033[0m");
             gsub(/warning:/, "\033[1;33mwarning:\033[0m");
+            gsub(/symbol/, "\033[1;34msymbol\033[0m");
+            gsub(/location/, "\033[1;35mlocation\033[0m");
+            gsub(/:/, "\033[1;36m:\033[0m");
             gsub(/\^/, "\033[1;32m^\033[0m"); print
         }']]
         cmd = string.format("cd %s && rm -f ./bin/%s.class && javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then java -cp ./bin %s; fi",
@@ -92,3 +96,4 @@ local function compile()
 end
 
 vim.keymap.set("n", "<leader>r", compile, { desc = "Clean Build and Run" })
+
