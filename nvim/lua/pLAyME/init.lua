@@ -3,6 +3,7 @@ require("pLAyME.remap")
 require("pLAyME.set")
 require("pLAyME.lazy_init")
 require("pLAyME.compile_langs")
+require("vim._core.ui2").enable()
 
 local augroup = vim.api.nvim_create_augroup
 local pLAyMEGroup = augroup('pLAyME', {})

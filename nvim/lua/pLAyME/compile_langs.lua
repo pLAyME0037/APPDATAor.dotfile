@@ -42,6 +42,8 @@ local function compile()
     elseif ft == "c" then
         cmd = string.format("cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
                             s_dir, s_class, s_filename, s_class)
+    elseif ft == "lua" then
+        cmd = string.format("lua %s", s_filename)
     elseif ft == "java" then
         local awk_colors = [[awk '{
             gsub(/[^ \t:]+\.java/, "\033[1;33m&\033[0m");
@@ -96,4 +98,3 @@ local function compile()
 end
 
 vim.keymap.set("n", "<leader>r", compile, { desc = "Clean Build and Run" })
-

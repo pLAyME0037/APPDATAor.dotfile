@@ -10,7 +10,6 @@ bat \
 bluez \
 bluez-utils \
 brightnessctl \
-btop \
 chromium \
 clang \
 cmake \
@@ -22,7 +21,6 @@ dkms \
 dolphin \
 dosfstools \
 dpkg \
-dunst \
 efibootmgr \
 fastfetch \
 fd \
@@ -38,10 +36,6 @@ gparted \
 grim \
 grub \
 gst-plugin-pipewire \
-gst-plugins-bad \
-gst-plugins-base \
-gst-plugins-good \
-gst-plugins-ugly \
 hexedit \
 htop \
 hyprland \
@@ -50,8 +44,6 @@ imv \
 intel-media-driver \
 intel-ucode \
 inxi \
-iwd \
-jdk25-openjdk \
 kitty \
 kmscon \
 kvantum \
@@ -59,8 +51,6 @@ lazygit \
 libpulse \
 libreoffice-fresh \
 libva-nvidia-driver \
-lightdm \
-lightdm-gtk-greeter \
 linux \
 linux-firmware \
 linux-headers \
@@ -74,9 +64,7 @@ mesa-utils \
 meson \
 mpv \
 mtools \
-nano \
 neovim \
-network-manager-applet \
 networkmanager \
 ninja \
 nmap \
@@ -85,14 +73,11 @@ noto-fonts \
 noto-fonts-cjk \
 npm \
 ntfs-3g \
-nvidia-open-dkms \
-nvidia-utils \
 nwg-look \
-ocaml \
 openbsd-netcat \
 opencode \
+openssh \
 os-prober \
-pavucontrol \
 pipewire \
 pipewire-alsa \
 pipewire-jack \
@@ -105,17 +90,11 @@ polkit-kde-agent \
 power-profiles-daemon \
 prismlauncher \
 proton-vpn-gtk-app \
-qt5-wayland \
 qt5ct \
-qt6-wayland \
 qt6ct \
 rofi \
 samba \
-slurp \
-smartmontools \
-starship \
 sudo \
-swappy \
 system-config-printer \
 telegram-desktop \
 tldr \
@@ -126,8 +105,6 @@ ttf-cascadia-mono-nerd \
 ttf-jetbrains-mono \
 ttf-khmer \
 unzip \
-uwsm \
-vim \
 vlc \
 vulkan-intel \
 vulkan-radeon \
@@ -135,22 +112,15 @@ waybar \
 wget \
 wine-staging \
 winetricks \
-wireless_tools \
 wireplumber \
 wl-clipboard \
-wlr-randr \
-wofi \
 wpa_supplicant \
-xdg-desktop-portal-hyprland \
-xdg-utils \
-xorg-server \
 xorg-xhost \
-xorg-xinit \
 yt-dlp \
 zenity \
 zip \
 zoxide \
-zram-generator
+zram-generator \
 
 # pacman -Qemq
 
@@ -160,3 +130,18 @@ mcpelauncher-ui
 rate-mirrors-bin
 yay-bin
 yay-bin-debug
+
+# pacman -Qm
+
+grimblast-git \
+librewolf-bin \
+mcpelauncher-linux \
+mcpelauncher-ui \
+multitail \
+multitail-debug \
+powerline-console-fonts \
+rate-mirrors-bin \
+rate-mirrors-bin-debug \
+ttf-ms-fonts \
+yay-bin \
+yay-bin-debug \
