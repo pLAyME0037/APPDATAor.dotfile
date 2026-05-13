@@ -17,18 +17,19 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 hl.monitor({
     output   = "eDP-1",
-    mode     = "1920z1080@60",
+    mode     = "1920x1080@60",
     position = "0x0",
     scale    = "1",
 })
 
--- hl.monitor({
---     output   = "HDMI-A-1",
---     mode     = "1024x768@60",
---     position = "1920x0",
---     scale    = "1",
---     mirrored = "eDP-1"
--- })
+hl.monitor({
+    output   = "HDMI-A-1",
+    mode     = "1024x768@60",
+    position = "1920x0",
+    scale    = "1",
+    mirror   = "eDP-1"
+})
+
 
 ---------------------
 ---- MY PROGRAMS ----
@@ -49,7 +50,7 @@ local menu        = "rofi -show run"
 -- Autostart necessary processes (like notifications daemons, status bars, etc.)
 -- Or execute your favorite apps at launch like this:
 --
-hl.on("hyprland.start", function () 
+hl.on("hyprland.start", function ()
   --   hl.exec_cmd(terminal)
   --   hl.exec_cmd("nm-applet")
   --   hl.exec_cmd("hyprpaper & firefox")
@@ -78,7 +79,14 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
 hl.env("XDG_SESSION_TYPE", "wayland")
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
-import("~/.config/hypr/env.conf")
+hl.env("QT_SCALE_FACTOR", "1.25")
+hl.env("GDK_DPI_SCALE", "1.25")
+hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
+
+-- discord --force-device-scale-factor=1.25
+-- code --force-device-scale-factor=1.25
+-- google-chrome-stable --force-device-scale-factor=1.25
+-- Telegram --force-device-scale-facte=or=1
 
 -----------------------
 ----- PERMISSIONS -----
@@ -106,8 +114,8 @@ import("~/.config/hypr/env.conf")
 -- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 hl.config({
     general = {
-        gaps_in  = 5,
-        gaps_out = 20,
+        gaps_in  = 3,
+        gaps_out = 2,
 
         border_size = 2,
 
@@ -238,8 +246,8 @@ hl.config({
 
 hl.config({
     input = {
-        kb_layout  = "us", "kh",
-        kb_variant = "", "",
+        kb_layout  = "us, kh",
+        kb_variant = "",
         kb_model   = "",
         kb_options = "grp:alt_space_toggle",
         kb_rules   = "",
@@ -286,21 +294,21 @@ hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
-hl.bind(mainMod .. " + F", hl.dsp.window.fullscreenstate(1))
-hl.bind(shftMod .. " + F", hl.dsp.window.fullscreenstate(2))
+hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle"}))
+hl.bind(shftMod .. " + F", hl.dsp.window.fullscreen({ action = "toggle"}))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("brave"))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("Telegram"))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("killall -9 waybar && waybar &"))
-hl.bind(mainMod .. " + G", hl.dsp.exec_cmd("sudo -E gparted"))
-hl.bind(_       .. " + PRINT", hl.dsp.exec_cmd("grim ~/Document/pictures/$(date +'%Y-%m-%d-%H%M%S_grim.png')"))
+hl.bind(mainMod .. " + G", hl.dsp.exec_cmd("gparted"))
+hl.bind("PRINT",           hl.dsp.exec_cmd("grim ~/Document/pictures/$(date +'%Y-%m-%d-%H%M%S_grim.png')"))
 hl.bind(shftMod .. " + PRINT", hl.dsp.exec_cmd("grim -g '$(slurp)' - | wl-copy"))
 hl.bind(mainMod .. " + PRINT", hl.dsp.exec_cmd("grim -g '$(slurp)' - | swappy -f -"))
 
 -- Move focus with mainMod + arrow keys
-hl.bind(mainMod .. " + left  | l", hl.dsp.focus({ direction = "left" }))
-hl.bind(mainMod .. " + right | h", hl.dsp.focus({ direction = "right" }))
-hl.bind(mainMod .. " + up    | j", hl.dsp.focus({ direction = "up" }))
-hl.bind(mainMod .. " + down  | k", hl.dsp.focus({ direction = "down" }))
+hl.bind(shftMod .. " + l", hl.dsp.focus({ direction = "left" }))
+hl.bind(shftMod .. " + h", hl.dsp.focus({ direction = "right" }))
+hl.bind(shftMod .. " + k", hl.dsp.focus({ direction = "up" }))
+hl.bind(shftMod .. " + j", hl.dsp.focus({ direction = "down" }))
 
 -- Switch workspaces with mainMod + [0-9]
 -- Move active window to a workspace with mainMod + SHIFT + [0-9]
@@ -335,7 +343,6 @@ hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"),       { locked = tr
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
-
 
 --------------------------------
 ---- WINDOWS AND WORKSPACES ----
@@ -386,3 +393,4 @@ hl.window_rule({
     move  = "20 monitor_h-120",
     float = true,
 })
+
