@@ -1,0 +1,12 @@
+sudo pacman -S qemu-full virt-manager virt-viewer dnsmasq vde2 openbsd-netcat ebtables nftables libguestfs --needed
+
+vi /etc/libvirt/libvirtd.conf
+
+svi /etc/libvirt/libvirtd.conf
+
+sudo usermod -a -G libvirt $(whoami)
+
+sudo systemctl enable --now libvirtd
+
+sudo virsh net-start default
+sudo virsh net-autostart default

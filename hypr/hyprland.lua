@@ -77,16 +77,41 @@ end)
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
+
+-- toolkit
+hl.env("GDK_BACKEND", "wayland,x11,*")
+hl.env("QT_QPA_PLATFORM", "wayland;xcb")
+hl.env("SDL_VIDEODRIVER", "wayland")
+hl.env("CLUTTER_BACKEND", "wayland")
+
+-- XDG Specipication
+hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
 hl.env("XDG_SESSION_TYPE", "wayland")
+hl.env("XDG_SESSION_DESKTOP", "Hyprland")
+
+-- Qt Variables
+hl.env("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
+hl.env("QT_QPA_PLATFORM", "wayland;xcb")
+hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("QT_SCALE_FACTOR", "1.25")
+
 hl.env("GDK_DPI_SCALE", "1.25")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 
--- discord --force-device-scale-factor=1.25
--- code --force-device-scale-factor=1.25
--- google-chrome-stable --force-device-scale-factor=1.25
--- Telegram --force-device-scale-facte=or=1
+-- NVIDIA Specific
+-- To force GBM as a backend, set the following environment variables:
+-- hl.env("GBM_BACKEND", "nvidia-drm")
+hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+-- Hardware acceleration on NVIDIA GPUs
+hl.env("LIBVA_DRIVER_NAME", "nvidia")
+-- Controls if G-Sync capable monitors should use Variable Refresh Rate (VRR)
+-- __GL_GSYNC_ALLOWED
+-- Controls if Adaptive Sync should be used. Recommended to set as “0” to avoid having problems on some games.
+-- __GL_VRR_ALLOWED
+-- use legacy DRM interface instead of atomic mode setting. NOT recommended.
+-- hl.env("AQ_NO_ATOMIC", "1")
+
 
 -----------------------
 ----- PERMISSIONS -----
@@ -115,7 +140,7 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 hl.config({
     general = {
         gaps_in  = 3,
-        gaps_out = 2,
+        gaps_out = 6,
 
         border_size = 2,
 
@@ -130,12 +155,12 @@ hl.config({
         -- Please see https://wiki.hypr.land/Configuring/Advanced-and-Cool/Tearing/ before you turn this on
         allow_tearing = false,
 
-        layout = "dwindle",
+        layout = "dwindle", -- dwindle, scrolling, master
     },
 
     decoration = {
-        rounding       = 5,
-        rounding_power = 2,
+        rounding       = 3,
+        rounding_power = 3,
 
         -- Change transparency of focused and unfocused windows
         active_opacity   = 1.0,
@@ -228,6 +253,16 @@ hl.config({
     },
 })
 
+hl.config({
+    cursor = {
+        no_hardware_cursors = true,   -- Set to true if experiencing cursor glitches on multi-monitor setups
+        zoom_factor = 1.0,            -- Default cursor zoom level
+        zoom_rigid = false,           -- Follow cursor rigidly or loosely
+        inactive_timeout = 0,         -- Hide cursor after X seconds of inactivity
+    }
+})
+
+
 ----------------
 ----  MISC  ----
 ----------------
@@ -298,7 +333,7 @@ hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "maximized", action
 hl.bind(shftMod .. " + F", hl.dsp.window.fullscreen({ action = "toggle"}))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("brave"))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("Telegram"))
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("killall -9 waybar && waybar &"))
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("killall -9 waybar && waybar &"))
 hl.bind(mainMod .. " + G", hl.dsp.exec_cmd("gparted"))
 hl.bind("PRINT",           hl.dsp.exec_cmd("grim ~/Document/pictures/$(date +'%Y-%m-%d-%H%M%S_grim.png')"))
 hl.bind(shftMod .. " + PRINT", hl.dsp.exec_cmd("grim -g '$(slurp)' - | wl-copy"))
@@ -393,4 +428,3 @@ hl.window_rule({
     move  = "20 monitor_h-120",
     float = true,
 })
-

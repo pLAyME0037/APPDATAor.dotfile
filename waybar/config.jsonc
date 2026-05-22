@@ -48,7 +48,7 @@
     "hyprland/window": {
         "format": " {}",
         "rewrite": {
-            "(.*)": "$1",
+            "(.*)": "$1 ",
         },
         "separate-outputs": true
     },
@@ -87,7 +87,7 @@
 
     "custom/uptime": {
         "format": "󰔟 {}",
-        "exec": "uptime -p | sed 's/up //; s/ days/d/; s/ hours/h/; s/ minutes/m/'",
+        "exec": "uptime -p | sed 's/up //; s/ days/d/; s/ hour/h/; s/ hours/h/; s/ minutes/m/'",
         "interval": 60
     },
 
@@ -164,7 +164,8 @@
         "format-wifi": "󰖩 {essid} ({signalStrength}%)",
         "format-ethernet": "󰈀 {ifname}",
         "format-linked": "󰈀 {ifname} (No IP)",
-        "format-disconnected": "󰖪 Disconnected",
+        "format-disconnected": "󰖪 LOL",
+        // "format-disconnected": "󰖪 Disconnected",
         "format-alt": "{ifname}: {ipaddr}/{cidr}",
         "tooltip-format": "{ifname}: {ipaddr}",
         "on-click": "kitty -e nmtui"
@@ -213,7 +214,7 @@
     },
 
     "custom/power": {
-        "format": "",
+        "format": " ",
         "on-click": "$HOME/.config/waybar/scripts/power-drawer.sh",
         "tooltip": false
     },
