@@ -6,13 +6,13 @@ local function compile()
     local filename = vim.fn.expand("%:t")
     local target = vim.fn.expand("%:p:r")
     local dir = vim.fn.expand("%:p:h")
-    local class_name = vim.fn.expand("%:t:r")
+    local exec_name = vim.fn.expand("%:t:r")
 
     local s_file = vim.fn.shellescape(file)
     local s_filename = vim.fn.shellescape(filename)
     local s_target = vim.fn.shellescape(target)
     local s_dir = vim.fn.shellescape(dir)
-    local s_class = vim.fn.shellescape(class_name)
+    local s_name = vim.fn.shellescape(exec_name)
 
     local cmd = ""
     local cwd = dir
@@ -38,10 +38,10 @@ local function compile()
         cmd = string.format("php %s", s_file)
     elseif ft == "cpp" or ft == "cc" then
         cmd = string.format("cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
-                            s_dir, s_class, s_filename, s_class)
+                            s_dir, s_name, s_filename, s_name)
     elseif ft == "c" then
         cmd = string.format("cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
-                            s_dir, s_class, s_filename, s_class)
+                            s_dir, s_name, s_filename, s_name)
     elseif ft == "lua" then
         cmd = string.format("lua %s", s_filename)
     elseif ft == "java" then
@@ -55,10 +55,16 @@ local function compile()
             gsub(/\^/, "\033[1;32m^\033[0m"); print
         }']]
         cmd = string.format("cd %s && rm -f ./bin/%s.class && javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then java -cp ./bin %s; fi",
-                            s_dir, s_class, s_filename, awk_colors, s_class, s_class)
+                            s_dir, s_name, s_filename, awk_colors, s_name, s_name)
     elseif ft == "rust" then
         cmd = string.format("rustc --color=always %s -o %s && %s/%s",
-                            s_file, s_target, s_dir, s_class)
+                            s_file, s_target, s_dir, s_name)
+    elseif ft == "cabal.haskell" then
+        cmd = string.format("cabal run")
+    elseif ft == "haskell" then
+        cmd = string.format("mkdir -p %s/bin/%s && ghc -dynamic -outputdir %s/bin/%s -o %s/bin/%s/%s %s && %s/bin/%s/%s",
+                            s_dir, s_name, s_dir, s_name, s_dir, s_name, s_name, s_filename, s_dir, s_name, s_name)
+        -- cmd = string.format("runghc %s", s_filename)
     else
         print("No runner for: " .. ft)
         return

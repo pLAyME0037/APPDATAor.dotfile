@@ -13,17 +13,17 @@ chosen=$(printf '%s\n' "$shutdown" "$reboot" "$suspend" "$logout" "$cancel" | ro
 case "$chosen" in
 "$shutdown")
     systemctl poweroff
-    ;;
+;;
 "$reboot")
     systemctl reboot
-    ;;
+;;
 "$suspend")
     systemctl suspend
-    ;;
+;;
 "$logout")
     hyprctl dispatch exit
-    ;;
+;;
 "$cancel")
     exit 0
-    ;;
+;;
 esac
