@@ -23,6 +23,17 @@ local function compile()
         cmd = "mkdir -p build && cd build && cmake .. && cmake --build . -j $(nproc)"
     elseif vim.fn.filereadable(dir .. "/build.sh") == 1 then
         cmd = "./build.sh"
+    elseif vim.fn.filereadable(dir .. "/nob.c") == 1 then
+        local nob_bin = dir .. "/bin/nob"
+        local nob_src = dir .. "/nob.c"
+-- do not use nob_cmd_run_async_and_reset, their not output
+        if vim.fn.filereadable(nob_bin) ~= 1
+        or vim.fn.getftime(nob_src) > vim.fn.getftime(nob_bin) then
+            cmd = string.format("mkdir -p %s/bin && cc -o %s/bin/nob %s/nob.c && %s/bin/nob",
+                s_dir, s_dir, s_dir, s_dir)
+        else
+            cmd = string.format("%s/bin/nob", s_dir)
+        end
     elseif vim.fn.filereadable(dir .. "/Cargo.toml") == 1 then
         cmd = "cargo run --color=always"
         cwd = dir
@@ -31,17 +42,19 @@ local function compile()
         cwd = dir
     elseif ft == "cs" then
         cmd = string.format("dotnet run --project %s || (csc %s && mono %s.exe)",
-                            s_dir, s_file, s_target)
+            s_dir, s_file, s_target)
     elseif ft == "python" then
         cmd = string.format("python3 %s", s_file)
     elseif ft == "php" then
         cmd = string.format("php %s", s_file)
     elseif ft == "cpp" or ft == "cc" then
-        cmd = string.format("cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
-                            s_dir, s_class, s_filename, s_class)
+        cmd = string.format(
+            "cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
+            s_dir, s_class, s_filename, s_class)
     elseif ft == "c" then
-        cmd = string.format("cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
-                            s_dir, s_class, s_filename, s_class)
+        cmd = string.format(
+            "cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
+            s_dir, s_class, s_filename, s_class)
     elseif ft == "lua" then
         cmd = string.format("lua %s", s_filename)
     elseif ft == "java" then
@@ -54,16 +67,17 @@ local function compile()
             gsub(/:/, "\033[1;36m:\033[0m");
             gsub(/\^/, "\033[1;32m^\033[0m"); print
         }']]
-        cmd = string.format("cd %s && rm -f ./bin/%s.class && javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then java -cp ./bin %s; fi",
-                            s_dir, s_class, s_filename, awk_colors, s_class, s_class)
+        cmd = string.format(
+            "cd %s && rm -f ./bin/%s.class && javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then java -cp ./bin %s; fi",
+            s_dir, s_class, s_filename, awk_colors, s_class, s_class)
     elseif ft == "rust" then
         cmd = string.format("rustc --color=always %s -o %s && %s/%s",
-                            s_file, s_target, s_dir, s_class)
+            s_file, s_target, s_dir, s_class)
     elseif ft == "cabal.haskell" then
         cmd = string.format("cabal run")
     elseif ft == "haskell" then
         cmd = string.format("mkdir -p %s/bin/%s && ghc -dynamic -outputdir %s/bin/%s -o %s/bin/%s/%s %s && %s/bin/%s/%s",
-                            s_dir, s_class, s_dir, s_class, s_dir, s_class, s_class, s_filename, s_dir, s_class, s_class)
+            s_dir, s_class, s_dir, s_class, s_dir, s_class, s_class, s_filename, s_dir, s_class, s_class)
         -- cmd = string.format("runghc %s", s_filename)
     else
         print("No runner for: " .. ft)

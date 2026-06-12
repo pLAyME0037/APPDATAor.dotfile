@@ -1,4 +1,4 @@
-local opts = { noremap = true, silent = true }
+local onts = { noremap = true, silent = true }
 
 vim.g.mapleader = " "
 -- vim.g.maplocalleader = " "
@@ -11,9 +11,29 @@ vim.api.nvim_set_keymap("n", "<leader>tf", "<Plug>PlenaryTestFile", { noremap = 
 vim.keymap.set("i", "jk", "<Esc>")
 vim.keymap.set("n", "J", "mzJ`z")
 
--- neo-tree
-vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Go to Left Window" })
-vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Go to Right Window" })
+local function try_tmux(dir)
+    local orig = vim.fn.winnr()
+    vim.cmd("wincmd " .. dir)
+    if vim.fn.winnr() == orig then
+        vim.fn.system("tmux select-pane -" .. dir:upper())
+    end
+end
+
+local function try_quickfix_or_tmux(dir)
+    local qflist = vim.fn.getqflist({ size = 0 })
+    if qflist.size and qflist.size > 0 then
+        if dir == "j" then
+            vim.cmd("cprev | zz")
+        else
+            vim.cmd("cnext | zz")
+        end
+    else
+        try_tmux(dir)
+    end
+end
+
+vim.keymap.set("n", "<C-h>", function() try_tmux("h") end, { desc = "Window left / Tmux left" })
+vim.keymap.set("n", "<C-l>", function() try_tmux("l") end, { desc = "Window right / Tmux right" })
 
 vim.keymap.set("n", "<C-d>", "<C-d>zz")
 vim.keymap.set("n", "<C-u>", "<C-u>zz")
@@ -28,7 +48,6 @@ vim.keymap.set("v", ">", ">gv", opts)
 
 vim.keymap.set("n", "=ap", "ma=ap'a")
 
-vim.keymap.set("n", "<leader>fm", vim.lsp.buf.format)
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 vim.keymap.set("n", "<leader>lt", function()
     vim.cmd [[ PlenaryBustedFile % ]]
@@ -57,22 +76,14 @@ vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
 vim.keymap.set("n", "<M-h>", "<cmd>silent !tmux-sessionizer -s 0 --vsplit<CR>")
 vim.keymap.set("n", "<M-H>", "<cmd>silent !tmux neww tmux-sessionizer -s 0<CR>")
 
-vim.keymap.set("n", "<C-k>", "<cmd>cnext<CR>zz")
-vim.keymap.set("n", "<C-j>", "<cmd>cprev<CR>zz")
-vim.keymap.set("n", "<leader>k", "<cmd>lnext<CR>zz")
-vim.keymap.set("n", "<leader>j", "<cmd>lprev<CR>zz")
+vim.keymap.set("n", "<C-j>", function() try_quickfix_or_tmux("j") end,
+    { desc = "Quickfix prev / Window down / Tmux down" })
+vim.keymap.set("n", "<C-k>", function() try_quickfix_or_tmux("k") end, { desc = "Quickfix next / Window up / Tmux up" })
+vim.keymap.set("n", "<leader>k", "<cmd>lNext<CR>zz")
+vim.keymap.set("n", "<leader>j", "<cmd>lprevious<CR>zz")
 
-vim.keymap.set(
-    "n", "<leader>grn",
-    [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]],
-    { desc = "Replace word cursor is on globally"}
-)
-vim.keymap.set(
-    "n", "<leader>lrn",
-    [[:s/\<<C-r><C-w>\>/<C-r>//g<Left><Left>]],
-    { desc = "Substitute word on line" }
-)
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
+vim.keymap.set("n", "<leader>nl", "082lF i<CR><Esc>")
 
 vim.keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically." })
 vim.keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally." })
@@ -99,32 +110,34 @@ end, { desc = "Toggle split zoom." })
 local function resize_split(count, op)
     local times = count > 0 and count or 5
     for _ = 1, times do
-        if op == "inc_h" then vim.cmd("wincmd +")
-        elseif op == "dec_h" then vim.cmd("wincmd -")
-        elseif op == "inc_w" then vim.cmd("wincmd >")
-        elseif op == "dec_w" then vim.cmd("wincmd <")
+        if op == "inc_h" then
+            vim.cmd("wincmd +")
+        elseif op == "dec_h" then
+            vim.cmd("wincmd -")
+        elseif op == "inc_w" then
+            vim.cmd("wincmd >")
+        elseif op == "dec_w" then
+            vim.cmd("wincmd <")
         end
     end
 end
 
 vim.keymap.set("n", "<leader>s]", function() resize_split(vim.v.count, "inc_h") end, { desc = "Increase split height." })
 vim.keymap.set("n", "<leader>s[", function() resize_split(vim.v.count, "dec_h") end, { desc = "Decrease split height." })
-vim.keymap.set("n", "<leader>s>", function() resize_split(vim.v.count, "inc_w") end, { desc = "Increase split width." })
-vim.keymap.set("n", "<leader>s<", function() resize_split(vim.v.count, "dec_w") end, { desc = "Decrease split width." })
+vim.keymap.set("n", "<leader><", function() resize_split(vim.v.count, "inc_w") end, { desc = "Increase split width." })
+vim.keymap.set("n", "<leader>>", function() resize_split(vim.v.count, "dec_w") end, { desc = "Decrease split width." })
 vim.keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split." })
 
-vim.keymap.set("n", "<leader>fp", function ()
+vim.keymap.set("n", "<leader>fp", function()
     local filePath = vim.fn.expand("%:~")
     vim.fn.setreg("+", filePath)
     print("File path copied to clipboard: " .. filePath)
-end, { desc = "Copy file path to cilpboard."})
+end, { desc = "Copy file path to cilpboard." })
 
-vim.keymap.set("n", "<leader>u", function ()
+vim.keymap.set("n", "<leader>u", function()
     vim.cmd.packadd("nvim.undotree")
     require("undotree").open()
-end, { desc = "toggle buildin undo tree."})
-
-vim.keymap.set( "n", "<leader>nl", "082lF i<CR><Esc>")
+end, { desc = "toggle buildin undo tree." })
 
 local function align_to_char()
     local char = vim.fn.input("Align to character: ")
@@ -166,4 +179,3 @@ vim.keymap.set("n", "<leader>el", "oif err != nil {<CR>}<Esc>O.logger.Error(\"er
 vim.keymap.set("n", "<leader><leader>", function()
     require("telescope.builtin").find_files()
 end)
-
