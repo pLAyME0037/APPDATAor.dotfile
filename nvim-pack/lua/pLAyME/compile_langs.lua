@@ -49,11 +49,17 @@ local function compile()
         cmd = string.format("php %s", s_file)
     elseif ft == "cpp" or ft == "cc" then
         cmd = string.format(
-            "cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
+            "cd %s &&"
+            .."mkdir -p ./bin &&"
+            .."g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s &&"
+            .."./bin/%s",
             s_dir, s_class, s_filename, s_class)
     elseif ft == "c" then
         cmd = string.format(
-            "cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && ./bin/%s",
+            "cd %s &&"
+            .."mkdir -p ./bin &&"
+            .."cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s &&"
+            .."./bin/%s",
             s_dir, s_class, s_filename, s_class)
     elseif ft == "lua" then
         cmd = string.format("lua %s", s_filename)
@@ -68,7 +74,9 @@ local function compile()
             gsub(/\^/, "\033[1;32m^\033[0m"); print
         }']]
         cmd = string.format(
-            "cd %s && rm -f ./bin/%s.class && javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then java -cp ./bin %s; fi",
+            "cd %s &&"
+            .."rm -f ./bin/%s.class &&"
+            .."javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then java -cp ./bin %s; fi",
             s_dir, s_class, s_filename, awk_colors, s_class, s_class)
     elseif ft == "rust" then
         cmd = string.format("rustc --color=always %s -o %s && %s/%s",

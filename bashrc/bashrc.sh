@@ -740,6 +740,17 @@ runPlaylist() {
 
 vmrss() { grep VmRSS /proc/"$1"/status; }
 
+trunclog() {
+    local files=("$@")
+    ((${#files[@]} == 0)) && mapfile -t files < <(fd -H -e log . '/' 2>/dev/null)
+    for f in "${files[@]}"; do
+        local sz=$(wc -c < "$f")
+        printf "[Before %d] %s\n" "$sz" "$f"
+        ((sz > 102400)) && sudo truncate -s 102400 "$f"
+        printf "[After >%d]\n" $(wc -c < "$f")
+    done
+}
+
 #######################################################
 # Set the ultimate amazing command prompt
 #######################################################
