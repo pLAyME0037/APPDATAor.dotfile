@@ -1,0 +1,5 @@
+sudo pacman -S noto-fonts-emoji 
+# color emoji (may look "3D/button-like")
+yay -S ttf-symbola
+# monochrome emoji (flat, matches Nerd Font style)
+fc-cache -fv
