@@ -29,29 +29,84 @@ local function compile()
     local cmd = ""
     local cwd = dir
 
-    if vim.fn.filereadable(dir .. "/Makefile") == 1 then
-        cmd = "make"
-    elseif vim.fn.filereadable(dir .. "/CMakeLists.txt") == 1 then
-        cmd = "mkdir -p build && cd build && cmake .. && cmake --build . -j $(nproc)"
-    elseif vim.fn.filereadable(dir .. "/build.sh") == 1 then
-        cmd = "./build.sh"
-    elseif vim.fn.filereadable(dir .. "/nob.c") == 1 then
-        local nob_bin = dir .. "/bin/nob"
-        local nob_src = dir .. "/nob.c"
--- do not use nob_cmd_run_async_and_reset, their not output
-        if vim.fn.filereadable(nob_bin) ~= 1
-        or vim.fn.getftime(nob_src) < vim.fn.getftime(nob_bin) then
-            cmd = string.format("%s/bin/nob", s_dir)
-        else
-            cmd = string.format("mkdir -p %s/bin && cc -o %s/bin/nob %s/nob.c && %s/bin/nob",
-                                s_dir, s_dir, s_dir, s_dir)
+    local function find_project_root(start, depth_max)
+        local d = start
+        for _ = 1, depth_max do
+            for _, m in ipairs({ "Makefile", "CMakeLists.txt", "build.sh", "nob.c", "Cargo.toml" }) do
+                if vim.fn.filereadable(d .. "/" .. m) == 1 then
+                    return d, m
+                end
+            end
+            if vim.fn.isdirectory(d .. "/build") == 1 then
+                return d, "build/"
+            end
+            if vim.fn.glob(d .. "/*.csproj") ~= "" then
+                return d, "*.csproj"
+            end
+            local parent = vim.fn.fnamemodify(d, ":h")
+            if parent == d then break end
+            d = parent
         end
-    elseif vim.fn.filereadable(dir .. "/Cargo.toml") == 1 then
-        cmd = "cargo run --color=always"
-        cwd = dir
-    elseif vim.fn.glob(dir .. "/*.csproj") ~= "" then
-        cmd = "dotnet run"
-        cwd = dir
+        return nil, nil
+    end
+
+    local function find_build_target(root)
+        local os_map = { linux = "linux", darwin = "macos", windows_nt = "windows" }
+        local os_dir = os_map[vim.loop.os_uname().sysname:lower()] or vim.loop.os_uname().sysname:lower()
+        local function scan(d)
+            for _, m in ipairs({ "Makefile", "CMakeLists.txt", "build.sh", "nob.c", "Cargo.toml" }) do
+                if vim.fn.filereadable(d .. "/" .. m) == 1 then
+                    return d, m
+                end
+            end
+            if vim.fn.glob(d .. "/*.csproj") ~= "" then
+                return d, "*.csproj"
+            end
+            return nil, nil
+        end
+        local d, m = scan(root .. "/build")
+        if d then return d, m end
+        local os_d = root .. "/build/" .. os_dir
+        if vim.fn.isdirectory(os_d) == 1 then
+            return scan(os_d)
+        end
+        return nil, nil
+    end
+
+    local root, marker = find_project_root(dir, 3)
+
+    if root and marker == "build/" then
+        local d, m = find_build_target(root)
+        if d and m then
+            root, marker = d, m
+        else
+            root, marker = nil, nil
+        end
+    end
+
+    if root and marker then
+        cwd = root
+        local s_root = vim.fn.shellescape(root)
+        if marker == "Makefile" then
+            cmd = "make -B"
+        elseif marker == "CMakeLists.txt" then
+            cmd = "mkdir -p build && cd build && cmake .. && cmake --build . -j $(nproc)"
+        elseif marker == "build.sh" then
+            cmd = "./build.sh"
+        elseif marker == "nob.c" then
+            local nob_bin = root .. "/bin/nob"
+            local nob_src = root .. "/nob.c"
+            if vim.fn.filereadable(nob_bin) == 1 and vim.fn.getftime(nob_bin) >= vim.fn.getftime(nob_src) then
+                cmd = string.format("%s/bin/nob", s_root)
+            else
+                cmd = string.format("mkdir -p %s/bin && cc -o %s/bin/nob %s/nob.c && %s/bin/nob",
+                                    s_root, s_root, s_root, s_root)
+            end
+        elseif marker == "Cargo.toml" then
+            cmd = "cargo run --color=always"
+        elseif marker == "*.csproj" then
+            cmd = "dotnet run"
+        end
     elseif ft == "cs" then
         cmd = perf_fn .. string.format("_perf 'compilation' && dotnet run --project %s || (csc %s && _perf 'run time' && mono %s.exe)",
                                        s_dir, s_file, s_target)
