@@ -29,10 +29,17 @@ local function compile()
     local cmd = ""
     local cwd = dir
 
+    local bts = {
+        "Makefile",
+        "CMakeLists.txt",
+        "build.sh",
+        "nob.c",
+        "Cargo.toml"
+    } -- build_tools
     local function find_project_root(start, depth_max)
         local d = start
         for _ = 1, depth_max do
-            for _, m in ipairs({ "Makefile", "CMakeLists.txt", "build.sh", "nob.c", "Cargo.toml" }) do
+            for _, m in ipairs(bts) do
                 if vim.fn.filereadable(d .. "/" .. m) == 1 then
                     return d, m
                 end
@@ -51,10 +58,15 @@ local function compile()
     end
 
     local function find_build_target(root)
-        local os_map = { linux = "linux", darwin = "macos", windows_nt = "windows" }
-        local os_dir = os_map[vim.loop.os_uname().sysname:lower()] or vim.loop.os_uname().sysname:lower()
+        local os_map = {
+            linux      = "linux",
+            darwin     = "macos",
+            windows_nt = "windows"
+        }
+        local os_dir = os_map[vim.loop.os_uname().sysname:lower()] or
+                              vim.loop.os_uname().sysname:lower()
         local function scan(d)
-            for _, m in ipairs({ "Makefile", "CMakeLists.txt", "build.sh", "nob.c", "Cargo.toml" }) do
+            for _, m in ipairs(bts) do
                 if vim.fn.filereadable(d .. "/" .. m) == 1 then
                     return d, m
                 end
@@ -96,11 +108,12 @@ local function compile()
         elseif marker == "nob.c" then
             local nob_bin = root .. "/bin/nob"
             local nob_src = root .. "/nob.c"
-            if vim.fn.filereadable(nob_bin) == 1 and vim.fn.getftime(nob_bin) >= vim.fn.getftime(nob_src) then
+            if vim.fn.filereadable(nob_bin) == 1 and
+               vim.fn.getftime(nob_bin) >= vim.fn.getftime(nob_src) then
                 cmd = string.format("%s/bin/nob", s_root)
             else
                 cmd = string.format("mkdir -p %s/bin && cc -o %s/bin/nob %s/nob.c && %s/bin/nob",
-                                    s_root, s_root, s_root, s_root)
+                                    s_dir, s_dir, s_root, s_dir)
             end
         elseif marker == "Cargo.toml" then
             cmd = "cargo run --color=always"
@@ -224,4 +237,3 @@ local function goto_error_line()
 end
 
 vim.keymap.set("n", "<leader>er", goto_error_line, { desc = "goto [ER]ror line" })
-

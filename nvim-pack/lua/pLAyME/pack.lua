@@ -1,10 +1,10 @@
 vim.pack.add({
--- dependencies:
+-- local dependencies:
     { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
     { src = 'https://github.com/kevinhwang91/promise-async' },
     { src = 'https://github.com/NvChad/nvim-colorizer.lua' },
     -- { src = 'https://github.com/' },
--- end dependencies:
+-- end local dependencies:
 
 -- color scheme:
     -- { src = 'https://github.com/rose-pine/neovim' },
@@ -22,7 +22,6 @@ vim.pack.add({
 -- mason + dep
     { src = "https://github.com/williamboman/mason.nvim" },
     { src = 'https://github.com/williamboman/mason-lspconfig.nvim' },
-    { src = 'https://github.com/WhoIsSethDaniel/mason-tool-installer.nvim' },
 
 -- telescope + deps:
     { src = "https://github.com/nvim-telescope/telescope.nvim" },
@@ -34,10 +33,6 @@ vim.pack.add({
     { src = "https://github.com/kristijanhusak/vim-dadbod-ui" },
     { src = "https://github.com/tpope/vim-dadbod" },
     { src = "https://github.com/kristijanhusak/vim-dadbod-completion" },
-
--- flutter:
-    { src = "https://github.com/nvim-flutter/flutter-tools.nvim" },
-    { src = "https://github.com/stevearc/dressing.nvim" },
 
 -- lualine:
     { src = "https://github.com/nvim-lualine/lualine.nvim" },
@@ -63,10 +58,11 @@ vim.pack.add({
 -- dap + deps:
     { src = "https://github.com/mfussenegger/nvim-dap" },
     { src = "https://github.com/rcarriga/nvim-dap-ui" },
-    { src = "https://github.com/theHamsta/nvim-dap-virtual-text" },
-    { src = "https://github.com/nvim-neotest/nvim-nio" },
     { src = "https://github.com/jay-babu/mason-nvim-dap.nvim" },
+    { src = "https://github.com/nvim-neotest/nvim-nio" },
+    { src = "https://github.com/nvim-neotest/neotest" },
     { src = "https://github.com/leoluz/nvim-dap-go" },
+    { src = 'https://github.com/Issafalcon/neotest-dotnet' },
 
 -- lint:
     { src = "https://github.com/mfussenegger/nvim-lint" },
@@ -90,16 +86,24 @@ vim.pack.add({
     { src = 'https://github.com/kevinhwang91/nvim-ufo' },
 
 -- autopairs
-    { src = 'https://github.com/windwp/nvim-autopairs' }, 
+    { src = 'https://github.com/windwp/nvim-autopairs' },
 
 -- vim be good
     { src = 'https://github.com/theprimeagen/vim-be-good' },
 
+-- flutter:
+    { src = "https://github.com/nvim-flutter/flutter-tools.nvim" },
+    { src = "https://github.com/stevearc/dressing.nvim" },
+
 -- lang
     { src = 'https://github.com/roobert/tailwindcss-colorizer-cmp.nvim' },
 
-    { src = 'https://github.com/olrtg/nvim-emmet' }, 
-    -- { src = 'https://github.com/adalessa/laravel.nvim' }, 
+    { src = 'https://github.com/olrtg/nvim-emmet' },
+    -- { src = 'https://github.com/adalessa/laravel.nvim' },
     { src = 'https://github.com/jwalton512/vim-blade' },
+
+-- dotnet
+    { src = 'https://github.com/GustavEikaas/easy-dotnet.nvim' },
+    { src = 'https://github.com/seblyng/roslyn.nvim' },
     -- { src = 'https://github.com/' },
 })

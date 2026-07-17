@@ -1,5 +1,7 @@
 local mason = require("mason")
-local mason_tool_installer = require("mason-tool-installer")
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+local mason_lspconfig = require("mason-lspconfig")
+local lspconfig = require("lspconfig")
 
 mason.setup({
     ui = {
@@ -9,24 +11,15 @@ mason.setup({
             package_uninstalled = "✗",
         },
     },
-})
-
-mason_tool_installer.setup({
-    ensure_installed = {
-        "clangd",
-        "biome",
+    registries = {
+        "github:mason-org/mason-registry",
+        "github:Crashdummyy/mason-registry",
     },
 })
 
-local capabilities = vim.lsp.protocol.make_client_capabilities()
 capabilities = vim.tbl_deep_extend("force", capabilities, require("mini.completion").get_lsp_capabilities())
 
--- vim.lsp.config("*", { capabilities = capabilities })
-
-local lspconfig = require("lspconfig")
-
-require("mason-lspconfig").setup({
-    ensure_installed = { "clangd", "biome" },
+mason_lspconfig.setup({
     handlers = {
         function(server_name)
             lspconfig[server_name].setup({ capabilities = capabilities })

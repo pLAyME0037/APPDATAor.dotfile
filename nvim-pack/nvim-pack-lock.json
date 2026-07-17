@@ -28,6 +28,10 @@
       "rev": "2d7c2db2507fa3c4956142ee607431ddb2828639",
       "src": "https://github.com/stevearc/dressing.nvim"
     },
+    "easy-dotnet.nvim": {
+      "rev": "26b939e2e013ddfc137a8e6149cda1f0b62303ca",
+      "src": "https://github.com/GustavEikaas/easy-dotnet.nvim"
+    },
     "fidget.nvim": {
       "rev": "82404b196e73a00b1727a91903beef5ddc319d22",
       "src": "https://github.com/j-hui/fidget.nvim"
@@ -83,6 +87,14 @@
     "mini.trailspace": {
       "rev": "22653218f1aedc9bf306c8b4e8ec2c8a575f6fae",
       "src": "https://github.com/echasnovski/mini.trailspace"
+    },
+    "neotest": {
+      "rev": "504944bd70ef575315bc72a6aa633ef6ea0a4913",
+      "src": "https://github.com/nvim-neotest/neotest"
+    },
+    "neotest-dotnet": {
+      "rev": "e27c67a856ce67cc968b773d01a35ec07459bb8b",
+      "src": "https://github.com/Issafalcon/neotest-dotnet"
     },
     "nvim": {
       "rev": "0303a7208dba448c459767486a38a6ec05c4216b",
@@ -161,9 +173,17 @@
       "rev": "119e8961014c9bfaf1487bf3c2a393d254f337e2",
       "src": "https://github.com/kevinhwang91/promise-async"
     },
+    "ramboe-dotnet-utils": {
+      "rev": "a1baee01fca7aab4b238c7fe017a7e2114482d6b",
+      "src": "https://github.com/ramboe/ramboe-dotnet-utils"
+    },
     "render-markdown.nvim": {
       "rev": "5adf0895310c1904e5abfaad40a2baad7fe44a07",
       "src": "https://github.com/MeanderingProgrammer/render-markdown.nvim"
+    },
+    "roslyn.nvim": {
+      "rev": "b4954e97e145bd8129b3bbe99809759f6ced2235",
+      "src": "https://github.com/seblyng/roslyn.nvim"
     },
     "snacks.nvim": {
       "rev": "882c996cf28183f4d63640de0b4c02ec886d01f2",

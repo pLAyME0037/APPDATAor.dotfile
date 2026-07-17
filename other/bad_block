@@ -1,0 +1,9 @@
+# run a bad-block-aware fsck:
+# Step 1: Unmount if partially mounted
+sudo umount /dev/sdc1
+
+# Step 2: Check with bad block detection (-c) and auto-repair (-y)
+sudo e2fsck -f -c -y /dev/sdc1
+The -c flag runs badblocks(8) to scan for physical bad sectors, writes them to the filesystem bad block inode, and prevents future allocations on them. After that, mount should work.
+Step 3: Mount:
+sudo mount /dev/sdc1 /mnt/disk4

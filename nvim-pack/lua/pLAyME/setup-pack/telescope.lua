@@ -475,7 +475,7 @@ local search_home_dirs = function()
     })
 end
 
-vim.keymap.set('n', '<C-p>', builtin.git_files, {})
+-- vim.keymap.set('i', '<C-p>', builtin.git_files, {})
 vim.keymap.set('n', '<leader>fd', search_home_dirs, { desc = "[F]ind [D]ir and jump" })
 vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
 vim.keymap.set('n', '<leader>bf', builtin.buffers, { desc = "[B]uffer Lists"})
@@ -497,4 +497,3 @@ vim.keymap.set("n", "<leader>ths", "<cmd>Telescope themes<CR>", {
     silent = true,
     desc = "Theme Switcher"
 })
-

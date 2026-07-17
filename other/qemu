@@ -1,0 +1,3 @@
+sudo qemu-img info rocky10.qcow2 
+
+sudo qemu-img resize rocky10.qcow2 +4G

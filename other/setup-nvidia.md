@@ -54,7 +54,7 @@ MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)
 
 # -----------------------------------------
 
-sudo tee /usr/lib/modules/7.1.2-arch3-1/build/include/linux/of_gpio.h << 'EOF'
+sudo tee /usr/lib/modules/7.1.3-arch1-1/build/include/linux/of_gpio.h << 'EOF'
 /* SPDX-License-Identifier: GPL-2.0+ */
 #ifndef __LINUX_OF_GPIO_H
 #define __LINUX_OF_GPIO_H
