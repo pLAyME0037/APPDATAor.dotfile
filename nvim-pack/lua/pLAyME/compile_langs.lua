@@ -1,4 +1,6 @@
 local function compile()
+    _G.compile_timings = {}
+
     vim.cmd("wall")
 
     local ft = vim.bo.filetype
@@ -19,7 +21,7 @@ local function compile()
     vim.fn.writefile({
         '_perf() {',
         '    local _n=$(date +%s%N)',
-        '    printf "[%sms] %s\\n" "$(( (_n - _t) / 1000000 ))" "$*"',
+        '    printf "[%sms] %s\\n" "$(( (_n - _t) / 1000000 ))" "$*" >> '.. perf_script ..'.perf',
         '    _t=$_n',
         '}',
         '_t=$(date +%s%N)',
@@ -36,6 +38,7 @@ local function compile()
         "nob.c",
         "Cargo.toml"
     } -- build_tools
+
     local function find_project_root(start, depth_max)
         local d = start
         for _ = 1, depth_max do
@@ -108,12 +111,15 @@ local function compile()
         elseif marker == "nob.c" then
             local nob_bin = root .. "/bin/nob"
             local nob_src = root .. "/nob.c"
+            if root:match("/build$") then
+                cwd = vim.fn.fnamemodify(root, ":h")
+            end
             if vim.fn.filereadable(nob_bin) == 1 and
                vim.fn.getftime(nob_bin) >= vim.fn.getftime(nob_src) then
                 cmd = string.format("%s/bin/nob", s_root)
             else
                 cmd = string.format("mkdir -p %s/bin && cc -o %s/bin/nob %s/nob.c && %s/bin/nob",
-                                    s_dir, s_dir, s_root, s_dir)
+                                    s_root, s_root, s_root, s_root)
             end
         elseif marker == "Cargo.toml" then
             cmd = "cargo run --color=always"
@@ -121,43 +127,43 @@ local function compile()
             cmd = "dotnet run"
         end
     elseif ft == "cs" then
-        cmd = perf_fn .. string.format("_perf 'compilation' && dotnet run --project %s || (csc %s && _perf 'run time' && mono %s.exe)",
+        cmd = perf_fn .. string.format("_perf 'compilation' && dotnet run --project %s || (csc %s && _perf 'run' && mono %s.exe)",
                                        s_dir, s_file, s_target)
     elseif ft == "python" then
-        cmd = perf_fn .. string.format("_perf 'run time' && python3 %s", s_file)
+        cmd = perf_fn .. string.format("_perf 'run' && python3 %s", s_file)
     elseif ft == "php" then
-        cmd = perf_fn .. string.format("_perf 'run time' && php %s", s_file)
+        cmd = perf_fn .. string.format("_perf 'run' && php %s", s_file)
     elseif ft == "cpp" or ft == "cc" then
-        cmd = perf_fn .. string.format("_perf 'compilation' && cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && _perf 'run time' && ./bin/%s",
+        cmd = perf_fn .. string.format("_perf 'compilation' && cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && _perf 'run' && ./bin/%s",
                                        s_dir, s_class, s_filename, s_class)
     elseif ft == "c" then
-        cmd = perf_fn .. string.format("_perf 'compilation' && cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && _perf 'run time' && ./bin/%s",
+        cmd = perf_fn .. string.format("_perf 'compilation' && cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && _perf 'run' && ./bin/%s",
                                        s_dir, s_class, s_filename, s_class)
     elseif ft == "lua" then
-        cmd = perf_fn .. string.format("_perf 'run time' && lua %s", s_filename)
+        cmd = perf_fn .. string.format("_perf 'run' && lua %s", s_filename)
     elseif ft == "java" then
         local awk_colors = [[awk '{
             gsub(/[^ \t:]+\.java/, "\033[1;33m&\033[0m");
-            gsub(/errors|error:/, "\033[1;31m&\033[0m");
-            gsub(/warning:/, "\033[1;33mwarning:\033[0m");
-            gsub(/symbol/, "\033[1;34msymbol\033[0m");
-            gsub(/location/, "\033[1;35mlocation\033[0m");
-            gsub(/:/, "\033[1;36m:\033[0m");
-            gsub(/\^/, "\033[1;32m^\033[0m"); print
+            gsub(/errors|error:/,  "\033[1;31m&\033[0m");
+            gsub(/warning:/,       "\033[1;33mwarning:\033[0m");
+            gsub(/location/,       "\033[1;35mlocation\033[0m");
+            gsub(/symbol/,         "\033[1;34msymbol\033[0m");
+            gsub(/:/,              "\033[1;36m:\033[0m");
+            gsub(/\^/,             "\033[1;32m^\033[0m"); print
         }']]
-        cmd = perf_fn .. string.format("cd %s && rm -f ./bin/%s.class && _perf 'compilation' && javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then _perf 'run time' && java -cp ./bin %s; fi",
+        cmd = perf_fn .. string.format("cd %s && rm -f ./bin/%s.class && _perf 'compilation' && javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then _perf 'run' && java -cp ./bin %s; fi",
                                        s_dir, s_class, s_filename, awk_colors, s_class, s_class)
     elseif ft == "rust" then
-        cmd = perf_fn .. string.format("_perf 'compilation' && rustc --color=always %s -o %s && _perf 'run time' && %s/%s",
+        cmd = perf_fn .. string.format("_perf 'compilation' && rustc --color=always %s -o %s && _perf 'run' && %s/%s",
                                        s_file, s_target, s_dir, s_class)
     elseif ft == "cabal.haskell" then
         cmd = "cabal run"
     elseif ft == "haskell" then
-        cmd = perf_fn .. string.format("_perf 'compilation' && mkdir -p %s/bin/%s && ghc -dynamic -outputdir %s/bin/%s -o %s/bin/%s/%s %s && _perf 'run time' && %s/bin/%s/%s",
+        cmd = perf_fn .. string.format("_perf 'compilation' && mkdir -p %s/bin/%s && ghc -dynamic -outputdir %s/bin/%s -o %s/bin/%s/%s %s && _perf 'run' && %s/bin/%s/%s",
             s_dir, s_class, s_dir, s_class, s_dir, s_class, s_class, s_filename, s_dir, s_class, s_class)
         -- cmd = string.format("runghc %s", s_filename)
     elseif ft == "sh" then
-        cmd = perf_fn .. string.format("_perf 'run time' && ./%s", s_filename)
+        cmd = perf_fn .. string.format("_perf 'run' && ./%s", s_filename)
     else
         print("No runner for: " .. ft)
         return
@@ -181,6 +187,16 @@ local function compile()
     vim.b[new_buf].is_compile_output = true
     vim.b[new_buf].compile_dir = dir
 
+    vim.api.nvim_create_autocmd("BufWipeout", {
+        buffer = new_buf,
+        callback = function()
+            _G.compile_timings = {}
+        end,
+    })
+
+    _G.compile_timings = {}
+    vim.fn.delete(perf_script .. ".perf")
+
     vim.fn.jobstart(cmd, {
         cwd = cwd,
         term = true,
@@ -188,7 +204,19 @@ local function compile()
             FORCE_COLOR = "1",
             CLICOLOR_FORCE = "1",
             PYTHONUNBUFFERED = "1"
-        }
+        },
+        on_exit = function(_, _, _)
+            local ok, lines = pcall(vim.fn.readfile, perf_script .. ".perf")
+            if ok then
+                for _, line in ipairs(lines) do
+                    local ms, label = line:match("%[(%d+)ms%]%s+(.+)")
+                    if ms and label then
+                        _G.compile_timings[label] = ms .. "ms"
+                    end
+                end
+            end
+            vim.fn.delete(perf_script .. ".perf")
+        end
     })
 
     vim.cmd("startinsert")
@@ -197,7 +225,16 @@ local function compile()
     vim.keymap.set("n", "q", ":bd!<CR>",     { buffer = new_buf, noremap = true, silent = true })
 end
 
-vim.keymap.set("n", "<leader>r", compile, { desc = "Clean Build and run time" })
+function _G.compile_perf_component()
+    local t = _G.compile_timings or {}
+    if not t.compilation and not t.run then return "" end
+    local parts = {}
+    if t.compilation then parts[#parts + 1] = " " .. t.compilation end
+    if t.run then parts[#parts + 1] = " " .. t.run end
+    return table.concat(parts, " ") .. " |"
+end
+
+vim.keymap.set("n", "<leader>r", compile, { desc = "Clean Build and run" })
 
 local function goto_error_line()
     local raw = vim.api.nvim_get_current_line()

@@ -165,40 +165,75 @@ local patterns = {
     }
 }
 
-patterns.java = patterns.c
-patterns.cs = patterns.c
-patterns.dart = patterns.c
+patterns.java       = patterns.c
+patterns.cs         = patterns.c
+patterns.dart       = patterns.c
 patterns.typescript = patterns.javascript
+patterns.sh         = patterns.javascript
 
 local scope_patterns = {
     lua = {},
-    php = { "^%s*namespace%s+([%w%_\\\\]+)%s*;", "^%s*class%s+([%w_]+)" },
+    php = {
+        "^%s*namespace%s+([%w%_\\\\]+)%s*;",
+        "^%s*class%s+([%w_]+)"
+    },
     javascript = { "^%s*class%s+([%w_]+)" },
-    typescript = { "^%s*class%s+([%w_]+)", "^%s*interface%s+([%w_]+)" },
+    typescript = {
+        "^%s*class%s+([%w_]+)",
+        "^%s*interface%s+([%w_]+)"
+    },
+    sh = {},
     python = { "^%s*class%s+([%w_]+)" },
     go = { "^%s*type%s+([%w_]+)%s+struct" },
-    rust = { "^%s*impl%s+%s*([%w<>]+)%s*%{", "^%s*pub%s+trait%s+([%w_]+)", "^%s*trait%s+([%w_]+)" },
+    rust = {
+        "^%s*impl%s+%s*([%w<>]+)%s*%{",
+        "^%s*pub%s+trait%s+([%w_]+)",
+        "^%s*trait%s+([%w_]+)"
+    },
     c = {},
-    cpp = { "^%s*class%s+([%w_]+)", "^%s*struct%s+([%w_]+)", "^%s*namespace%s+([%w_]+)" },
-    java = { "^%s*class%s+([%w_]+)", "^%s*interface%s+([%w_]+)" },
-    cs = { "^%s*namespace%s+([%w%.]+)", "^%s*class%s+([%w_]+)" },
+    cpp = {
+        "^%s*class%s+([%w_]+)",
+        "^%s*struct%s+([%w_]+)",
+        "^%s*namespace%s+([%w_]+)"
+    },
+    java = {
+        "^%s*class%s+([%w_]+)",
+        "^%s*interface%s+([%w_]+)"
+    },
+    cs = {
+        "^%s*namespace%s+([%w%.]+)",
+        "^%s*class%s+([%w_]+)"
+    },
 }
 
 -- Raw literals for exact character matches (avoids regex escape bugs)
 local comment_chars = {
-    lua = { single = "--", block_start = "--[[", block_end = "]]" },
-    python = { single = "#", block_start = '"""', block_end = '"""', block_start_alt = "'''", block_end_alt = "'''" },
-    c = { single = "//", block_start = "/*", block_end = "*/" },
+    lua = {
+        single = "--",
+        block_start = "--[[",
+        block_end = "]]"
+    },
+    python = {
+        single = "#",
+        block_start = '"""', block_end = '"""',
+        block_start_alt = "'''", block_end_alt = "'''"
+    },
+    c = {
+        single = "//",
+        block_start = "/*",
+        block_end = "*/"
+    },
 }
-comment_chars.cpp = comment_chars.c
-comment_chars.java = comment_chars.c
-comment_chars.cs = comment_chars.c
-comment_chars.dart = comment_chars.c
-comment_chars.php = comment_chars.c
-comment_chars.go = comment_chars.c
-comment_chars.rust = comment_chars.c
+comment_chars.cpp        = comment_chars.c
+comment_chars.java       = comment_chars.c
+comment_chars.cs         = comment_chars.c
+comment_chars.dart       = comment_chars.c
+comment_chars.php        = comment_chars.c
+comment_chars.go         = comment_chars.c
+comment_chars.rust       = comment_chars.c
 comment_chars.javascript = comment_chars.c
 comment_chars.typescript = comment_chars.c
+comment_chars.sh         = comment_chars.python
 
 local reserve_words = {
     ["if"]=true,        ["while"]=true,     ["for"]=true,
@@ -219,25 +254,26 @@ local reserve_words = {
 }
 
 local reject_start = {
-    ["return"]=true, ["if"]=true, ["while"]=true, ["for"]=true,
-    ["switch"]=true, ["else"]=true, ["typedef"]=true, ["using"]=true,
-    ["throw"]=true, ["new"]=true, ["delete"]=true
+    ["return"]=true,  ["if"]=true,     ["while"]=true,
+    ["for"]   =true,     ["switch"]=true, ["else"]=true,
+    ["typedef"]=true, ["using"]=true,  ["throw"]=true,
+    ["new"]=true,     ["delete"]=true
 }
 
 local function list_functions()
-    local buf = vim.api.nvim_get_current_buf()
+    local buf   = vim.api.nvim_get_current_buf()
     local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
     local results = {}
-    local lang = vim.bo.filetype
+    local lang    = vim.bo.filetype
 
     local lang_patterns = patterns[lang] or patterns.lua
     local current_scope = ""
-    local scope_indent = 0
+    local scope_indent  = 0
     local sp = scope_patterns[lang] or {}
     local keywords = (lang == "javascript" or lang == "cpp") and reserve_words or nil
     local is_comment_style = comment_chars[lang] or comment_chars.c
 
-    local in_block_comment = false
+    local in_block_comment     = false
     local in_block_comment_alt = false
 
     local function add_result(i, line, name, raw_name)
@@ -422,14 +458,13 @@ local function list_functions()
     :find()
 end
 
-local search_home_dirs = function()
+local search_home_dirs = function(is_cd)
     local home = vim.fn.expand("~")
     local dirs = {
         home,
         home .. "/mythings/study_my_code",
         home .. "/Projects/github",
         home .. "/opt_at_home",
-        "/mnt/disk2/MyThings/study_my_code"
     }
 
     builtin.find_files({
@@ -446,6 +481,8 @@ local search_home_dirs = function()
             "--exclude", "node_modules",
             "--exclude", "vendors",
             "--exclude", "plugins",
+            "--exclude", "packs",
+            "--exclude", "packages",
             "--exclude", "legal",
             ".",
             unpack(dirs)
@@ -466,7 +503,7 @@ local search_home_dirs = function()
                 local dir = selection.value
 
                 actions.close(prompt_bufnr)
-                vim.api.nvim_set_current_dir(dir)
+                if is_cd == true then vim.api.nvim_set_current_dir(dir) end
                 builtin.find_files({ cwd = dir })
                 print("Switch to " .. dir)
             end)
@@ -476,7 +513,8 @@ local search_home_dirs = function()
 end
 
 -- vim.keymap.set('i', '<C-p>', builtin.git_files, {})
-vim.keymap.set('n', '<leader>fd', search_home_dirs, { desc = "[F]ind [D]ir and jump" })
+vim.keymap.set('n', '<leader>fd', function() search_home_dirs(true) end, { desc = "[F]ind [D]ir and jump to dir" })
+vim.keymap.set('n', '<leader>df', function() search_home_dirs(false) end, { desc = "[D]ir [F]ind" })
 vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
 vim.keymap.set('n', '<leader>bf', builtin.buffers, { desc = "[B]uffer Lists"})
 vim.keymap.set('n', '<leader>fn', list_functions, { desc = "[F]u[N]ctions Find in file"})
@@ -492,8 +530,4 @@ vim.keymap.set('n', '<leader>ps', function()
     builtin.grep_string({ search = vim.fn.input("Grep > ") })
 end)
 vim.keymap.set('n', '<leader>vh', builtin.help_tags, {})
-vim.keymap.set("n", "<leader>ths", "<cmd>Telescope themes<CR>", {
-    noremap = true,
-    silent = true,
-    desc = "Theme Switcher"
-})
+vim.keymap.set("n", "<leader>ths", "<cmd>Telescope themes<CR>", { noremap = true, silent = true, desc = "Theme Switcher" })

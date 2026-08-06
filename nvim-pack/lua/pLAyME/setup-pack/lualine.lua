@@ -68,6 +68,14 @@ lualine.setup({
         lualine_c = { diff, filename },
         lualine_x = {
             { "filetype" },
-        },
-    },
+            {
+                function()
+                    return _G.compile_perf_component   and
+                           _G.compile_perf_component() or
+                           ""
+                end,
+                color = { fg = "#cba6f7" }
+            },
+        }
+    }
 })

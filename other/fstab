@@ -21,7 +21,7 @@ UUID=67ebb98f-9d3f-4356-8382-2272e5699778	/mnt/disk2     	ext4	rw,relatime,exec	
 # /dev/sdb2
 UUID=72A458ACA4587517  				/mnt/disk3  	ntfs3	defaults,nofail,uid=1000,gid=1000,dmask=0022,fmask=0133,windows_names,hide_dot_files,prealloc  0 0
 
-
+mythings    /home/usr_name/mythings virtiofs    defaults    0 0
 
 # ============================================================
 # /etc/grub.d/40_custom

@@ -81,6 +81,7 @@ vim.keymap.set("n", "<C-k>", function() try_quickfix_or_tmux("k") end, { desc = 
 vim.keymap.set("n", "<leader>k", "<cmd>lNext<CR>zz")
 vim.keymap.set("n", "<leader>j", "<cmd>lprevious<CR>zz")
 
+vim.keymap.set("n", "<leader>ls", "<cmd>!pwd && ls -laFh --group-directories-first<CR>", { silent = true })
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
 vim.keymap.set("n", "<leader>nl", "082lF i<CR><Esc>")
 

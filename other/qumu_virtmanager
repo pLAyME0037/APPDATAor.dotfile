@@ -1,3 +1,4 @@
+# to install 
 sudo pacman -S qemu-full virt-manager virt-viewer dnsmasq vde2 openbsd-netcat ebtables nftables libguestfs --needed
 
 vi /etc/libvirt/libvirtd.conf
@@ -10,3 +11,8 @@ sudo systemctl enable --now libvirtd
 
 sudo virsh net-start default
 sudo virsh net-autostart default
+
+# change size of img
+sudo qemu-img info rocky10.qcow2 
+
+sudo qemu-img resize rocky10.qcow2 +4G
