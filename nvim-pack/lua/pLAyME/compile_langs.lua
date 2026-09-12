@@ -238,39 +238,42 @@ vim.keymap.set("n", "<leader>r", compile, { desc = "Clean Build and run" })
 
 local function goto_error_line()
     local raw = vim.api.nvim_get_current_line()
-    local err = raw:gsub("\x1b%[%d;]*m", "")
-    local file, err_line = err:match("^lua: ([^:]+):(%d+):")
+    local err = raw:gsub("\x1b%[[%d;]*[a-zA-Z]", "")
+
+    local file, err_line = err:match("^%s*lua: ([^:]+):(%d+):")
 
     if not file then
-        -- try C/GCC format: hash_table.c:86:1:
-        file, err_line = err:match("^([^:]+):(%d+):%d+:")
+        -- C/GCC: hash_table.c:86:1: or hash_table.c:86:
+        file, err_line = err:match("^%s*([^:]+):(%d+):%d*:")
     end
     if not file then
-        -- try Java format: iostream.java:41: error:
-        file, err_line = err:match("^([^:]+):(%d+): error:")
+        -- Java: iostream.java:41: error:
+        file, err_line = err:match("^%s*([^:]+):(%d+):%s+error:")
     end
     if not file then
-        -- try Python format: File "/home/user/py_generator/main.py", line 16
-        file, err_line = err:match('^%s*File "([^"]+)"/", line (%d+)')
+        -- Python: File "/path/main.py", line 16
+        file, err_line = err:match('^%s*File "([^"]+)", line (%d+)')
+    end
+    if not file then
+        -- Bash: ./script.sh: line 3: or script.sh: line 3:
+        file, err_line = err:match("^%s*([^:]+): line (%d+):")
     end
 
     if not file then
-        -- ./2_functor.sh: line 3: local: can only be used in a function
-        file, err_line = err:match("^./([^:]+): line (%d+):")
+        return
     end
 
+    local stat = (vim.uv or vim.loop).fs_stat
     local buf = vim.api.nvim_get_current_buf()
     local dir = vim.b[buf].compile_dir
 
-    if dir and file:sub(1, 1) ~= "/" then
+    if dir and file:sub(1, 1) ~= "/" and not stat(file) then
         file = dir .. "/" .. file
     end
 
-    if file then
-        vim.cmd("wincmd p")
-        vim.cmd("e " .. file)
-        vim.cmd(":" .. err_line)
-    end
+    vim.cmd("wincmd p")
+    vim.cmd("e " .. vim.fn.fnameescape(file))
+    pcall(vim.api.nvim_win_set_cursor, 0, { tonumber(err_line), 0 })
 end
 
 vim.keymap.set("n", "<leader>er", goto_error_line, { desc = "goto [ER]ror line" })
