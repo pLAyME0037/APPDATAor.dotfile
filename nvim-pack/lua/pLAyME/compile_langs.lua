@@ -41,104 +41,73 @@ local function compile()
 
     local function find_project_root(start, depth_max)
         local d = start
-        for _ = 1, depth_max do
+        if not d or d == "" then return nil, nil end
+
+        local outermost_root = nil
+        local outermost_marker = nil
+
+        while true do
+            -- 1. Check for build tool files
             for _, m in ipairs(bts) do
                 if vim.fn.filereadable(d .. "/" .. m) == 1 then
-                    return d, m
+                    outermost_root = d
+                    outermost_marker = m
+                    break -- Move up to see if an even higher parent has a build tool
                 end
             end
-            if vim.fn.isdirectory(d .. "/build") == 1 then
-                return d, "build/"
-            end
+
+            -- 2. Check for .csproj files
             if vim.fn.glob(d .. "/*.csproj") ~= "" then
-                return d, "*.csproj"
+                outermost_root = d
+                outermost_marker = "*.csproj"
             end
+
+            -- Move to parent directory
             local parent = vim.fn.fnamemodify(d, ":h")
-            if parent == d then break end
+            if parent == d then break end -- Reached '/'
             d = parent
         end
-        return nil, nil
+
+        return outermost_root, outermost_marker
     end
 
-    local function find_build_target(root)
-        local os_map = {
-            linux      = "linux",
-            darwin     = "macos",
-            windows_nt = "windows"
-        }
-        local os_dir = os_map[vim.loop.os_uname().sysname:lower()] or
-                              vim.loop.os_uname().sysname:lower()
-        local function scan(d)
-            for _, m in ipairs(bts) do
-                if vim.fn.filereadable(d .. "/" .. m) == 1 then
-                    return d, m
-                end
-            end
-            if vim.fn.glob(d .. "/*.csproj") ~= "" then
-                return d, "*.csproj"
-            end
-            return nil, nil
-        end
-        local d, m = scan(root .. "/build")
-        if d then return d, m end
-        local os_d = root .. "/build/" .. os_dir
-        if vim.fn.isdirectory(os_d) == 1 then
-            return scan(os_d)
-        end
-        return nil, nil
-    end
-
-    local root, marker = find_project_root(dir, 3)
-
-    if root and marker == "build/" then
-        local d, m = find_build_target(root)
-        if d and m then
-            root, marker = d, m
-        else
-            root, marker = nil, nil
-        end
-    end
+    local root, marker = find_project_root(dir)
 
     if root and marker then
-        cwd = root
+        cwd = root -- The top-level folder (e.g. prog/) is always the working directory
         local s_root = vim.fn.shellescape(root)
-        if marker == "Makefile" then
-            cmd = "make -B"
+
+        if marker == "build.sh" then
+            cmd = perf_fn .. "_perf 'compilation' && ./build.sh"
+        elseif marker == "Makefile" then
+            cmd = perf_fn .. "_perf 'compilation' && make -B"
         elseif marker == "CMakeLists.txt" then
-            cmd = "mkdir -p build && cd build && cmake .. && cmake --build . -j $(nproc)"
-        elseif marker == "build.sh" then
-            cmd = "./build.sh"
+            cmd = perf_fn .. "_perf 'compilation' && mkdir -p build && cd build && cmake .. && cmake --build . -j $(nproc)"
         elseif marker == "nob.c" then
-            local nob_bin = root .. "/bin/nob"
-            local nob_src = root .. "/nob.c"
-            if root:match("/build$") then
-                cwd = vim.fn.fnamemodify(root, ":h")
-            end
-            if vim.fn.filereadable(nob_bin) == 1 and
-               vim.fn.getftime(nob_bin) >= vim.fn.getftime(nob_src) then
-                cmd = string.format("%s/bin/nob", s_root)
-            else
-                cmd = string.format("mkdir -p %s/bin && cc -o %s/bin/nob %s/nob.c && %s/bin/nob",
-                                    s_root, s_root, s_root, s_root)
-            end
+            local nob_src = vim.fn.shellescape(root .. "/nob.c")
+            local nob_bin = vim.fn.shellescape(root .. "/nob")
+            cmd = perf_fn .. string.format(
+                "_perf 'compilation' && cc -Wall -Wextra -o %s %s && _perf 'run' && %s",
+                nob_bin, nob_src, nob_bin
+            )
         elseif marker == "Cargo.toml" then
             cmd = "cargo run --color=always"
         elseif marker == "*.csproj" then
             cmd = "dotnet run"
         end
-    elseif ft == "cs" then
+    elseif ft == "cs" then   elseif ft == "cs" then    elseif ft == "cs" then    elseif ft == "cs" then
         cmd = perf_fn .. string.format("_perf 'compilation' && dotnet run --project %s || (csc %s && _perf 'run' && mono %s.exe)",
-                                       s_dir, s_file, s_target)
+        s_dir, s_file, s_target)
     elseif ft == "python" then
         cmd = perf_fn .. string.format("_perf 'run' && python3 %s", s_file)
     elseif ft == "php" then
         cmd = perf_fn .. string.format("_perf 'run' && php %s", s_file)
     elseif ft == "cpp" or ft == "cc" then
         cmd = perf_fn .. string.format("_perf 'compilation' && cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && _perf 'run' && ./bin/%s",
-                                       s_dir, s_class, s_filename, s_class)
+        s_dir, s_class, s_filename, s_class)
     elseif ft == "c" then
         cmd = perf_fn .. string.format("_perf 'compilation' && cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && _perf 'run' && ./bin/%s",
-                                       s_dir, s_class, s_filename, s_class)
+        s_dir, s_class, s_filename, s_class)
     elseif ft == "lua" then
         cmd = perf_fn .. string.format("_perf 'run' && lua %s", s_filename)
     elseif ft == "java" then
@@ -152,15 +121,15 @@ local function compile()
             gsub(/\^/,             "\033[1;32m^\033[0m"); print
         }']]
         cmd = perf_fn .. string.format("cd %s && rm -f ./bin/%s.class && _perf 'compilation' && javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then _perf 'run' && java -cp ./bin %s; fi",
-                                       s_dir, s_class, s_filename, awk_colors, s_class, s_class)
+        s_dir, s_class, s_filename, awk_colors, s_class, s_class)
     elseif ft == "rust" then
         cmd = perf_fn .. string.format("_perf 'compilation' && rustc --color=always %s -o %s && _perf 'run' && %s/%s",
-                                       s_file, s_target, s_dir, s_class)
+        s_file, s_target, s_dir, s_class)
     elseif ft == "cabal.haskell" then
         cmd = "cabal run"
     elseif ft == "haskell" then
         cmd = perf_fn .. string.format("_perf 'compilation' && mkdir -p %s/bin/%s && ghc -dynamic -outputdir %s/bin/%s -o %s/bin/%s/%s %s && _perf 'run' && %s/bin/%s/%s",
-            s_dir, s_class, s_dir, s_class, s_dir, s_class, s_class, s_filename, s_dir, s_class, s_class)
+        s_dir, s_class, s_dir, s_class, s_dir, s_class, s_class, s_filename, s_dir, s_class, s_class)
         -- cmd = string.format("runghc %s", s_filename)
     elseif ft == "sh" then
         cmd = perf_fn .. string.format("_perf 'run' && ./%s", s_filename)
