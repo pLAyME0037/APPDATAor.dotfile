@@ -146,6 +146,7 @@ alias vi='nvim'
 alias svi='sudo nvim'
 alias vis='nvim "+set si"'
 alias yayf="yay -Slq | fzf --multi --preview 'yay -Sii {1}' --preview-window=down:75% | xargs -ro yay -S"
+alias treecatcp='tree . && find . -type f -exec echo -e "\n--- File: {} ---" \; -exec cat {} \; | wl-copy'
 
 # Change directory aliases
 alias cd..='cd ..'
