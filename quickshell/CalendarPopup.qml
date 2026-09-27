@@ -13,9 +13,19 @@ PopupWindow {
     color: "transparent"
 
     property bool open: false
+    onOpenChanged: if (open) now = new Date()
+    property date now: new Date()
     property date viewDate: new Date()
     property string selectedDateStr: Qt.formatDate(new Date(), "yyyy-MM-dd")
     property var notesData: ({})
+
+    // Ticking clock — only while popup visible
+    Timer {
+        interval: 1000
+        running: root.open
+        repeat: true
+        onTriggered: root.now = new Date()
+    }
 
     // Center horizontally, below bar
     anchor.window: bar
@@ -66,14 +76,14 @@ PopupWindow {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 2
                 Text {
-                    text: Qt.formatTime(new Date(), "hh:mm:ss AP")
+                    text: Qt.formatTime(root.now, "hh:mm:ss AP")
                     color: "#cdd6f4"
                     font.pixelSize: 20
                     font.bold: true
                     Layout.alignment: Qt.AlignHCenter
                 }
                 Text {
-                    text: Qt.formatDate(new Date(), "dddd, MMMM dd, yyyy")
+                    text: Qt.formatDate(root.now, "dddd, MMMM dd, yyyy")
                     color: "#a6adc8"
                     font.pixelSize: 12
                     Layout.alignment: Qt.AlignHCenter
@@ -113,7 +123,7 @@ PopupWindow {
                     radius: 6
                     property string cellDate: Qt.formatDate(model.date, "yyyy-MM-dd")
                     property bool isSelected: root.selectedDateStr === cellDate
-                    property bool hasNotes: root.notesData[cellDate] && root.notesData[cellDate].length > 0
+                    property bool hasNotes: (root.notesData[cellDate] || "").length > 0
 
                     color: isSelected ? "#cba6f7" : (hasNotes ? "#45475a" : "transparent")
 

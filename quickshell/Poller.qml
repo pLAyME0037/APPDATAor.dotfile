@@ -21,4 +21,8 @@ Scope {
         repeat:               true
         onTriggered:          proc.running = true
     }
+    function trigger() {
+        proc.running = false;
+        proc.running = true;
+    }
 }

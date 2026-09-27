@@ -3,6 +3,7 @@ import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Mpris
+import Quickshell.Services.SystemTray
 
 PanelWindow {
     id:             bar
@@ -17,7 +18,7 @@ PanelWindow {
         right:      1;
     }
     implicitHeight: 25
-    color:          "transparent"
+    color:          "#1e1e2e"
     Poller {
         id:         clock
         command:    "date +%I:%M:%S"
@@ -67,6 +68,11 @@ PanelWindow {
         interval:   5000
     }
     Poller {
+        id:         brightness
+        command:    "brightnessctl get"
+        interval:   1000
+    }
+    Poller {
         id:         network
         command:    "nmcli -t -f NAME connection show --active | head -n1"
         interval:   5000
@@ -83,11 +89,15 @@ PanelWindow {
     }
     readonly property var player: Mpris.players
                                        .values
-                                       .find(p => p.isPlaying) ?? Mpris.players.values[0]
-                                                               ?? null
-    PlayerPopup {
-        id: playerPopup
-    }
+                                       .find(p => p.isPlaying) 
+                                           ?? Mpris.players.values[0]
+                                           ?? null
+
+    PlayerPopup { id: playerPopup }
+
+    // ================
+    // The left section
+    // ================
     RowLayout {
         anchors.left:           parent.left
         anchors.verticalCenter: parent.verticalCenter
@@ -111,7 +121,7 @@ PanelWindow {
             Text {
                 anchors.centerIn: parent
                 text:             "\u{f08c7}" 
-                color:            "#f2cdcd"
+                color:            "#89b4fa"
                 font.pixelSize:   18
                 font.weight:      Font.DemiBold
             }
@@ -120,7 +130,6 @@ PanelWindow {
         Pill {
             icon:               "󰆾"
             label:              windowTitle.value
-            iconColor:          "#f2cdcd"
             maxLabelWidth:      500
         }
     }
@@ -129,6 +138,10 @@ PanelWindow {
     CalendarPopup {
         id: calendarPopup
     }
+
+    // ==================
+    // The middle section
+    // ==================
     RowLayout {
         anchors.centerIn:       parent
         spacing:                8
@@ -137,7 +150,6 @@ PanelWindow {
             icon:      bar.showDateMode ? "󰸗" : "󰥔"
             label:     bar.showDateMode ? Qt.formatDate(new Date(), "dd-MMM-yyyy")
                                         : clock.value
-            iconColor: "#f2cdcd"
 
             MouseArea {
                 anchors.fill:    parent
@@ -170,7 +182,11 @@ PanelWindow {
     readonly property string gpuUsage: hwData[1] || "0"
     readonly property string memUsage: hwData[2] || "0"
     HardwarePopup { id: hwPopup }
+    NetworkPopup { id: networkPopup }
 
+    // =================
+    // The right section
+    // =================
     RowLayout {
         anchors.right:          parent.right
         anchors.verticalCenter: parent.verticalCenter
@@ -179,7 +195,6 @@ PanelWindow {
         Pill {
             icon:               "󰍛"
             label:              "CPU " + bar.cpuUsage + "%"
-            iconColor:          "#f2cdcd"
 
             MouseArea {
                 anchors.fill:   parent
@@ -190,7 +205,6 @@ PanelWindow {
         Pill {
             icon:               "󰎈"
             label:              player.value
-            iconColor:          "#f2cdcd"
             maxLabelWidth:      150
 
             MouseArea {
@@ -204,7 +218,6 @@ PanelWindow {
         Pill {
             icon:                bar.isMuted ? "\u{f075f}" : "\u{eb75}"
             label:               bar.isMuted ? "" : (bar.volumePercent + "%")
-            iconColor:           "#f2cdcd"
 
             MouseArea {
                 anchors.fill:    parent
@@ -229,14 +242,37 @@ PanelWindow {
             }
         }
         Pill {
-            icon:               "󰂰"
-            label:              bluetooth.value
-            iconColor:          "#f2cdcd"
+            icon:               "\u{f00de}"
+            label:              brightness.value
+            MouseArea {
+                anchors.fill:    parent
+                cursorShape:     Qt.PointingHandCursor
+
+                onWheel: (wheel) => {
+                    if (wheel.angleDelta.y > 0) {
+                        Quickshell.execDetached(["brightnessctl", "set", "+5%"]);
+                    } else if (wheel.angleDelta.y < 0) {
+                        Quickshell.execDetached(["brightnessctl", "set", "5%-"]);
+                    }
+                }
+            }
         }
         Pill {
             icon:               "󰖩"
             label:              network.value
-            iconColor:          "#f2cdcd"
+            maxLabelWidth:      120
+            MouseArea {
+                anchors.fill:    parent
+                cursorShape:     Qt.PointingHandCursor
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: (mouse) => {
+                    if (mouse.button === Qt.LeftButton) {
+                        networkPopup.open = !networkPopup.open;
+                    } else if (mouse.button === Qt.RightButton) {
+                        Quickshell.execDetached(["nm-connection-editor"]);
+                    }
+                }
+            }
         }
         Pill {
             icon:               bar.batteryIcon
