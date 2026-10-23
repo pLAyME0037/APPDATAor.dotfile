@@ -1,0 +1,166 @@
+;;; -*- lexical-binding: t; -*-
+#+TITLE: pLAyME GNU Emacs config
+#+AUTHOR: Mean
+#+DESCRIPTION: My Emac config
+#+STARTUP: showeverything
+#+OPTIONS: toc:2
+
+* IMPORTANT PROGRAM TO LOAD FIRST
+** Elpaca Package Manager
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t; -*-
+    (defvar elpaca-installer-version 0.12)
+    (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+    (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+    (defvar elpaca-sources-directory (expand-file-name "sources/" elpaca-directory))
+    (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                                  :ref nil :depth 1 :inherit ignore
+                                  :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                                  :build (:not elpaca-activate)))
+    (let* ((repo  (expand-file-name "elpaca/" elpaca-sources-directory))
+           (build (expand-file-name "elpaca/" elpaca-builds-directory))
+           (order (cdr elpaca-order))
+           (default-directory repo))
+      (add-to-list 'load-path (if (file-exists-p build) build repo))
+      (unless (file-exists-p repo)
+        (make-directory repo t)
+        (when (<= emacs-major-version 28) (require 'subr-x))
+        (condition-case-unless-debug err
+            (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                      ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                      ,@(when-let* ((depth (plist-get order :depth)))
+                                                          (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                      ,(plist-get order :repo) ,repo))))
+                     ((zerop (call-process "git" nil buffer t "checkout"
+                                            (or (plist-get order :ref) "--"))))
+                      (emacs (concat invocation-directory invocation-name))
+                      ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                            "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                      ((require 'elpaca))
+                      ((elpaca-generate-autoloads "elpaca" repo)))
+                (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+              (error "%s" (with-current-buffer buffer (buffer-string))))
+          ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+      (unless (require 'elpaca-autoloads nil t)
+        (require 'elpaca)
+        (elpaca-generate-autoloads "elpaca" repo)
+        (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
+    (add-hook 'after-init-hook #'elpaca-process-queues)
+    (elpaca `(,@elpaca-order))
+
+  ;; Install use-package support
+  (elpaca elpaca-use-package
+    ;; Enable use-package :ensure support for Elpaca.
+    (elpaca-use-package-mode)
+    (setq elpaca-use-package-by-default t))
+#+end_src
+
+** Load Evil Mode
+#+begin_src emacs-lisp
+  (use-package evil
+    :ensure t
+    :demand t
+    :init
+    (setq evil-want-integration t)
+    (setq evil-want-keybinding nil)
+    (setq evil-vsplit-window-right t)
+    (setq evil-split-window-below t)
+    :config
+    (evil-mode 1))
+
+  (use-package evil-collection
+    :after evil
+    :ensure t
+    :config
+    (setq evil-collection-mode-list '(dashboard dired ibuffer))
+    (evil-collection-init))
+
+  (use-package emacs :ensure nil :config (setq ring-bell-function #'ignore))
+#+end_src
+
+** General Keybinding
+#+begin_src emacs-lisp
+  (use-package general
+    :after evil-collection
+    :ensure t
+    :config
+    (general-evil-setup)
+    (general-create-definer pLAyME/leader-keys
+      :states '(normal insert visual emacs)
+      :keymaps 'override
+      :prefix "SPC"
+      :global-prefix "M-SPC")
+
+    (pLAyME/leader-keys
+      "b" '(:ignore t :wk "buffer")
+      "bb" '(switch-to-buffer :wk "Switch buffer")
+      "bi" '(ibuffer :wk "Ibuffer")
+      "bk" '(kill-this-buffer :wk "Kill this buffer")
+      "bn" '(next-buffer :wk "Next buffer")
+      "bp" '(previous-buffer :wk "Previous buffer")
+      "br" '(revert-buffer :wk "Reload buffer"))
+
+    (pLAyME/leader-keys
+      "e" '(:ignore t :wk "eval")
+      "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
+      "ed" '(eval-defun :wk "Evaluate defun containing or after point")
+      "ee" '(eval-expression :wk "Evaluate an elisp expression")
+      "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
+      "er" '(eval-region :wk "Evaluate elisp in region"))
+
+    (pLAyME/leader-keys
+      "fe" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Edit emacs config")
+      "gcc" '(comment-line :wk "Comment Lines"))
+
+    (pLAyME/leader-keys
+      "h" '(:ignore t :wk "Help")
+      "hf" '(describe-function :wk "Describe Function")
+      "hv" '(describe-variable :wk "Describe Variable")
+      "hrr" '((lambda () (interactive) (load-file user-init-file)) :wk "Reload config"))
+
+    (pLAyME/leader-keys
+      "t" '(:ignore t :wk "Toggle")
+      "tl" '(display-line-numbers-mode :wk "Toggle Line Number")
+      "tw" '(visual-line-mode :wk "Toggle Wrap Line")))
+#+end_src
+
+** Fonts
+#+begin_src emacs-lisp
+  (set-face-attribute 'default nil
+   :font "CaskaydiaMono Nerd Font"
+   :height 120
+   :weight 'medium)
+  (set-face-attribute 'variable-pitch nil
+   :font "Adwaita Sans"
+   :height 120
+   :weight 'medium)
+  (set-face-attribute 'fixed-pitch nil
+   :font "JetBrains Mono"
+   :height 120
+   :weight 'medium)
+
+  (set-face-attribute 'font-lock-comment-face nil
+   :slant 'italic)
+  (set-face-attribute 'font-lock-keyword-face nil
+   :slant 'italic)
+
+  (add-to-list 'default-frame-alist '(font . "CaskaydiaMono NFM SemiBold-16"))
+  (setq-default line-spacing 0.12)
+#+end_src
+
+** Tweak User Interface
+#+begin_src emacs-lisp
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+
+  (global-display-line-numbers-mode 1)
+  (global-visual-line-mode t)
+#+end_src
+
+** Tweak User Experience
+#+begin_src emacs-lisp
+  ;; (electric-indent-mode -1)
+  (ido-mode 1)
+  (ido-everywhere 1)
+#+end_src
