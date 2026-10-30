@@ -1,0 +1,745 @@
+;;; -*- lexical-binding: t; -*-
+#+TITLE: pLAyME GNU Emacs config
+#+AUTHOR: Mean
+#+DESCRIPTION: My Emac config
+#+STARTUP: showeverything
+#+OPTIONS: toc:2
+
+* IMPORTANT PROGRAM TO LOAD FIRST
+** Elpaca Package Manager
+#+begin_src emacs-lisp
+  ;;; -*- lexical-binding: t; -*-
+  (defvar elpaca-installer-version 0.12)
+  (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+  (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+  (defvar elpaca-sources-directory (expand-file-name "sources/" elpaca-directory))
+  (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+				:ref nil :depth 1 :inherit ignore
+				:files (:defaults "elpaca-test.el" (:exclude "extensions"))
+				:build (:not elpaca-activate)))
+  (let* ((repo  (expand-file-name "elpaca/" elpaca-sources-directory))
+	 (build (expand-file-name "elpaca/" elpaca-builds-directory))
+	 (order (cdr elpaca-order))
+	 (default-directory repo))
+    (add-to-list 'load-path (if (file-exists-p build) build repo))
+    (unless (file-exists-p repo)
+      (make-directory repo t)
+      (when (<= emacs-major-version 28) (require 'subr-x))
+      (condition-case-unless-debug err
+	  (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+		    ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+						    ,@(when-let* ((depth (plist-get order :depth)))
+							(list (format "--depth=%d" depth) "--no-single-branch"))
+						    ,(plist-get order :repo) ,repo))))
+		    ((zerop (call-process "git" nil buffer t "checkout"
+					  (or (plist-get order :ref) "--"))))
+		    (emacs (concat invocation-directory invocation-name))
+		    ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+					  "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+		    ((require 'elpaca))
+		    ((elpaca-generate-autoloads "elpaca" repo)))
+	      (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+	    (error "%s" (with-current-buffer buffer (buffer-string))))
+	((error) (warn "%s" err) (delete-directory repo 'recursive))))
+    (unless (require 'elpaca-autoloads nil t)
+      (require 'elpaca)
+      (elpaca-generate-autoloads "elpaca" repo)
+      (let ((load-source-file-function nil)) (load "./elpaca-autoloads"))))
+  (add-hook 'after-init-hook #'elpaca-process-queues)
+  (elpaca `(,@elpaca-order))
+
+  ;; Install use-package support
+  (elpaca elpaca-use-package
+    ;; Enable use-package :ensure support for Elpaca.
+    (elpaca-use-package-mode)
+    (setq elpaca-use-package-by-default t))
+#+end_src
+
+* ALL THE ICONS
+This is an icon set that can be used with dashboard, dired, ibuffer
+and other Emacs programs.
+  
+#+begin_src emacs-lisp
+(use-package all-the-icons
+  :ensure t
+  :if (display-graphic-p))
+
+(use-package all-the-icons-dired
+  :ensure t
+  :hook (dired-mode . (lambda () (all-the-icons-dired-mode t))))
+#+end_src
+
+** Load Evil Mode
+#+begin_src emacs-lisp
+  (use-package evil
+    :ensure t
+    :demand t
+    :init
+    (setq evil-want-integration t)
+    (setq evil-want-keybinding nil)
+    (setq evil-vsplit-window-right t)
+    (setq evil-split-window-below t)
+    (setq evil-undo-system 'undo-redo)
+    :config
+    (evil-mode 1))
+
+  (use-package evil-collection
+    :after evil
+    :ensure t
+    :config
+    (setq evil-collection-mode-list '(dashboard dired ibuffer))
+    (evil-collection-init))
+
+  ;; Using RETURN to follow links in Org/Evil 
+  ;; Unmap keys in 'evil-maps if not done, (setq org-return-follows-link t) will not work
+  (with-eval-after-load 'evil-maps
+    (define-key evil-motion-state-map (kbd "SPC") nil)
+    (define-key evil-motion-state-map (kbd "RET") nil)
+    (define-key evil-motion-state-map (kbd "TAB") nil))
+  ;; Setting RETURN key in org-mode to follow links
+  (setq org-return-follows-link  t)
+
+  (use-package emacs :ensure nil :config (setq ring-bell-function #'ignore))
+#+end_src
+
+** Fonts
+#+begin_src emacs-lisp
+  (set-face-attribute 'default nil
+  		    :font "CaskaydiaMono Nerd Font"
+  		    :height 170
+  		    :weight 'medium)
+  (set-face-attribute 'variable-pitch nil
+  		    :font "Adwaita Sans"
+  		    :weight 'medium)
+  (set-face-attribute 'fixed-pitch nil
+  		    :font "JetBrains Mono"
+  		    :weight 'medium)
+
+  (set-face-attribute 'font-lock-comment-face nil
+
+  		    :slant 'italic)
+  (set-face-attribute 'font-lock-keyword-face nil
+
+  		    :slant 'italic)
+
+  ;; (add-to-list 'default-frame-alist '(font . "CaskaydiaMono NFM SemiBold-16"))
+  (setq-default line-spacing nil)
+#+end_src
+
+* COMPANY
+[[https://company-mode.github.io/][Company]] is a text completion framework for Emacs. The name stands
+for "complete anything".  Completion will start automatically
+after you type a few letters. Use M-n and M-p to select,
+<return> to complete or <tab> to complete the common part.
+
+#+begin_src emacs-lisp
+(use-package company
+  :ensure t
+  :defer 2
+  :diminish
+  :custom
+  (company-begin-commands '(self-insert-command))
+  (company-idle-delay .1)
+  (company-minimum-prefix-length 2)
+  (company-show-numbers t)
+  (company-tooltip-align-annotations 't)
+  (global-company-mode t))
+
+(use-package company-box
+  :ensure t
+  :after company
+  :diminish
+  :hook (company-mode . company-box-mode))
+#+end_src
+
+** Magit
+[[https://magit.vc/manual/][Magit]] is a full-featured git client for Emacs.
+
+#+begin_src emacs-lisp
+(use-package magit :ensure t)
+
+#+end_src
+
+* DIRED
+#+begin_src emacs-lisp
+  (use-package dired-open
+  :ensure t
+    :config
+    (setq dired-open-extensions '(("gif" . "sxiv")
+                                  ("jpg" . "sxiv")
+                                  ("png" . "sxiv")
+                                  ("mkv" . "mpv")
+                                  ("mp4" . "mpv"))))
+
+  (use-package peep-dired
+    :after dired
+    :ensure t
+    :hook (evil-normalize-keymaps . peep-dired-hook)
+    :config
+      (evil-define-key 'normal dired-mode-map (kbd "h") 'dired-up-directory)
+      ;; use dired-find-file instead if not using dired-open package
+      (evil-define-key 'normal dired-mode-map (kbd "l") 'dired-open-file)
+      (evil-define-key 'normal peep-dired-mode-map (kbd "j") 'peep-dired-next-file)
+      (evil-define-key 'normal peep-dired-mode-map (kbd "k") 'peep-dired-prev-file)
+  )
+#+end_src
+
+* PROJECT SCOPE
+#+begin_src emacs-lisp
+  ;; (global-set-key (kbd "C-c f n") #'imenu)
+  ;; (defun my/find-dir-and-cd ()
+  ;;   (interactive)
+  ;;   (let ((default-directory "~"))
+  ;;     (call-interactively #'find-file)))
+  ;; ;; Word under point:
+  ;; (global-set-key (kbd "C-c p w s") #'rgrep)
+  ;; ;; Whole project:
+  ;; (global-set-key (kbd "C-c p s") #'project-find-regexp)
+
+  ;; Allow confirmation prompts inside active minibuffer
+  (setq enable-recursive-minibuffers t)
+  ;; 1. Kill buffer on C-d without leaving Vertico
+  (defun my/vertico-kill-buffer ()
+    "Kill buffer candidate at point and remove from Vertico list."
+    (interactive)
+    (when-let ((cand (vertico--candidate)))
+      (let* ((multi (get-text-property 0 'multi-category cand))
+              (target (if (and multi (eq (car multi) 'buffer))
+                        (cdr multi)
+                        cand))
+              ;; Target can be a buffer object or string candidate
+              (buf (if (bufferp target)
+                     target
+                     (get-buffer (replace-regexp-in-string "[\x100000-\x10fffd]" ""
+                                   (substring-no-properties target)))))
+              (name (and (buffer-live-p buf) (buffer-name buf))))
+        (if (not (buffer-live-p buf))
+          (message "Candidate is not a live buffer: %s" cand)
+          ;; Prompt if modified file buffer, else kill
+          (if (and (buffer-modified-p buf) (buffer-file-name buf))
+            (when (yes-or-no-p (format "Buffer %s modified. Kill anyway? " name))
+              (kill-buffer buf))
+            (kill-buffer buf))
+          ;; Remove from Vertico view immediately
+          (setq vertico--candidates (delete cand vertico--candidates))
+          (setq vertico--total (max 0 (1- vertico--total)))
+          (vertico--exhibit)
+          (message "Killed buffer: %s" name)))))
+
+  ;; 2. Directory picker with live directory preview + recursive file search
+  (defun my/search-home-dirs (&optional cd-to-dir)
+    "Pick directory with live preview, then find files inside.
+        Prefix arg (C-u) or cd-to-dir switches default-directory."
+    (interactive "P")
+    (let* ((raw-dirs (list (expand-file-name "~")
+                       (expand-file-name "~/mythings/studying_code")
+                       (expand-file-name "~/Projects/github")
+                       (expand-file-name "~/opt_at_home")))
+            (dirs (seq-filter #'file-directory-p raw-dirs))
+            (cmd (append '("fd" "--type" "d" "--hidden" "--ignore-case"
+                            "--max-depth" "3"
+                            "--exclude" ".git"
+                            "--exclude" "node_modules"
+                            "--exclude" "packages"
+                            ".")
+                   dirs))
+            (candidates (apply #'process-lines cmd))
+            ;; consult--read with file-state enables live directory preview in right window
+            (selected (consult--read
+                        candidates
+                        :prompt "Jump to dir: "
+                        :category 'file
+                        :state (consult--file-state)
+                        :require-match t)))
+      (when (and selected (file-directory-p selected))
+        (when cd-to-dir
+          (cd selected)
+          (setq default-directory selected)
+          (message "Switched directory: %s" selected))
+        ;; Open search inside selected directory
+        (consult-find selected))))
+
+  ;; 3. Vertico side-by-side split layout (Left: Search, Right: Preview)
+  (use-package vertico
+    :ensure t
+    :init
+    (vertico-mode 1)
+    :config
+    (require 'vertico-buffer)
+    (vertico-buffer-mode 1)
+
+    ;; Fill window height (replaces 10-line limit)
+    (setq vertico-count 25)
+
+    ;; Left window 42% width, right window shows preview
+    (setq vertico-buffer-display-action
+      '(display-buffer-in-side-window
+         (side . left)
+         (window-width . 0.42)))
+
+    ;; Force C-d through Evil into vertico
+    (define-key vertico-map (kbd "C-d") #'my/vertico-kill-buffer)
+    (define-key minibuffer-local-map (kbd "C-d") #'my/vertico-kill-buffer)
+    (with-eval-after-load 'evil
+      (evil-define-key '(normal insert visual motion emacs) vertico-map (kbd "C-d") #'my/vertico-kill-buffer)
+      (evil-define-key '(normal insert visual motion emacs) minibuffer-local-map (kbd "C-d") #'my/vertico-kill-buffer)))
+
+  ;; 4. Marginalia annotations (file size, modes, permissions)
+  (use-package marginalia
+    :ensure t
+    :init
+    (marginalia-mode 1))
+
+  ;; 5. Fuzzy match
+  (use-package orderless
+    :ensure t
+    :custom
+    (completion-styles '(orderless basic)))
+
+  ;; 6. Consult search + instant preview in opposite split
+  (use-package consult
+    :ensure t
+    :bind (("C-c f f" . consult-find)
+            ("C-c b f" . consult-buffer)
+            ("C-c f n" . consult-imenu)
+            ("C-c p s" . consult-ripgrep)
+            ("C-c t h s" . consult-theme))
+    :config
+    (consult-customize
+      consult-find consult-fd consult-ripgrep
+      consult-buffer consult-recent-file
+      my/search-home-dirs
+      :preview-key 'any))
+
+  (global-set-key (kbd "C-c f d") #'my/search-home-dirs)
+  (global-set-key (kbd "C-c d f") (lambda () (interactive) (my/search-home-dirs t)))
+#+end_src
+
+* HIGHLIGHT TODO
+Adding highlights to TODO and related words.
+
+#+begin_src emacs-lisp
+  (use-package hl-todo
+    :ensure t
+    :hook ((org-mode . hl-todo-mode)
+           (prog-mode . hl-todo-mode))
+    :config
+    (setq hl-todo-highlight-punctuation ":"
+          hl-todo-keyword-faces
+          `(("TODO"       warning bold)
+            ("FIXME"      error bold)
+            ("HACK"       font-lock-constant-face bold)
+            ("REVIEW"     font-lock-keyword-face bold)
+            ("NOTE"       success bold)
+            ("DEPRECATED" font-lock-doc-face bold))))
+
+ #+end_src
+
+* MODELINE
+The modeline is the bottom status bar that appears in Emacs windows.
+While you can create your own custom modeline, why go to the trouble
+when Doom Emacs already has a nice modeline package available.  For
+more information on what is available to configure in the Doom modeline,
+check out: [[https://github.com/seagle0128/doom-modeline][Doom Modeline]]
+
+#+begin_src emacs-lisp
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1)
+  :config
+  (setq doom-modeline-height 25      ;; sets modeline height
+        doom-modeline-bar-width 5    ;; sets right bar width
+        doom-modeline-persp-name t   ;; adds perspective name to modeline
+        doom-modeline-persp-icon t)) ;; adds folder icon next to persp name
+
+#+end_src
+
+* RAINBOW DELIMITERS
+Adding rainbow coloring to parentheses.
+
+#+begin_src emacs-lisp
+(use-package rainbow-delimiters
+  :ensure t
+  :hook ((emacs-lisp-mode . rainbow-delimiters-mode)
+         (clojure-mode . rainbow-delimiters-mode)))
+
+#+end_src
+
+* RAINBOW MODE
+Display the actual color as a background for any hex color value
+(ex. #ffffff).  The code block below enables rainbow-mode in all
+programming modes (prog-mode) as well as org-mode, which is why
+rainbow works in this document.  
+
+#+begin_src emacs-lisp
+(use-package rainbow-mode
+  :ensure t
+  :hook prog-mode)
+#+end_src
+
+* LANGUAGE SUPPORT
+Emacs has built-in programming language modes for Lisp, Scheme, DSSSL,
+Ada, ASM, AWK, C, C++, Fortran, Icon, IDL (CORBA), IDLWAVE, Java,
+Javascript, M4, Makefiles, Metafont, Modula2, Object Pascal, Objective-C,
+Octave, Pascal, Perl, Pike, PostScript, Prolog, Python, Ruby, Simula,
+SQL, Tcl, Verilog, and VHDL.  Other languages will require to install
+additional modes.
+
+#+begin_src emacs-lisp
+    (use-package haskell-mode
+      :ensure t
+      :custom
+      (haskell-indent-offset 2)
+      (haskell-indentation-layout-offset 2))
+
+    (use-package lua-mode
+      :ensure t
+      :hook (php-mode . (lambda () (setq c-basic-offset 4))))
+
+    (use-package php-mode
+      :ensure t
+      :custom
+      (lua-indent-level 4))
+
+    (setq lisp-indent-offset 2)
+    (setq c-indent-offset 4)
+#+end_src
+
+* AUTO COMPILE SYSTEM
+#+begin_src emacs-lisp
+  (require 'compile)
+  (require 'ansi-color)
+
+  ;; 1. Global state for timings
+  (defvar my/compile-timings (make-hash-table :test 'equal))
+  (defvar my/compile-current-perf-file nil)
+
+  ;; 2. Project marker table (Outermost root match)
+  (defvar my/project-build-tools
+    '(("build.sh"       . (lambda (root _dir _file _base)
+                            (format "./build.sh")))
+       ("Makefile"       . (lambda (root _dir _file _base)
+                             (format "make -B")))
+       ("CMakeLists.txt" . (lambda (root _dir _file _base)
+                             (format "mkdir -p build && cd build && cmake .. && cmake --build . -j $(nproc)")))
+       ("nob.c"          . (lambda (root _dir _file _base)
+                             (let ((src (shell-quote-argument (concat root "/nob.c")))
+                                    (bin (shell-quote-argument (concat root "/nob"))))
+                               (format "_perf 'compilation' && cc -Wall -Wextra -o %s %s && _perf 'run' && %s"
+                                 bin src bin))))
+       ("Cargo.toml"     . (lambda (_root _dir _file _base)
+                             "cargo run --color=always"))
+       ("*.csproj"       . (lambda (_root _dir _file _base)
+                             "dotnet run"))))
+
+  ;; 3. Single-file runner table (Grouped by major-mode)
+  (defvar my/file-runners
+    '(((c-mode c-ts-mode) .
+        (lambda (dir file base)
+          (format "_perf 'compilation' && cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && _perf 'run' && ./bin/%s"
+            dir base file base)))
+
+       ((c++-mode c++-ts-mode) .
+         (lambda (dir file base)
+           (format "_perf 'compilation' && cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o ./bin/%s %s && _perf 'run' && ./bin/%s"
+             dir base file base)))
+
+       ((csharp-mode csharp-ts-mode) .
+         (lambda (dir file base)
+           (format "_perf 'compilation' && dotnet run --project %s || (csc %s && _perf 'run' && mono %s.exe)"
+             dir file base)))
+
+       ((python-mode python-ts-mode) .
+         (lambda (_dir file _base)
+           (format "_perf 'run' && python3 %s" file)))
+
+       ((php-mode) .
+         (lambda (_dir file _base)
+           (format "_perf 'run' && php %s" file)))
+
+       ((lua-mode) .
+         (lambda (_dir file _base)
+           (format "_perf 'run' && lua %s" file)))
+
+       ((rust-mode rust-ts-mode) .
+         (lambda (dir file base)
+           (format "_perf 'compilation' && rustc --color=always %s -o %s/%s && _perf 'run' && %s/%s"
+             file dir base dir base)))
+
+       ((java-mode java-ts-mode) .
+         (lambda (dir file base)
+           (let ((awk "awk '{ gsub(/[^ \\t:]+\\.java/, \"\\033[1;33m&\\033[0m\"); gsub(/errors|error:/, \"\\033[1;31m&\\033[0m\"); gsub(/warning:/, \"\\033[1;33mwarning:\\033[0m\"); print }'"))
+             (format "cd %s && rm -f ./bin/%s.class && _perf 'compilation' && javac -d ./bin %s 2>&1 | %s ; if [ -f ./bin/%s.class ]; then _perf 'run' && java -cp ./bin %s; fi"
+               dir base file awk base base))))
+
+       ((haskell-mode) .
+         (lambda (dir file base)
+           (format "_perf 'compilation' && mkdir -p %s/bin/%s && ghc -dynamic -outputdir %s/bin/%s -o %s/bin/%s/%s %s && _perf 'run' && %s/bin/%s/%s"
+             dir base dir base dir base base file dir base base)))
+
+       ((sh-mode bash-ts-mode) .
+         (lambda (_dir file _base)
+           (format "_perf 'run' && ./%s" file)))))
+
+  ;; 4. Find outermost project root
+  (defun my/find-project-root (start-dir)
+    "Walk up to '/' to locate outermost folder with build tool marker."
+    (let ((current (expand-file-name start-dir))
+           (outermost-root nil)
+           (outermost-marker nil))
+      (while (not (equal current "/"))
+        (dolist (tool my/project-build-tools)
+          (let ((marker (car tool)))
+            (if (string-equal marker "*.csproj")
+              (when (directory-files current nil "\\.csproj$" t)
+                (setq outermost-root current
+                  outermost-marker marker))
+              (when (file-exists-p (expand-file-name marker current))
+                (setq outermost-root current
+                  outermost-marker marker)))))
+        (setq current (file-name-directory (directory-file-name current))))
+      (cons outermost-root outermost-marker)))
+
+  ;; 5. Main compile command
+  (defun my/auto-compile ()
+    "Save all buffers, resolve command via root marker or major-mode, run."
+    (interactive)
+    (save-some-buffers t) ; vim.cmd("wall") equivalent
+    (clrhash my/compile-timings)
+
+    (let* ((file (buffer-file-name))
+            (dir (and file (file-name-directory file)))
+            (base (and file (file-name-sans-extension (file-name-nondirectory file))))
+            (root-info (and dir (my/find-project-root dir)))
+            (root (car root-info))
+            (marker (cdr root-info))
+            (exec-name (or base "compile"))
+            (perf-script (format "/tmp/%s" exec-name))
+            (perf-file (concat perf-script ".perf"))
+            (cwd dir)
+            (raw-cmd nil))
+
+      (unless file
+        (user-error "Buffer is not visiting a file"))
+
+      (setq my/compile-current-perf-file perf-file)
+      (when (file-exists-p perf-file)
+        (delete-file perf-file))
+
+      ;; Resolve command
+      (if (and root marker)
+        (progn
+          (setq cwd root)
+          (let ((handler (cdr (assoc marker my/project-build-tools))))
+            (when handler
+              (setq raw-cmd (funcall handler
+                              (shell-quote-argument root)
+                              (shell-quote-argument dir)
+                              (shell-quote-argument file)
+                              (shell-quote-argument base))))))
+        ;; Fallback to file runners
+        (let ((handler (cl-some (lambda (entry)
+                                  (when (memq major-mode (car entry))
+                                    (cdr entry)))
+                         my/file-runners)))
+          (when handler
+            (setq raw-cmd (funcall handler
+                            (shell-quote-argument dir)
+                            (shell-quote-argument (file-name-nondirectory file))
+                            (shell-quote-argument base))))))
+
+      (unless raw-cmd
+        (user-error "No build runner for mode %s" major-mode))
+
+      ;; Inject bash timing harness
+      (with-temp-file perf-script
+        (insert (format "_perf() {\n    local _n=$(date +%%s%%N)\n    printf \"[%%sms] %%s\\n\" \"$(( (_n - _t) / 1000000 ))\" \"$*\" >> %s\n    _t=$_n\n}\n_t=$(date +%%s%%N)\n" perf-file)))
+
+      (let* ((full-cmd (format ". %s && rm %s && %s"
+                         perf-script perf-script raw-cmd))
+              (default-directory cwd)
+              (compilation-environment '("FORCE_COLOR=1" "CLICOLOR_FORCE=1" "PYTHONUNBUFFERED=1")))
+        ;; Run in bottom split window
+        (compile full-cmd))))
+
+  ;; 6. Process timing on finish & handle ANSI colors
+  (defun my/compile-on-finish (buf desc)
+    "Parse perf file when compilation finishes."
+    (when (and my/compile-current-perf-file
+            (file-exists-p my/compile-current-perf-file))
+      (with-temp-buffer
+        (insert-file-contents my/compile-current-perf-file)
+        (goto-char (point-min))
+        (while (re-search-forward "\\[\\([0-9]+\\)ms\\][ \t]+\\(.+\\)" nil t)
+          (puthash (match-string 2) (concat (match-string 1) "ms") my/compile-timings)))
+      (delete-file my/compile-current-perf-file))
+    (force-mode-line-update t))
+
+  (add-hook 'compilation-finish-functions #'my/compile-on-finish)
+  (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter)
+
+  ;; 7. Window behavior (10 rows high at bottom, scroll with output)
+  (setq compilation-scroll-output t)
+  (setq compilation-always-kill t)
+
+  (add-to-list 'display-buffer-alist
+    '("\\*compilation\\*"
+       (display-buffer-reuse-window display-buffer-at-bottom)
+       (window-height . 10)))
+
+  (with-eval-after-load 'compile
+    (define-key compilation-mode-map (kbd "q") #'kill-buffer-and-window))
+
+  ;; 8. Modeline component
+  (defun my/compile-perf-modeline ()
+    "Modeline indicator for compilation and run duration."
+    (let ((c (gethash "compilation" my/compile-timings))
+           (r (gethash "run" my/compile-timings)))
+      (if (or c r)
+        (format " [🔨 %s 🚀 %s] " (or c "-") (or r "-"))
+        "")))
+
+  ;; 9. Keybinding: SPC r
+  ;; define in general scope for it to work properly
+#+end_src
+
+* General Keybinding
+#+begin_src emacs-lisp
+  (use-package general
+    :after evil-collection
+    :ensure t
+    :config
+    (general-evil-setup)
+    (general-create-definer pLAyME/leader-keys
+      :states '(normal insert visual emacs)
+      :keymaps 'override
+      :prefix "SPC"
+      :global-prefix "M-SPC")
+
+    (pLAyME/leader-keys
+      "b" '(:ignore t :wk "buffer")
+      "bb" '(switch-to-buffer :wk "Switch buffer")
+      "bc" '(clone-indirect-buffer :wk "Create indirect buffer copy in a split")
+      "bC" '(clone-indirect-buffer-other-window :wk "Clone indirect buffer in new window")
+      "bd" '(bookmark-delete :wk "Delete bookmark")
+      "bi" '(ibuffer :wk "Ibuffer")
+      "bk" '(kill-this-buffer :wk "Kill this buffer")
+      "bK" '(kill-some-buffers :wk "Kill multiple buffers")
+      "bl" '(list-bookmarks :wk "List bookmarks")
+      "bm" '(bookmark-set :wk "Set bookmark")
+      "bn" '(next-buffer :wk "Next buffer")
+      "bp" '(previous-buffer :wk "Previous buffer")
+      "br" '(revert-buffer :wk "Reload buffer")
+      "bR" '(rename-buffer :wk "Rename buffer")
+      "bs" '(basic-save-buffer :wk "Save buffer")
+      "bS" '(save-some-buffers :wk "Save multiple buffers")
+      "bw" '(bookmark-save :wk "Save current bookmarks to bookmark file"))
+
+    (pLAyME/leader-keys
+      "d" '(:ignore t :wk "Dired")
+      "ds" '(dired :wk "Open dired")
+      "dj" '(dired-jump :wk "Dired jump to current")
+      ;; "dn" '(neotree-dir :wk "Open directory in neotree")
+      "dp" '(peep-dired :wk "Peep-dired"))
+
+    (pLAyME/leader-keys
+      "e" '(:ignore t :wk "eval")
+      "eb" '(eval-buffer :wk "Evaluate elisp in buffer")
+      "ed" '(eval-defun :wk "Evaluate defun containing or after point")
+      "ee" '(eval-expression :wk "Evaluate an elisp expression")
+      "el" '(eval-last-sexp :wk "Evaluate elisp expression before point")
+      "er" '(eval-region :wk "Evaluate elisp in region"))
+
+    (pLAyME/leader-keys
+      "g" '(:ignore t :wk "Git")    
+      "g/" '(magit-displatch :wk "Magit dispatch")
+      "g." '(magit-file-displatch :wk "Magit file dispatch")
+      "gb" '(magit-branch-checkout :wk "Switch branch")
+      "gc" '(:ignore t :wk "Create") 
+      "gcb" '(magit-branch-and-checkout :wk "Create branch and checkout")
+      "gcc" '(magit-commit-create :wk "Create commit")
+      "gcf" '(magit-commit-fixup :wk "Create fixup commit")
+      "gC" '(magit-clone :wk "Clone repo")
+      "gf" '(:ignore t :wk "Find") 
+      "gsc" '(magit-show-commit :wk "Show commit")
+      "gff" '(magit-find-file :wk "Magit find file")
+      "gfg" '(magit-find-git-config-file :wk "Find gitconfig file")
+      "gF" '(magit-fetch :wk "Git fetch")
+      "gS" '(magit-status :wk "Magit status")
+      "gi" '(magit-init :wk "Initialize git repo")
+      "gl" '(magit-log-buffer-file :wk "Magit buffer log")
+      "gr" '(vc-revert :wk "Git revert file")
+      "gsf" '(magit-stage-file :wk "Git stage file")
+      "gt" '(git-timemachine :wk "Git time machine")
+      "gu" '(magit-stage-file :wk "Git unstage file"))
+
+    (pLAyME/leader-keys
+      "h" '(:ignore t :wk "Help")
+      "hf" '(describe-function :wk "Describe Function")
+      "hv" '(describe-variable :wk "Describe Variable")
+      "hrr" '((lambda () (interactive) (load-file user-init-file)) :wk "Reload config"))
+
+    (pLAyME/leader-keys
+      "t" '(:ignore t :wk "Toggle")
+      "tn" '(display-line-numbers-mode :wk "Toggle Line Number")
+      "tw" '(visual-line-mode :wk "Toggle Wrap Line"))
+
+    (pLAyME/leader-keys
+      "fe" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Edit emacs config")
+      "gcc" '(comment-line :wk "Comment Lines")
+      "ef" '(dired-create-empty-file :wk "Create Empty in dired")
+      "r" '(my/auto-compile :wk "Auto compile and run"))
+    )
+#+end_src
+
+** Tweak User Interface
+#+begin_src emacs-lisp
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+
+  (global-display-line-numbers-mode 1)
+  (global-visual-line-mode t)
+  (global-auto-revert-mode t)  ;; Automatically show changes if the file has changed
+
+  (add-to-list 'custom-theme-load-path "~/.config/emacs/themes/")
+  (load-theme 'clear-as-night t)
+
+  (add-to-list 'default-frame-alist '(alpha-background . 95))
+  ;; Smooth scrolling. Defaults are scroll-step 0 / scroll-conservatively 0,
+  ;; which mean "always RECENTER point when it moves off-screen" -> that's the
+  ;; snap-to-middle jump at top/bottom, and every recenter is a whole-window
+  ;; redraw (a big trigger for ghost-text debris under XWayland on fast key
+  ;; movement). scroll-conservatively > 100 makes redisplay NEVER recenter and
+  ;; instead scroll just enough to bring point into view, even from far away.
+  (setq scroll-step 1)
+  (setq scroll-conservatively 101)
+  (setq scroll-margin 9)
+#+end_src
+
+** Tweak User Experience
+#+begin_src emacs-lisp
+    (use-package tldr :ensure t)
+    (delete-selection-mode 1)    ;; You can select text and delete it by typing.
+    ;; (electric-indent-mode -1)    ;; Turn off the weird indenting that Emacs does by default.
+    (electric-pair-mode 1)       ;; Turns on automatic parens pairing
+    (ido-mode 1)
+    (ido-everywhere 1)
+    (pixel-scroll-precision-mode -1)
+    (global-set-key [escape] 'keyboard-escape-quit)
+    ;; just remove all backup, i personally don't think it helpful
+    (setq backup-directory-alist '((".*" . "/tmp/")))
+    (setq org-edit-src-content-indentation 2) ;; Set src block automatic indent to 0 instead of 2.
+    ;; Use spaces instead of hard tabs by default
+    (setq-default indent-tabs-mode nil)
+    ;; Default fallback visual width of a tab
+    (setq-default tab-width 4)
+    ;; --- C / C++ / Java / C# ---
+    (setq-default c-basic-offset 4)
+    ;; --- JavaScript / TypeScript / JSON ---
+    (setq-default js-indent-level 2)
+    (setq-default typescript-indent-level 2)
+    ;; If using treesitter modes (Emacs 29+):
+    (setq-default js-ts-mode-indent-offset 2)
+    (setq-default typescript-ts-mode-indent-offset 2)
+#+end_src
