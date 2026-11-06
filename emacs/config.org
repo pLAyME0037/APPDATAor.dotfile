@@ -241,6 +241,7 @@ after you type a few letters. Use M-n and M-p to select,
                             "--exclude" ".git"
                             "--exclude" "node_modules"
                             "--exclude" "packages"
+                            "--exclude" "sqlite3"
                             ".")
                    dirs))
             (candidates (apply #'process-lines cmd))
@@ -285,10 +286,10 @@ after you type a few letters. Use M-n and M-p to select,
       (evil-define-key '(normal insert visual motion emacs) minibuffer-local-map (kbd "C-d") #'my/vertico-kill-buffer)))
 
   ;; 4. Marginalia annotations (file size, modes, permissions)
-  (use-package marginalia
-    :ensure t
-    :init
-    (marginalia-mode 1))
+  ;; (use-package marginalia
+  ;;   :ensure t
+  ;;   :init
+  ;;   (marginalia-mode 1))
 
   ;; 5. Fuzzy match
   (use-package orderless
@@ -299,11 +300,6 @@ after you type a few letters. Use M-n and M-p to select,
   ;; 6. Consult search + instant preview in opposite split
   (use-package consult
     :ensure t
-    :bind (("C-c f f" . consult-find)
-            ("C-c b f" . consult-buffer)
-            ("C-c f n" . consult-imenu)
-            ("C-c p s" . consult-ripgrep)
-            ("C-c t h s" . consult-theme))
     :config
     (consult-customize
       consult-find consult-fd consult-ripgrep
@@ -311,8 +307,8 @@ after you type a few letters. Use M-n and M-p to select,
       my/search-home-dirs
       :preview-key 'any))
 
-  (global-set-key (kbd "C-c f d") #'my/search-home-dirs)
-  (global-set-key (kbd "C-c d f") (lambda () (interactive) (my/search-home-dirs t)))
+  (global-set-key (kbd "C-c fd") #'my/search-home-dirs)
+  (global-set-key (kbd "C-c df") (lambda () (interactive) (my/search-home-dirs t)))
 #+end_src
 
 * HIGHLIGHT TODO
@@ -685,9 +681,18 @@ additional modes.
       "tw" '(visual-line-mode :wk "Toggle Wrap Line"))
 
     (pLAyME/leader-keys
+      "f" '(:ignore f :wk "Find")
       "fe" '((lambda () (interactive) (find-file "~/.config/emacs/config.org")) :wk "Edit emacs config")
+      "fn" '(consult-imenu :wk "Function Declare")
+      "ff" '(consult-find :wk "Fuzzy Finding")
+      "fb" '(consult-buffer :wk "Find Buffer")
+      "fd" '(my/search-home-dirs :wk "Finding Project Dir Than List Files"))
+
+    (pLAyME/leader-keys
       "gcc" '(comment-line :wk "Comment Lines")
       "ef" '(dired-create-empty-file :wk "Create Empty in dired")
+      "ths" '(consult-theme :wk "Find Theme")
+      ;; "gp" '(rgrep :wk "Recursive Grep with Define Dir")
       "r" '(my/auto-compile :wk "Auto compile and run"))
     )
 #+end_src
@@ -702,10 +707,15 @@ additional modes.
   (global-visual-line-mode t)
   (global-auto-revert-mode t)  ;; Automatically show changes if the file has changed
 
+  (column-number-mode t)
+  
   (add-to-list 'custom-theme-load-path "~/.config/emacs/themes/")
   (load-theme 'clear-as-night t)
 
   (add-to-list 'default-frame-alist '(alpha-background . 95))
+
+  (global-display-fill-column-indicator-mode 1)
+  (setq-default display-fill-column-indicator-column 80)
   ;; Smooth scrolling. Defaults are scroll-step 0 / scroll-conservatively 0,
   ;; which mean "always RECENTER point when it moves off-screen" -> that's the
   ;; snap-to-middle jump at top/bottom, and every recenter is a whole-window
