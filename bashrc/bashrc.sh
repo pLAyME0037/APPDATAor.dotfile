@@ -1,12 +1,4 @@
-#!/usr/bin/env bash iatest=$(expr index "$-" i)
-
-#######################################################
-# SOURCED ALIAS'S AND SCRIPTS BY zachbrowne.me
-#######################################################
-# Auto-start Hyprland on tty1
-# if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
-#   exec Hyprland
-# fi
+#!/usr/bin/env bash
 
 # start fastfetch on terminal open if uptime > 5 min (300 seconds)
 if [ -f /usr/bin/fastfetch ]; then
@@ -76,7 +68,6 @@ export EDITOR=nvim
 export VISUAL=nvim
 alias spico='sudo pico'
 alias snano='sudo nano'
-alias vim='nvim'
 
 # To have colors for ls and all grep commands such as grep, egrep and zgrep
 export CLICOLOR=1
@@ -247,8 +238,6 @@ alias sha1='openssl sha1'
 
 alias clickpaste='sleep 3; xdotool type "$(xclip -o -selection clipboard)"'
 
-# KITTY - alias to be able to use kitty features when connecting to remote servers(e.g use tmux on remote server)
-
 alias kssh="kitty +kitten ssh"
 
 # alias to cleanup unused docker containers, images, networks, and volumes
@@ -408,58 +397,46 @@ up() {
   cd $d
 }
 
-# Automatically do an ls after each cd, z, or zoxide
-cd ()
-{
-  if [ -n "$1" ]; then
-    builtin cd "$@" && ls
-  else
-    builtin cd ~ && ls
-  fi
-}
-
-# Returns the last 2 fields of the working directory
 pwdtail() {
   pwd | awk -F/ '{nlast = NF -1;print $nlast"/"$NF}'
 }
 
-# Show the current version of the operating system
 ver() {
   local dtype
   dtype=$(distribution)
 
   case $dtype in
-    "redhat")
-      if [ -s /etc/redhat-release ]; then
-        cat /etc/redhat-release
-      else
-        cat /etc/issue
-      fi
-      uname -a
-      ;;
-    "suse")
-      cat /etc/SuSE-release
-      ;;
-    "debian")
-      lsb_release -a
-      ;;
-    "gentoo")
-      cat /etc/gentoo-release
-      ;;
-    "arch")
-      cat /etc/os-release
-      ;;
-    "slackware")
-      cat /etc/slackware-version
-      ;;
-    *)
-      if [ -s /etc/issue ]; then
-        cat /etc/issue
-      else
-        echo "Error: Unknown distribution"
-        exit 1
-      fi
-      ;;
+  "redhat")
+    if [ -s /etc/redhat-release ]; then
+      cat /etc/redhat-release
+    else
+      cat /etc/issue
+    fi
+    uname -a
+    ;;
+  "suse")
+    cat /etc/SuSE-release
+    ;;
+  "debian")
+    lsb_release -a
+    ;;
+  "gentoo")
+    cat /etc/gentoo-release
+    ;;
+  "arch")
+    cat /etc/os-release
+    ;;
+  "slackware")
+    cat /etc/slackware-version
+    ;;
+  *)
+    if [ -s /etc/issue ]; then
+      cat /etc/issue
+    else
+      echo "Error: Unknown distribution"
+      exit 1
+    fi
+    ;;
   esac
 }
 
@@ -550,17 +527,6 @@ trim() {
   var="${var%"${var##*[![:space:]]}"}" # remove trailing whitespace characters
   echo -n "$var"
 }
-# GitHub Titus Additions
-
-gcom() {
-  git add .
-  git commit -m "$1"
-}
-lazyg() {
-  git add .
-  git commit -m "$1"
-  git push
-}
 
 function hb {
   if [ $# -eq 0 ]; then
@@ -615,102 +581,171 @@ fr() {
   [ -n "$dir" ] && cd "$dir"
 }
 
+# Usage:
+#   ytdlv [quality] [dir] <URL_or_yt-dlp_args>
+#
+# Examples:
+#   ytdlv "https://youtu.be/xyz"
+#   ytdlv 720 "https://youtu.be/xyz"
+#   ytdlv 1080 /custom/path "https://youtu.be/xyz"
 ytdlv() {
-  local q="${1:-1080}"
-  shift
+    local q="1080"
+    local dir="/mnt/disk2/img-mp3-mp4/videos/youtube"
 
-  local dir="/mnt/disk2/img-mp3-mp4/videos/youtube"
-  if [[ -n "$1" && "$1" != http* ]]; then
-    dir="$1"
-    shift
-  fi
-
-  yt-dlp \
-    -f "bestvideo[height<=${q}]+bestaudio/best[height<=${q}]" \
-    --cookies-from-browser brave \
-    --extractor-args "youtube:player_client=default,-android_sdkless" \
-    --embed-subs --sub-langs "en.*" \
-    --merge-output-format mp4 \
-    --downloader-args "ffmpeg_i:-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" \
-    -o "${dir}/%(title)s.%(ext)s" \
-    "$@"
-}
-
-ytdlm() {
-    local dir="/mnt/disk2/img-mp3-mp4/musics"
-    local imgcmd="convert"
-
-    if command -v convert >/dev/null 2>&1; then
-      imgcmd="convert"
-    elif command -v magick >/dev/null 2>&1; then
-      imgcmd="magick"
-    else
-      echo "Error: Install ImageMagick" >&2
-      return 1
+    # Parse optional resolution (e.g. 720, 1080, 2160)
+    if [[ "$1" =~ ^[0-9]+$ ]]; then
+        q="$1"
+        shift
     fi
 
-    if [[ -n "$1" && "$1" != http* && "$1" != -* && -d "$1" ]]; then
+    # Parse optional output directory
+    if [[ -n "$1" && "$1" != http* && "$1" != -* ]]; then
         dir="$1"
         shift
     fi
-    mkdir -p -- "$dir"
 
+    mkdir -p -- "$dir" || return 1
+
+    yt-dlp \
+        -f "bestvideo[height<=${q}]+bestaudio/best[height<=${q}]" \
+        --cookies-from-browser brave \
+        --extractor-args "youtube:player_client=default,-android_sdkless" \
+        --embed-subs --sub-langs "en.*" \
+        --merge-output-format mp4 \
+        --downloader-args "ffmpeg_i:-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" \
+        --write-thumbnail --convert-thumbnails jpg \
+        --embed-thumbnail \
+        --embed-metadata \
+        --download-archive "${dir}/archive.txt" \
+        --trim-filenames 150 \
+        -o "${dir}/%(title).150s.%(ext)s" \
+        "$@"
+}
+
+# Usage:
+#   ytdlm [dir] [X:Y:Z] <URL_or_yt-dlp_args>
+#
+# Arguments:
+#   dir   : Optional output directory (default: /mnt/disk2/img-mp3-mp4/musics)
+#   X:Y:Z : Optional crop offset X, offset Y, zoom percent Z (default: 0:0:100)
+#           X = horizontal offset (+right, -left)
+#           Y = vertical offset (+down, -up)
+#           Z = zoom percentage (e.g. 120 = 120% zoom)
+#
+# Examples:
+#   ytdlm "https://youtu.be/xyz"
+#   ytdlm 0:0:120 "https://youtu.be/xyz"
+#   ytdlm +50:-20:100 "https://youtu.be/xyz"
+#   ytdlm /custom/dir +0:+30:115 "https://youtu.be/xyz"
+ytdlm() {
+    local target_dir="/mnt/disk2/img-mp3-mp4/musics"
+    local imgcmd=""
+    local off_x="0"
+    local off_y="0"
+    local zoom="100"
+
+    # Detect ImageMagick
+    if command -v magick >/dev/null 2>&1; then
+        imgcmd="magick"
+    elif command -v convert >/dev/null 2>&1; then
+        imgcmd="convert"
+    else
+        echo "Error: ImageMagick not found." >&2
+        return 1
+    fi
+
+    # Parse target directory argument
+    if [[ -n "$1" && "$1" != http* && "$1" != -* && ! "$1" =~ ^[+-]?[0-9]+:[+-]?[0-9]+:[0-9]+$ && -d "$1" ]]; then
+        target_dir="$1"
+        shift
+    fi
+
+    # Parse X:Y:Z argument
+    if [[ "$1" =~ ^([+-]?[0-9]+):([+-]?[0-9]+):([0-9]+)$ ]]; then
+        off_x="${BASH_REMATCH[1]}"
+        off_y="${BASH_REMATCH[2]}"
+        zoom="${BASH_REMATCH[3]}"
+        shift
+    fi
+
+    mkdir -p -- "$target_dir" || return 1
+
+    # Safety: isolated sandbox prevents touching existing library files
+    local work_dir
+    work_dir=$(mktemp -d) || return 1
+    trap 'rm -rf -- "$work_dir"' EXIT
+
+    # Safety: --trim-filenames 150 prevents ENAMETOOLONG file name error
     yt-dlp \
         -f 'ba[acodec^=mp3]/ba/b' -x --audio-format mp3 \
         --write-thumbnail --convert-thumbnails jpg \
-        -o "${dir}/%(title)s.%(ext)s" "$@"
+        --trim-filenames 150 \
+        -o "${work_dir}/%(title).150s.%(ext)s" "$@" || return 1
 
-    local current_shopt=$(shopt -p nullglob)
+    local current_shopt
+    current_shopt=$(shopt -p nullglob)
     shopt -s nullglob
 
-    local mp3 base jpg webp thumb
-    for mp3 in "$dir"/*.mp3; do
+    local mp3 base jpg webp png thumb tmp_thumb tmp_mp3 out_dest
+    for mp3 in "$work_dir"/*.mp3; do
         base="${mp3%.mp3}"
         jpg="${base}.jpg"
         webp="${base}.webp"
+        png="${base}.png"
         thumb=""
+        tmp_thumb="${base}_cover.jpg"
+        tmp_mp3="${base}_safe_tmp.mp3"
 
         if [[ -f "$jpg" ]]; then
             thumb="$jpg"
         elif [[ -f "$webp" ]]; then
-            thumb="${base}_tmp.jpg"
-            "$imgcmd" "$webp" "$thumb" || continue
-        else
-            continue
+            thumb="$webp"
+        elif [[ -f "$png" ]]; then
+            thumb="$png"
         fi
 
-        "$imgcmd" "$thumb"       \
-          -fuzz 5% -trim +repage \
-          -resize '900x900^'   \
-          -gravity center        \
-          -extent 900x900      \
-          "$thumb" || { echo "Failed to crop $thumb"; continue; }
+        if [[ -n "$thumb" ]]; then
+            # Crop: trim borders, zoom Z percent, apply X/Y offset from center
+            "$imgcmd" "$thumb" \
+                -fuzz 7% -trim +repage \
+                -resize "${zoom}%" \
+                -gravity center \
+                -crop "%[fx:min(w,h)]x%[fx:min(w,h)]${off_x}${off_y}" +repage \
+                -resize 1000x1000 \
+                -quality 95 "$tmp_thumb" 2>/dev/null
 
-        ffmpeg -y -v quiet -i "$mp3" -i "$thumb" -map 0:0 -map 1:0 -c copy \
-            -id3v2_version 3 -metadata:s:v title="Album cover" \
-            -metadata:s:v comment="Cover (front)" \
-            -disposition:v attached_pic "${base}_tmp.mp3"
+            # Embed cover if image valid
+            if [[ -s "$tmp_thumb" ]]; then
+                ffmpeg -y -v error -i "$mp3" -i "$tmp_thumb" \
+                    -map 0:a:0 -map 1:v:0 \
+                    -c copy \
+                    -id3v2_version 3 \
+                    -metadata:s:v title="Album cover" \
+                    -metadata:s:v comment="Cover (front)" \
+                    -disposition:v:0 attached_pic \
+                    "$tmp_mp3"
 
-        if [[ -f "${base}_tmp.mp3" ]]; then
-            mv -f "${base}_tmp.mp3" "$mp3"
-            rm -f "$jpg" "$webp" "${base}_tmp.jpg"
+                # Atomic replace inside sandbox
+                if [[ $? -eq 0 && -s "$tmp_mp3" ]]; then
+                    mv -f "$tmp_mp3" "$mp3"
+                else
+                    rm -f "$tmp_mp3"
+                fi
+            fi
         fi
 
-        if [[ -f "${base}_tmp.mp3" ]]; then
-          mv -f "${base}_tmp.mp3" "$mp3"
-        fi
-
-        \rm -f "$jpg" "$webp" "${base}_orig.jpg" "${base}_trimmed.jpg" "${base}_bg.jpg" "${base}_fg.jpg" "$out_img"
+        # Move only processed files from sandbox to target
+        out_dest="${target_dir}/$(basename "$mp3")"
+        mv -f "$mp3" "$out_dest"
     done
 
-
-    if [[ -d "$HOME/.cache/thumbnails" ]]; then
-        \rm -rf "$HOME/.cache/thumbnails"/*
-        echo "System thumbnails cache cleared."
-    fi
+    # Cleanup sandbox and thumbnails cache
+    rm -rf -- "$work_dir"
+    trap - EXIT
+    [[ -d "$HOME/.cache/thumbnails" ]] && rm -rf "$HOME/.cache/thumbnails"/*
 
     eval "$current_shopt"
-    echo "Done!"
+    echo "Done."
 }
 
 runPlaylist() {
@@ -751,6 +786,70 @@ trunclog() {
     done
 }
 
+# Usage:
+#   catdirtree -i <dirs_or_files...> [-x <dirs_or_files...>]
+#
+# Examples:
+#   catdirtree -i src/ test/ migration/ -x migration/seed/ build/
+#   catdirtree -i main.go -x build/
+#   catdirtree -x .git/ node_modules/
+catdirtree() {
+    local mode=""
+    local includes=()
+    local excludes=()
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+        -i) mode="inc"; shift ;;
+        -x) mode="exc"; shift ;;
+        *)
+            if [[ "$mode" == "exc" ]]; then
+                excludes+=("$1")
+            else
+                includes+=("$1")
+            fi
+            shift
+            ;;
+        esac
+    done
+
+    # Default to current directory if no include given
+    [[ ${#includes[@]} -eq 0 ]] && includes=(".")
+
+    # Build find prune expression for exclusions
+    local prune=()
+    local exc
+    for exc in "${excludes[@]}"; do
+        exc="${exc%/}"
+        [[ ${#prune[@]} -gt 0 ]] && prune+=(-o)
+        prune+=(-path "$exc" -o -path "$exc/*" -o -path "*/$exc" -o -path "*/$exc/*")
+    done
+
+    local find_cmd=()
+    if [[ ${#prune[@]} -gt 0 ]]; then
+        find_cmd=(find "${includes[@]}" \( "${prune[@]}" \) -prune -o -type f -print0)
+    else
+        find_cmd=(find "${includes[@]}" -type f -print0)
+    fi
+
+    local file
+    while IFS= read -r -d '' file; do
+        [[ -r "$file" ]] || continue
+
+        printf "\n%s\n" "====================================================="
+        printf "FILE: %s\n" "$file"
+        printf "%s\n\n" "====================================================="
+
+        # Print text; skip binaries to protect terminal
+        if grep -qI . "$file" 2>/dev/null || [[ ! -s "$file" ]]; then
+            cat "$file"
+            echo ""
+        else
+            printf "[Binary file skipped: %s]\n" "$file"
+        fi
+    done < <("${find_cmd[@]}" 2>/dev/null)
+}
+
 #######################################################
 # Set the ultimate amazing command prompt
 #######################################################
@@ -770,19 +869,12 @@ eval "$(zoxide init bash)"
 #######################################################
 # EXPORTS ENV
 #######################################################
-export ANDROID_SDK_ROOT="$HOME/opt_at_home/Android/Sdk/"
 export ANDROID_AVD_HOME="$HOME/.config/.android/avd"
 export PHP_INI_SCAN_DIR="$HOME/.config/herd-lite/bin:$PHP_INI_SCAN_DIR"
-export JAVA_HOME="$HOME/opt_at_home/jdk-21-0-11/"
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/opt_at_home/SDL3/include:$PATH"
-export PATH="$HOME/opt_at_home/flutter/bin:$PATH"
 export PATH="$HOME/.config/herd-lite/bin:$PATH"
-# export PATH="$HOME/opt_at_home/platform-tools/:$PATH"
-export PATH="$PATH:$ANDROID_SDK_ROOT/platform-tools
-                  :$ANDROID_SDK_ROOT/cmdline-tools/latest/bin
-                  :$ANDROID_SDK_ROOT/emulator"
-export PATH="$JAVA_HOME/bin:$PATH"
 export PATH="$HOME/.pub-cache/bin:$PATH"
 export LIBVIRT_DEFAULT_URI="qemu:///system"
+
+
 
