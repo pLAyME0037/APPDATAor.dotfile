@@ -76,7 +76,7 @@ vim.pack.add({
 -- treesitter:
     {
         src = "https://github.com/nvim-treesitter/nvim-treesitter",
-        version = "main"
+        -- version = "main"
     },
 
 -- oil:

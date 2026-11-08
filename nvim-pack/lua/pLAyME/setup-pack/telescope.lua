@@ -462,7 +462,7 @@ local search_home_dirs = function(is_cd)
     local home = vim.fn.expand("~")
     local dirs = {
         home,
-        home .. "/mythings/study_my_code",
+        home .. "/mythings/studying_code",
         home .. "/Projects/github",
         home .. "/opt_at_home",
     }

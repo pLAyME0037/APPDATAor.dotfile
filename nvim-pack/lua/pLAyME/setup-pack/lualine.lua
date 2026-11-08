@@ -1,4 +1,6 @@
+local has_dotnet, dotnet = pcall(require, "easy-dotnet")
 local lualine = require("lualine")
+
 local colors = {
     color0 = "#092236",
     color1 = "#ff5874",
@@ -63,7 +65,10 @@ lualine.setup({
         section_separators = { left = "|", right = "" },
     },
     sections = {
-        lualine_a = { mode },
+        lualine_a = {
+            mode,
+            has_dotnet and dotnet.lualine.jobs or nil,
+        },
         lualine_b = { branch },
         lualine_c = { diff, filename },
         lualine_x = {
@@ -76,6 +81,14 @@ lualine.setup({
                 end,
                 color = { fg = "#cba6f7" }
             },
+            {
+                has_dotnet and dotnet.lualine.active_project or nil,
+                {
+                    dotnet.lualine.run_status,
+                    color = dotnet.lualine.run_status_color,
+                    on_click = dotnet.lualine.run_status_click,
+                },
+            }
         }
     }
 })

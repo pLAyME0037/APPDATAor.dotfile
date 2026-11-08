@@ -1,12 +1,13 @@
-local onts = { noremap = true, silent = true }
+local opts = { noremap = true, silent = true }
 
 vim.g.mapleader = " "
--- vim.g.maplocalleader = " "
+vim.g.maplocalleader = " "
 
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 
-vim.api.nvim_set_keymap("n", "<leader>tf", "<Plug>PlenaryTestFile", { noremap = false, silent = false })
+vim.api.nvim_set_keymap("n", "<leader>tf", "<Plug>PlenaryTestFile",
+                        { noremap = false, silent = false })
 
 vim.keymap.set("i", "jk", "<Esc>")
 vim.keymap.set("n", "J", "mzJ`z")
@@ -47,6 +48,10 @@ vim.keymap.set("v", "<", "<gv", opts)
 vim.keymap.set("v", ">", ">gv", opts)
 
 vim.keymap.set("n", "=ap", "ma=ap'a")
+
+vim.keymap.set("n", "gd", "<C-]>", { desc = "Tags: Jump to Definition" })
+vim.keymap.set("n", "gD", "g<C-]>", { desc = "Tags: Select Definition" })
+vim.keymap.set("n", "<leader>b", "<C-t>", { desc = "Tags: Jump Back" })
 
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 vim.keymap.set("n", "<leader>lt", function()

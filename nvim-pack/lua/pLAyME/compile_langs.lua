@@ -95,7 +95,7 @@ local function compile()
         elseif marker == "*.csproj" then
             cmd = "dotnet run"
         end
-    elseif ft == "cs" then   elseif ft == "cs" then    elseif ft == "cs" then    elseif ft == "cs" then
+    elseif ft == "cs" then
         cmd = perf_fn .. string.format("_perf 'compilation' && dotnet run --project %s || (csc %s && _perf 'run' && mono %s.exe)",
         s_dir, s_file, s_target)
     elseif ft == "python" then

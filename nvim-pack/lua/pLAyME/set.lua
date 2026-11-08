@@ -5,6 +5,8 @@ vim.g.netrw_banner = 0
 -- vim.g.netrw_liststyle = 1
 vim.opt.guicursor = "n-v-c:block,i-ci:ver25"
 
+vim.opt.tags = "./tags;,tags;"
+
 vim.opt.nu = true
 vim.opt.relativenumber = false
 
