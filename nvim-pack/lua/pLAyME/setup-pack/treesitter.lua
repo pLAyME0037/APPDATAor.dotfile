@@ -1,16 +1,15 @@
-local ok, ts = pcall(require, "nvim-treesitter.configs")
-if not ok then return end
-ts.setup({
-    ensure_installed = {
-        "c", "java", "rust", "ron", "svelte",
-        "python", "prisma", "go",
-        "query", "yaml", "json",
-        "php", "php_only", "php_doc", "blade",
-        "javascript", "typescript", "tsx", "html", "css", "http",
-        "graphql", "bash", "lua", "vim", "vimdoc",
-        "markdown", "markdown_inline", "latex",
-    },
-    auto_install = true,
-    highlight = { enable = true },
-    indent = { enable = true },
+local ts_group = vim.api.nvim_create_augroup("TreesitterAutoStart", { clear = true })
+vim.api.nvim_create_autocmd("FileType", {
+    group = ts_group,
+    desc = "Start Treesitter highlighting",
+    callback = function(args)
+        pcall(vim.treesitter.start, args.buf)
+    end,
 })
+
+local ok, ts = pcall(require, "nvim-treesitter")
+if ok and ts.setup then
+    ts.setup({
+        install_dir = vim.fn.stdpath("data") .. "/site",
+    })
+end

@@ -22,20 +22,7 @@ require("oil").setup({
     watch_for_changes = false,
     keymaps = {
         ["g?"] = { "actions.show_help", mode = "n" },
-        ["<CR>"] = function()
-            local oil = require("oil")
-            if oil.get_cursor_entry then
-                local entry = oil.get_cursor_entry()
-                if entry and entry.type ~= "directory" then
-                    local dir = oil.get_current_dir()
-                    if dir then
-                        vim.cmd("wincmd l | edit " .. vim.fn.fnameescape(dir .. entry.name) .. " | wincmd h")
-                        return
-                    end
-                end
-            end
-            require("oil.actions").select.callback()
-        end,
+        ["<CR>"] = "actions.select",
         ["<C-s>"] = { "actions.select", opts = { vertical = true }, desc = "Open in vertical split" },
         ["<C-h>"] = { "actions.select", opts = { horizontal = true }, desc = "Open in horizontal split" },
         ["<C-t>"] = { "actions.select", opts = { tab = true }, desc = "Open in new tab" },

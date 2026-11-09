@@ -18,19 +18,74 @@ local yank_group = augroup('HighlightYank', {})
 -- vim.lsp.enable("clangd")
 
 -- ==========================================================
--- Auto-update tags on save: lua/pLAyME/init.lua
+-- Auto-update tags safely on save (with HOME safety guards)
 -- ==========================================================
+local ctags_job = nil
+local ctags_timer = nil
+local home_dir = vim.fs.normalize(vim.fn.expand("~"))
+
+local function run_ctags()
+    if ctags_job then
+        vim.fn.jobstop(ctags_job)
+        ctags_job = nil
+    end
+
+    -- 1. ONLY look for .git (NEVER search for "tags", otherwise ~/tags traps $HOME forever)
+    local root = vim.fs.root(0, { ".git" })
+
+    -- 2. SAFETY GUARD: If not in a git repo, DO NOT run ctags automatically
+    if not root or root == "" then
+        return
+    end
+
+    root = vim.fs.normalize(root)
+
+    -- 3. SAFETY GUARD: NEVER run ctags on $HOME or the filesystem root /
+    if root == home_dir or root == "/" then
+        return
+    end
+
+    ctags_job = vim.fn.jobstart({
+        "ctags", "-R",
+        "--exclude=.*",            -- Skip ALL hidden dirs (.git, .cache, .cargo, .local, etc.)
+        "--exclude=node_modules",
+        "--exclude=build",
+        "--exclude=bin",
+        "--exclude=obj",
+        "--exclude=dist",
+        "--exclude=vendor",
+        "--exclude=compile_commands.json",
+        "-f", "tags", "."
+    }, {
+        cwd = root,
+        on_exit = function()
+            ctags_job = nil
+        end,
+    })
+end
+
 vim.api.nvim_create_user_command("TagsGenerate", function()
-    local root = vim.fs.root(0, { ".git", "tags" }) or vim.fn.getcwd()
+    local root = vim.fs.root(0, { ".git" })
+    if not root or root == "" then
+        root = vim.fs.normalize(vim.fn.getcwd())
+    else
+        root = vim.fs.normalize(root)
+    end
+
+    if root == home_dir or root == "/" then
+        vim.notify("Refusing to run ctags in $HOME or /", vim.log.levels.WARN)
+        return
+    end
+
     vim.fn.jobstart({
         "ctags", "-R",
-        "--exclude=.git",
-        "--exclude=.gitignore",
-        "--exclude=compile_commands.json",
-        "--exclude=resource/*",
-        "--exclude=resources/*",
-        "--exclude=wiki/*",
-        "--exclude=docs/*",
+        "--exclude=.*",
+        "--exclude=node_modules",
+        "--exclude=build",
+        "--exclude=bin",
+        "--exclude=obj",
+        "--exclude=dist",
+        "--exclude=vendor",
         "-f", "tags", "."
     }, {
         cwd = root,
@@ -42,33 +97,25 @@ vim.api.nvim_create_user_command("TagsGenerate", function()
             end
         end,
     })
-end, { desc = "Generate ctags file" })
+end, { desc = "Generate ctags file safely" })
 
 vim.api.nvim_create_autocmd("BufWritePost", {
     group = vim.api.nvim_create_augroup("AutoCtags", { clear = true }),
     pattern = "*",
     callback = function()
-        -- Skip git or temporary files
-        if vim.bo.buftype ~= "" or vim.fn.expand("%"):match("^.git") then
+        -- Skip special buffers or git commit buffers
+        if vim.bo.buftype ~= "" or vim.fn.expand("%"):match("^%.git") then
             return
         end
 
-        local root = vim.fs.root(0, { ".git", "tags" }) or vim.fn.getcwd()
-        vim.fn.jobstart({
-            "ctags", "-R",
-            "--exclude=.git",
-            "--exclude=.gitignore",
-            "--exclude=compile_commands.json",
-            "--exclude=resource/*",
-            "--exclude=resources/*",
-            "--exclude=wiki/*",
-            "--exclude=docs/*",
-            "-f", "tags", "."
-        }, {
-            cwd = root,
-        })
+        -- Debounce: wait 1.5s after editing stops before triggering
+        if ctags_timer then
+            ctags_timer:stop()
+        end
+        ctags_timer = vim.defer_fn(run_ctags, 1500)
     end,
 })
+
 -- ==========================================================
 --  1. CONFIGURATION FOR FILE TYPE
 -- ==========================================================
