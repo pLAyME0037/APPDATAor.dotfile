@@ -228,21 +228,43 @@ local function goto_error_line()
         file, err_line = err:match("^%s*([^:]+): line (%d+):")
     end
 
-    if not file then
+    if not file or not err_line then
         return
     end
 
-    local stat = (vim.uv or vim.loop).fs_stat
+    file = vim.trim(file)
+    local line_num = tonumber(err_line)
+    if not line_num then
+        return
+    end
+
+    local uv = vim.uv
+    if not uv then
+        uv = vim.loop
+    end
+
     local buf = vim.api.nvim_get_current_buf()
     local dir = vim.b[buf].compile_dir
 
-    if dir and file:sub(1, 1) ~= "/" and not stat(file) then
-        file = dir .. "/" .. file
+    if file:sub(1, 1) ~= "/" then
+        if dir and dir ~= "" then
+            local rel_candidate = vim.fs.normalize(dir .. "/" .. file)
+            local stat = uv.fs_stat(rel_candidate)
+            if stat then
+                file = rel_candidate
+            else
+                file = vim.fs.normalize(file)
+            end
+        else
+            file = vim.fs.normalize(file)
+        end
+    else
+        file = vim.fs.normalize(file)
     end
 
     vim.cmd("wincmd p")
-    vim.cmd("e " .. vim.fn.fnameescape(file))
-    pcall(vim.api.nvim_win_set_cursor, 0, { tonumber(err_line), 0 })
+    vim.cmd("edit " .. vim.fn.fnameescape(file))
+    pcall(vim.api.nvim_win_set_cursor, 0, { line_num, 0 })
 end
 
 vim.keymap.set("n", "<leader>er", goto_error_line, { desc = "goto [ER]ror line" })

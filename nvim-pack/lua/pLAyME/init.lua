@@ -1,5 +1,5 @@
 -- nvim\lua\pLAyME\init.lua
-require("vim._core.ui2").enable({})
+-- require("vim._core.ui2").enable({})
 require("pLAyME.remap")
 require("pLAyME.set")
 require("pLAyME.pack")
@@ -24,6 +24,20 @@ local ctags_job = nil
 local ctags_timer = nil
 local home_dir = vim.fs.normalize(vim.fn.expand("~"))
 
+local ctags_excludes = {
+    "--exclude=.git",
+    "--exclude=.cache",
+    "--exclude=.cargo",
+    "--exclude=.local",
+    "--exclude=node_modules",
+    "--exclude=build",
+    "--exclude=bin",
+    "--exclude=obj",
+    "--exclude=dist",
+    "--exclude=vendor",
+    "--exclude=compile_commands.json",
+}
+
 local function run_ctags()
     if ctags_job then
         vim.fn.jobstop(ctags_job)
@@ -45,18 +59,11 @@ local function run_ctags()
         return
     end
 
-    ctags_job = vim.fn.jobstart({
-        "ctags", "-R",
-        "--exclude=.*",            -- Skip ALL hidden dirs (.git, .cache, .cargo, .local, etc.)
-        "--exclude=node_modules",
-        "--exclude=build",
-        "--exclude=bin",
-        "--exclude=obj",
-        "--exclude=dist",
-        "--exclude=vendor",
-        "--exclude=compile_commands.json",
-        "-f", "tags", "."
-    }, {
+    local cmd = { "ctags", "-R" }
+    vim.list_extend(cmd, ctags_excludes)
+    vim.list_extend(cmd, { "-f", "tags", "." })
+
+    ctags_job = vim.fn.jobstart(cmd, {
         cwd = root,
         on_exit = function()
             ctags_job = nil
@@ -77,17 +84,11 @@ vim.api.nvim_create_user_command("TagsGenerate", function()
         return
     end
 
-    vim.fn.jobstart({
-        "ctags", "-R",
-        "--exclude=.*",
-        "--exclude=node_modules",
-        "--exclude=build",
-        "--exclude=bin",
-        "--exclude=obj",
-        "--exclude=dist",
-        "--exclude=vendor",
-        "-f", "tags", "."
-    }, {
+    local cmd = { "ctags", "-R" }
+    vim.list_extend(cmd, ctags_excludes)
+    vim.list_extend(cmd, { "-f", "tags", "." })
+
+    vim.fn.jobstart(cmd, {
         cwd = root,
         on_exit = function(_, code)
             if code == 0 then

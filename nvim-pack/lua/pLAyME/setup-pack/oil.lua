@@ -22,7 +22,7 @@ require("oil").setup({
     watch_for_changes = false,
     keymaps = {
         ["g?"] = { "actions.show_help", mode = "n" },
-        ["<CR>"] = "actions.select",
+        -- ["<CR>"] = "actions.select",
         ["<C-s>"] = { "actions.select", opts = { vertical = true }, desc = "Open in vertical split" },
         ["<C-h>"] = { "actions.select", opts = { horizontal = true }, desc = "Open in horizontal split" },
         ["<C-t>"] = { "actions.select", opts = { tab = true }, desc = "Open in new tab" },

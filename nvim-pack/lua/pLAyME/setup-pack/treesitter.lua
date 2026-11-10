@@ -1,15 +1,13 @@
-local ts_group = vim.api.nvim_create_augroup("TreesitterAutoStart", { clear = true })
-vim.api.nvim_create_autocmd("FileType", {
-    group = ts_group,
-    desc = "Start Treesitter highlighting",
-    callback = function(args)
-        pcall(vim.treesitter.start, args.buf)
-    end,
-})
+local parser_dir = vim.fs.joinpath(vim.fn.stdpath("data"), "site")
+vim.opt.runtimepath:append(parser_dir)
 
-local ok, ts = pcall(require, "nvim-treesitter")
-if ok and ts.setup then
-    ts.setup({
-        install_dir = vim.fn.stdpath("data") .. "/site",
+local ok, configs = pcall(require, "nvim-treesitter.configs")
+if ok then
+    configs.setup({
+        parser_install_dir = parser_dir,
+        highlight = {
+            enable = true,
+            additional_vim_regex_highlighting = false
+        }
     })
 end

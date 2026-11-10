@@ -82,6 +82,16 @@ local groups = {
     GitSignsAdd               = { fg = colors.git_added },
     GitSignsChange            = { fg = colors.git_modified },
     GitSignsDelete            = { fg = colors.git_deleted },
+    htmlTag                   = { fg = colors.operator },
+    htmlEndTag                = { fg = colors.operator },
+    htmlTagName               = { fg = colors.keyword, bold = true },
+    htmlTagN                  = { fg = colors.keyword, bold = true },
+    htmlSpecialTagName        = { fg = colors.keyword, bold = true },
+    htmlArg                   = { fg = colors.type },
+    htmlString                = { fg = colors.string },
+    htmlValue                 = { fg = colors.string },
+    htmlLink                  = { fg = colors.info, underline = true },
+    htmlSpecialChar           = { fg = colors.constant },
 
     -- Tree-sitter: Variables & Members
     ["@variable"]             = { fg = colors.variable },
@@ -139,6 +149,19 @@ local groups = {
     ["@lsp.type.parameter"]   = { link = "@variable.parameter" },
     ["@lsp.type.property"]    = { link = "@property" },
     ["@lsp.type.variable"]    = { link = "@variable" },
+
+    -- Tree-sitter: HTML, XML, JSX Tags & Attributes
+    ["@tag"]                  = { fg = colors.keyword, bold = true },
+    ["@tag.builtin"]          = { fg = colors.keyword, bold = true },
+    ["@tag.attribute"]        = { fg = colors.type },
+    ["@tag.delimiter"]        = { fg = colors.operator },
+    ["@attribute"]            = { fg = colors.type },
+    ["@attribute.builtin"]    = { fg = colors.type },
+
+    -- Tree-sitter: OOP & Modules (Python, Go, JS, TS)
+    ["@module"]               = { fg = colors.type },
+    ["@module.builtin"]       = { fg = colors.type },
+    ["@constructor"]          = { fg = colors.func },
 }
 
 function M.setup()

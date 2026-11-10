@@ -21,20 +21,29 @@ local function try_tmux(dir)
 end
 
 local function try_quickfix_or_tmux(dir)
-    local qflist = vim.fn.getqflist({ size = 0 })
-    if qflist.size and qflist.size > 0 then
+    local qf = vim.fn.getqflist({ size = 0 })
+    local qfsize = 0
+    if type(qf) == "table" and type(qf.size) == "number" then
+        qfsize = qf.size
+    end
+    if qfsize > 0 then
+        local cmd = "cnext"
         if dir == "j" then
-            vim.cmd("cprev | zz")
-        else
-            vim.cmd("cnext | zz")
+            cmd("cprev")
+        end
+        local ok = pcall(vim.cmd, cmd .. " | zz")
+        if not ok then
+            try_tmux(dir)
         end
     else
         try_tmux(dir)
     end
 end
 
-vim.keymap.set("n", "<C-h>", function() try_tmux("h") end, { desc = "Window left / Tmux left" })
-vim.keymap.set("n", "<C-l>", function() try_tmux("l") end, { desc = "Window right / Tmux right" })
+vim.keymap.set("n", "<C-h>", function() try_tmux("h") end, { desc = "Window left /Tmux left" })
+vim.keymap.set("n", "<C-l>", function() try_tmux("l") end, { desc = "Window right/Tmux right" })
+vim.keymap.set("n", "<C-j>", function() try_tmux("j") end, { desc = "Window down /Tmux above" })
+vim.keymap.set("n", "<C-k>", function() try_tmux("k") end, { desc = "Window above/Tmux down" })
 
 vim.keymap.set("n", "<C-d>", "<C-d>zz")
 vim.keymap.set("n", "<C-u>", "<C-u>zz")
