@@ -63,6 +63,7 @@ lualine.setup({
         theme = my_lualine_theme,
         component_separators = { left = "|", right = "|" },
         section_separators = { left = "|", right = "" },
+        globalstatus = true, -- Single statusline for the entire Neovim window
     },
     sections = {
         lualine_a = {

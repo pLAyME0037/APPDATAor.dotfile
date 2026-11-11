@@ -175,12 +175,6 @@ vim.schedule(function()
         },
     })
 
-    require('lualine').setup({
-        options = {
-            globalstatus = true, -- Single statusline for the entire Neovim window
-        }
-    })
-
     local neotest = require("neotest")
     neotest.setup({
         adapters = {

@@ -1,4 +1,4 @@
-local M                       = {}
+local M = {}
 
 local colors = {
     background                = "#181825",
@@ -27,18 +27,40 @@ local colors = {
 }
 
 local groups = {
+    -- Editor UI
     Normal                    = { fg = colors.foreground, bg = colors.background },
     NormalFloat               = { fg = colors.foreground, bg = colors.background_darker },
+    FloatBorder               = { fg = colors.foreground_subtle, bg = colors.background_darker },
     Cursor                    = { fg = colors.background, bg = colors.foreground },
     CursorLine                = { bg = colors.background_highlight },
     CursorColumn              = { bg = colors.background_highlight },
-    LineNr                    = { fg = colors.foreground_subtle },
-    CursorLineNr              = { fg = colors.foreground_muted },
-    SignColumn                = { bg = colors.background },
     ColorColumn               = { bg = colors.background_highlight },
-    Folded                    = { fg = colors.func, bg = colors.foreground_subtle },
+    LineNr                    = { fg = colors.foreground_subtle },
+    CursorLineNr              = { fg = colors.foreground_muted, bold = true },
+    SignColumn                = { bg = colors.background },
+    VertSplit                 = { fg = colors.background_highlight },
+    WinSeparator              = { fg = colors.background_highlight },
+    Folded                    = { fg = colors.foreground_muted, bg = colors.background_highlight },
     FoldColumn                = { fg = colors.foreground_subtle },
-    VertSplit                 = { fg = colors.foreground_subtle },
+    Visual                    = { bg = colors.selection_bg },
+    VisualNOS                 = { bg = colors.selection_bg },
+    Search                    = { fg = colors.background, bg = colors.type },
+    IncSearch                 = { fg = colors.background, bg = colors.warning },
+    CurSearch                 = { fg = colors.background, bg = colors.warning },
+    MatchParen                = { fg = colors.warning, bold = true, underline = true },
+    Pmenu                     = { fg = colors.foreground, bg = colors.background_darker },
+    PmenuSel                  = { fg = colors.background_darker, bg = colors.func, bold = true },
+    PmenuSbar                 = { bg = colors.background_highlight },
+    PmenuThumb                = { bg = colors.foreground_subtle },
+    StatusLine                = { fg = colors.foreground, bg = colors.background_highlight },
+    StatusLineNC              = { fg = colors.foreground_subtle, bg = colors.background_darker },
+    WildMenu                  = { fg = colors.background, bg = colors.func },
+    Directory                 = { fg = colors.func },
+    Title                     = { fg = colors.func, bold = true },
+    ErrorMsg                  = { fg = colors.error, bold = true },
+    WarningMsg                = { fg = colors.warning, bold = true },
+
+    -- Standard Vim Syntax
     Comment                   = { fg = colors.comment, italic = true },
     Constant                  = { fg = colors.constant },
     String                    = { fg = colors.string },
@@ -46,31 +68,36 @@ local groups = {
     Number                    = { fg = colors.constant },
     Boolean                   = { fg = colors.constant },
     Float                     = { fg = colors.constant },
+    Identifier                = { fg = colors.variable },
     Function                  = { fg = colors.func },
     Statement                 = { fg = colors.keyword },
-    Keyword                   = { fg = colors.keyword },
-    Special                   = { fg = colors.keyword },
-    Type                      = { fg = colors.type },
-    TemplateStringPlaceholder = { fg = colors.template },
-    Exception                 = { fg = colors.template },
-    Typedef                   = { fg = colors.template },
-    Operator                  = { fg = colors.operator },
-    Identifier                = { fg = colors.variable },
     Conditional               = { fg = colors.keyword },
     Repeat                    = { fg = colors.keyword },
     Label                     = { fg = colors.keyword },
+    Operator                  = { fg = colors.operator },
+    Keyword                   = { fg = colors.keyword },
+    Exception                 = { fg = colors.error },
+    PreProc                   = { fg = colors.keyword },
     Include                   = { fg = colors.keyword },
     Define                    = { fg = colors.keyword },
     Macro                     = { fg = colors.keyword },
     PreCondit                 = { fg = colors.keyword },
+    Type                      = { fg = colors.type },
     StorageClass              = { fg = colors.type },
     Structure                 = { fg = colors.type },
-    SpecialChar               = { fg = colors.string },
+    Typedef                   = { fg = colors.type },
+    Special                   = { fg = colors.template },
+    SpecialChar               = { fg = colors.template },
     Tag                       = { fg = colors.type },
-    Delimiter                 = { fg = colors.foreground },
+    Delimiter                 = { fg = colors.foreground_muted },
     SpecialComment            = { fg = colors.comment, italic = true },
     Debug                     = { fg = colors.warning },
-    PreProc                   = { fg = colors.keyword },
+    Underlined                = { underline = true },
+    Ignore                    = { fg = colors.foreground_subtle },
+    Error                     = { fg = colors.error },
+    Todo                      = { fg = colors.background, bg = colors.info, bold = true },
+
+    -- Diagnostics
     DiagnosticError           = { fg = colors.error },
     DiagnosticWarn            = { fg = colors.warning },
     DiagnosticInfo            = { fg = colors.info },
@@ -79,111 +106,147 @@ local groups = {
     DiagnosticUnderlineWarn   = { sp = colors.warning, undercurl = true },
     DiagnosticUnderlineInfo   = { sp = colors.info, undercurl = true },
     DiagnosticUnderlineHint   = { sp = colors.success, undercurl = true },
+
+    -- Git
     GitSignsAdd               = { fg = colors.git_added },
     GitSignsChange            = { fg = colors.git_modified },
     GitSignsDelete            = { fg = colors.git_deleted },
-    htmlTag                   = { fg = colors.operator },
-    htmlEndTag                = { fg = colors.operator },
-    htmlTagName               = { fg = colors.keyword, bold = true },
-    htmlTagN                  = { fg = colors.keyword, bold = true },
-    htmlSpecialTagName        = { fg = colors.keyword, bold = true },
-    htmlArg                   = { fg = colors.type },
-    htmlString                = { fg = colors.string },
-    htmlValue                 = { fg = colors.string },
-    htmlLink                  = { fg = colors.info, underline = true },
-    htmlSpecialChar           = { fg = colors.constant },
+    DiffAdd                   = { fg = colors.git_added, bg = colors.background_highlight },
+    DiffChange                = { fg = colors.git_modified, bg = colors.background_highlight },
+    DiffDelete                = { fg = colors.git_deleted, bg = colors.background_highlight },
+    DiffText                  = { fg = colors.background, bg = colors.git_modified, bold = true },
 
-    -- Tree-sitter: Variables & Members
+    -- Tree-sitter: Identifiers & Variables
     ["@variable"]             = { fg = colors.variable },
-    ["@variable.builtin"]     = { link = "Special" },
-    ["@variable.parameter"]   = { fg = colors.template },
-    ["@parameter"]            = { link = "@variable.parameter" },
-    ["@variable.member"]      = { fg = colors.operator },       -- struct fields: point.x, ptr->y
-    ["@property"]             = { link = "@variable.member" },
+    ["@variable.builtin"]     = { fg = colors.red, italic = true },
+    ["@variable.parameter"]   = { fg = colors.peach },
+    ["@variable.parameter.builtin"] = { fg = colors.peach, italic = true },
+    ["@variable.member"]      = { fg = colors.teal },
+    ["@property"]             = { fg = colors.teal },
+    ["@field"]                = { fg = colors.teal },
 
-    -- Tree-sitter: Functions
+    -- Tree-sitter: Functions & Methods
     ["@function"]             = { fg = colors.func },
-    ["@function.call"]        = { fg = colors.func },
     ["@function.builtin"]     = { fg = colors.func, italic = true },
+    ["@function.call"]        = { fg = colors.func },
     ["@function.macro"]       = { fg = colors.func },
+    ["@function.method"]      = { fg = colors.func },
+    ["@function.method.call"] = { fg = colors.func },
+    ["@constructor"]          = { fg = colors.type },
 
-    -- Tree-sitter: Types (C typedefs, primitives, qualifiers)
-    ["@type"]                 = { fg = colors.type },
-    ["@type.builtin"]         = { fg = colors.type },           -- int, char, void, size_t
-    ["@type.definition"]      = { fg = colors.type },
-    ["@type.qualifier"]       = { fg = colors.keyword },        -- const, static, volatile
-
-    -- Tree-sitter: Keywords & Directives (C Preprocessor)
+    -- Tree-sitter: Keywords
     ["@keyword"]              = { fg = colors.keyword },
-    ["@keyword.directive"]    = { fg = colors.keyword },        -- #include, #ifdef, #endif
-    ["@keyword.directive.define"] = { fg = colors.keyword },    -- #define
-    ["@keyword.conditional"]  = { fg = colors.keyword },
+    ["@keyword.coroutine"]    = { fg = colors.keyword, italic = true },
+    ["@keyword.function"]     = { fg = colors.keyword },
+    ["@keyword.operator"]     = { fg = colors.operator },
+    ["@keyword.import"]       = { fg = colors.keyword },
+    ["@keyword.storage"]      = { fg = colors.type },
+    ["@keyword.type"]         = { fg = colors.type },
+    ["@keyword.modifier"]     = { fg = colors.keyword },
     ["@keyword.repeat"]       = { fg = colors.keyword },
     ["@keyword.return"]       = { fg = colors.keyword, italic = true },
-    ["@keyword.type"]         = { fg = colors.type },
+    ["@keyword.debug"]        = { fg = colors.warning },
+    ["@keyword.exception"]    = { fg = colors.error },
+    ["@keyword.conditional"]  = { fg = colors.keyword },
+    ["@keyword.directive"]    = { fg = colors.keyword },
+    ["@keyword.directive.define"] = { fg = colors.keyword },
 
-    -- Tree-sitter: Constants & Literals
-    ["@constant"]             = { fg = colors.constant },
-    ["@constant.builtin"]     = { fg = colors.constant },       -- NULL, true, false
-    ["@constant.macro"]       = { fg = colors.constant },       -- UPPER_CASE macros
+    -- Tree-sitter: Types & Modules
+    ["@type"]                 = { fg = colors.type },
+    ["@type.builtin"]         = { fg = colors.type, italic = true },
+    ["@type.definition"]      = { fg = colors.type },
+    ["@type.qualifier"]       = { fg = colors.keyword },
+    ["@module"]               = { fg = colors.type },
+    ["@module.builtin"]       = { fg = colors.type, bold = true },
+    ["@namespace"]            = { fg = colors.type },
+
+    -- Tree-sitter: Literals
     ["@string"]               = { fg = colors.string },
-    ["@string.escape"]        = { fg = colors.template },       -- \n, \t
+    ["@string.documentation"] = { fg = colors.string, italic = true },
+    ["@string.regex"]         = { fg = colors.template },
+    ["@string.escape"]        = { fg = colors.peach },
+    ["@string.special"]       = { fg = colors.template },
+    ["@string.special.symbol"]= { fg = colors.constant },
+    ["@string.special.path"]  = { fg = colors.string },
+    ["@string.special.url"]   = { fg = colors.info, underline = true },
+    ["@character"]            = { fg = colors.string },
+    ["@character.special"]    = { fg = colors.template },
     ["@number"]               = { fg = colors.constant },
-    ["@boolean"]              = { fg = colors.variable },
+    ["@number.float"]         = { fg = colors.constant },
+    ["@boolean"]              = { fg = colors.constant },
+    ["@constant"]             = { fg = colors.constant },
+    ["@constant.builtin"]     = { fg = colors.constant, bold = true },
+    ["@constant.macro"]       = { fg = colors.constant },
 
-    -- Tree-sitter: Operators & Delimiters
+    -- Tree-sitter: Delimiters & Operators
     ["@operator"]             = { fg = colors.operator },
     ["@punctuation.delimiter"]= { fg = colors.foreground_muted },
     ["@punctuation.bracket"]  = { fg = colors.foreground_muted },
-    ["@punctuation.special"]  = { fg = colors.operator },
+    ["@punctuation.special"]  = { fg = colors.peach },
 
-    -- Tree-sitter: Comments
+    -- Tree-sitter: Comments & Tags
     ["@comment"]              = { fg = colors.comment, italic = true },
     ["@comment.documentation"]= { fg = colors.comment, italic = true },
-
-    -- LSP Semantic Tokens (Applied when clangd attaches)
-    ["@lsp.type.class"]       = { link = "@type" },
-    ["@lsp.type.type"]        = { link = "@type" },
-    ["@lsp.type.function"]    = { link = "@function" },
-    ["@lsp.type.macro"]       = { link = "@constant.macro" },
-    ["@lsp.type.parameter"]   = { link = "@variable.parameter" },
-    ["@lsp.type.property"]    = { link = "@property" },
-    ["@lsp.type.variable"]    = { link = "@variable" },
-
-    -- Tree-sitter: HTML, XML, JSX Tags & Attributes
+    ["@comment.error"]        = { fg = colors.error },
+    ["@comment.warning"]      = { fg = colors.warning },
+    ["@comment.todo"]         = { fg = colors.background, bg = colors.info, bold = true },
+    ["@comment.note"]         = { fg = colors.info },
     ["@tag"]                  = { fg = colors.keyword, bold = true },
     ["@tag.builtin"]          = { fg = colors.keyword, bold = true },
     ["@tag.attribute"]        = { fg = colors.type },
     ["@tag.delimiter"]        = { fg = colors.operator },
-    ["@attribute"]            = { fg = colors.type },
-    ["@attribute.builtin"]    = { fg = colors.type },
+    ["@attribute"]            = { fg = colors.peach },
+    ["@attribute.builtin"]    = { fg = colors.peach, bold = true },
 
-    -- Tree-sitter: OOP & Modules (Python, Go, JS, TS)
-    ["@module"]               = { fg = colors.type },
-    ["@module.builtin"]       = { fg = colors.type },
-    ["@constructor"]          = { fg = colors.func },
-}
+    -- Tree-sitter: Markup (Markdown / Docs)
+    ["@markup.heading"]       = { fg = colors.func, bold = true },
+    ["@markup.raw"]           = { fg = colors.template },
+    ["@markup.link"]          = { fg = colors.info, underline = true },
+    ["@markup.link.label"]    = { fg = colors.func },
+    ["@markup.link.url"]      = { fg = colors.info, underline = true },
+    ["@markup.list"]          = { fg = colors.operator },
+    ["@markup.list.checked"]  = { fg = colors.success },
+    ["@markup.list.unchecked"]= { fg = colors.foreground_subtle },
+    ["@markup.bold"]          = { bold = true },
+    ["@markup.italic"]        = { italic = true },
+    ["@markup.strikethrough"] = { strikethrough = true },
+    ["@markup.quote"]         = { fg = colors.foreground_muted, italic = true },
+
+    -- Tree-sitter: Diff
+    ["@diff.plus"]            = { fg = colors.git_added },
+    ["@diff.minus"]           = { fg = colors.git_deleted },
+    ["@diff.delta"]           = { fg = colors.git_modified },
+
+    -- LSP Semantic Token Fallbacks
+    ["@lsp.type.class"]         = { link = "@type" },
+    ["@lsp.type.comment"]       = { link = "@comment" },
+    ["@lsp.type.decorator"]     = { link = "@attribute" },
+    ["@lsp.type.enum"]          = { link = "@type" },
+    ["@lsp.type.enumMember"]    = { link = "@constant" },
+    ["@lsp.type.function"]      = { link = "@function" },
+    ["@lsp.type.interface"]     = { link = "@type" },
+    ["@lsp.type.macro"]         = { link = "@constant.macro" },
+    ["@lsp.type.method"]        = { link = "@function.method" },
+    ["@lsp.type.namespace"]     = { link = "@module" },
+    ["@lsp.type.parameter"]     = { link = "@variable.parameter" },
+    ["@lsp.type.property"]      = { link = "@property" },
+    ["@lsp.type.struct"]        = { link = "@type" },
+    ["@lsp.type.type"]          = { link = "@type" },
+    ["@lsp.type.typeParameter"] = { link = "@type.definition" },
+    ["@lsp.type.variable"]      = { link = "@variable" },
+} 
 
 function M.setup()
     vim.cmd("highlight clear")
-    if vim.fn.exists("syntax_on") == 1 then
-        vim.cmd("syntax reset")
-    end
-
+    vim.o.termguicolors = true
     vim.g.colors_name = "clear-as-night"
 
     for group, settings in pairs(groups) do
         vim.api.nvim_set_hl(0, group, settings)
     end
-
-    vim.defer_fn(function()
-        for group, settings in pairs(groups) do
-            vim.api.nvim_set_hl(0, group, settings)
-        end
-    end, 100)
 end
 
--- Must call M.setup() directly so :colorscheme runs it on source
 M.setup()
 
 return M
+

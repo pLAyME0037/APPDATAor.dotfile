@@ -12,11 +12,21 @@ vim.api.nvim_set_keymap("n", "<leader>tf", "<Plug>PlenaryTestFile",
 vim.keymap.set("i", "jk", "<Esc>")
 vim.keymap.set("n", "J", "mzJ`z")
 
+local tmux_dirs = {
+    h = "L",
+    j = "D",
+    k = "U",
+    l = "R",
+}
+
 local function try_tmux(dir)
     local orig = vim.fn.winnr()
     vim.cmd("wincmd " .. dir)
     if vim.fn.winnr() == orig then
-        vim.fn.system("tmux select-pane -" .. dir:upper())
+        local tmux_flag = tmux_dirs[dir]
+        if tmux_flag ~= nil then
+            vim.fn.system("tmux select-pane -" .. tmux_flag)
+        end
     end
 end
 
@@ -26,10 +36,11 @@ local function try_quickfix_or_tmux(dir)
     if type(qf) == "table" and type(qf.size) == "number" then
         qfsize = qf.size
     end
+
     if qfsize > 0 then
         local cmd = "cnext"
         if dir == "j" then
-            cmd("cprev")
+            cmd = "cprev"
         end
         local ok = pcall(vim.cmd, cmd .. " | zz")
         if not ok then
@@ -40,10 +51,11 @@ local function try_quickfix_or_tmux(dir)
     end
 end
 
-vim.keymap.set("n", "<C-h>", function() try_tmux("h") end, { desc = "Window left /Tmux left" })
-vim.keymap.set("n", "<C-l>", function() try_tmux("l") end, { desc = "Window right/Tmux right" })
-vim.keymap.set("n", "<C-j>", function() try_tmux("j") end, { desc = "Window down /Tmux above" })
-vim.keymap.set("n", "<C-k>", function() try_tmux("k") end, { desc = "Window above/Tmux down" })
+-- Window navigation & Tmux integration
+vim.keymap.set("n", "<C-h>", function() try_tmux("h") end, { desc = "Window left / Tmux left" })
+vim.keymap.set("n", "<C-l>", function() try_tmux("l") end, { desc = "Window right / Tmux right" })
+vim.keymap.set("n", "<C-j>", function() try_quickfix_or_tmux("j") end, { desc = "QF prev / Window down / Tmux down" })
+vim.keymap.set("n", "<C-k>", function() try_quickfix_or_tmux("k") end, { desc = "QF next / Window up / Tmux up" })
 
 vim.keymap.set("n", "<C-d>", "<C-d>zz")
 vim.keymap.set("n", "<C-u>", "<C-u>zz")
@@ -64,7 +76,7 @@ vim.keymap.set("n", "<leader>b", "<C-t>", { desc = "Tags: Jump Back" })
 
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 vim.keymap.set("n", "<leader>lt", function()
-    vim.cmd [[ PlenaryBustedFile % ]]
+    vim.cmd([[ PlenaryBustedFile % ]])
 end)
 
 vim.keymap.set("n", "<leader>a", "mzggVG")
@@ -72,13 +84,13 @@ vim.keymap.set("n", "<leader>a", "mzggVG")
 vim.keymap.set("x", "<leader>p", [["_dP]])
 vim.keymap.set("v", "p", '"_dP', opts)
 
-vim.keymap.set('n', 'tuc', 'gUw')
-vim.keymap.set('n', 'tlc', 'guw')
+vim.keymap.set("n", "tuc", "gUw")
+vim.keymap.set("n", "tlc", "guw")
 
 vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
 vim.keymap.set("n", "<leader>Y", [["+Y]])
 
-vim.keymap.set({ "n", "v" }, "<leader>d", "\"_d")
+vim.keymap.set({ "n", "v" }, "<leader>d", '"_d')
 
 vim.keymap.set("n", "Q", "<nop>")
 
@@ -90,8 +102,6 @@ vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
 vim.keymap.set("n", "<M-h>", "<cmd>silent !tmux-sessionizer -s 0 --vsplit<CR>")
 vim.keymap.set("n", "<M-H>", "<cmd>silent !tmux neww tmux-sessionizer -s 0<CR>")
 
-vim.keymap.set("n", "<C-j>", function() try_quickfix_or_tmux("j") end, { desc = "Quickfix prev / Window down / Tmux down" })
-vim.keymap.set("n", "<C-k>", function() try_quickfix_or_tmux("k") end, { desc = "Quickfix next / Window up / Tmux up" })
 vim.keymap.set("n", "<leader>k", "<cmd>lNext<CR>zz")
 vim.keymap.set("n", "<leader>j", "<cmd>lprevious<CR>zz")
 
@@ -122,7 +132,10 @@ vim.keymap.set("n", "<leader>sm", function()
 end, { desc = "Toggle split zoom." })
 
 local function resize_split(count, op)
-    local times = count > 0 and count or 5
+    local times = 5
+    if count > 0 then
+        times = count
+    end
     for _ = 1, times do
         if op == "inc_h" then
             vim.cmd("wincmd +")
@@ -146,12 +159,12 @@ vim.keymap.set("n", "<leader>fp", function()
     local filePath = vim.fn.expand("%:~")
     vim.fn.setreg("+", filePath)
     print("File path copied to clipboard: " .. filePath)
-end, { desc = "Copy file path to cilpboard." })
+end, { desc = "Copy file path to clipboard." })
 
 vim.keymap.set("n", "<leader>u", function()
     vim.cmd.packadd("nvim.undotree")
     require("undotree").open()
-end, { desc = "toggle buildin undo tree." })
+end, { desc = "Toggle builtin undo tree." })
 
 local function align_to_char()
     local char = vim.fn.input("Align to character: ")
@@ -171,7 +184,7 @@ local function align_to_char()
     for _, line in ipairs(lines) do
         local pos = line:find(char, 1, true)
         if pos then
-            local before = line:sub(1, pos - 1):gsub("%s+$", "") -- strip trailing spaces
+            local before = line:sub(1, pos - 1):gsub("%s+$", "")
             local after = line:sub(pos)
             local padding = string.rep(" ", max_pos - #before - 1)
             table.insert(new_lines, before .. padding .. after)
@@ -186,10 +199,6 @@ end
 vim.keymap.set("v", "<leader>a=", align_to_char, { desc = "Align selection to char" })
 
 vim.keymap.set("n", "<leader>ee", "oif err != nil {<CR>}<Esc>Oreturn err<Esc>")
-vim.keymap.set("n", "<leader>ea", "oassert.NoError(err, \"\")<Esc>F\";a")
-vim.keymap.set("n", "<leader>ef", "oif err != nil {<CR>}<Esc>Olog.Fatalf(\"error: %s\\n\", err.Error())<Esc>jj")
-vim.keymap.set("n", "<leader>el", "oif err != nil {<CR>}<Esc>O.logger.Error(\"error\", \"error\", err)<Esc>F.;i")
-
--- vim.keymap.set("n", "<leader><leader>", function()
---     require("telescope.builtin").find_files()
--- end)
+vim.keymap.set("n", "<leader>ea", 'oassert.NoError(err, "")<Esc>F";a')
+vim.keymap.set("n", "<leader>ef", 'oif err != nil {<CR>}<Esc>Olog.Fatalf("error: %s\\n", err.Error())<Esc>jj')
+vim.keymap.set("n", "<leader>el", 'oif err != nil {<CR>}<Esc>O.logger.Error("error", "error", err)<Esc>F.;i')
