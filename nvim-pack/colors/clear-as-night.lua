@@ -1,9 +1,9 @@
 local M = {}
 
 local colors = {
-    background                = "#181825",
-    background_darker         = "#11111b",
-    background_highlight      = "#1e1e2e",
+    background                = "#1e1e2e",
+    background_darker         = "#181825",
+    background_highlight      = "#313244",
     foreground                = "#cdd6f4",
     foreground_muted          = "#a6adc8",
     foreground_subtle         = "#6c7086",

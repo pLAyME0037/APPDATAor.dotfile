@@ -61,3 +61,8 @@ vim.opt.shortmess:append("c")
 vim.opt.clipboard:append("unnamedplus")
 vim.opt.mouse = "a"
 vim.g.editorconfig = true
+
+vim.opt.wildmenu = true
+vim.opt.wildmode = "longest:full,full"
+vim.opt.wildoptions = "pum,tagfile"
+
