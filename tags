@@ -747,6 +747,7 @@ breadcrumbs.enabled	other/settings.json	/^    "breadcrumbs.enabled": false,$/;"	
 button.background	other/attemp_catppuccine_setting.json	/^        "button.background": "#9500ff",$/;"	s	object:workbench.colorCustomizations
 button.foreground	other/attemp_catppuccine_setting.json	/^        "button.foreground": "#000000",$/;"	s	object:workbench.colorCustomizations
 button.foreground	other/settings.json	/^        "button.foreground": "#000000",$/;"	s	object:workbench.colorCustomizations
+byte_to_bin	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function byte_to_bin(byte)$/;"	f
 callback	lazy-nvim/lua/pLAyME/init.lua	/^    callback = function()$/;"	f
 callback	lazy-nvim/lua/pLAyME/init.lua	/^    callback = function(args)$/;"	f
 callback	lazy-nvim/lua/pLAyME/init.lua	/^    callback = function(e)$/;"	f
@@ -892,16 +893,17 @@ css.styleSheets	other/settings.json	/^    "css.styleSheets": [$/;"	a
 customCompletions	other/Microsoft.PowerShell_profile.ps1	/^    $customCompletions = @{$/;"	v
 custom_commentstring	lazy-nvim/lua/pLAyME/lazy/mini-modules.lua	/^                    custom_commentstring = function()$/;"	f
 custom_commentstring	nvim-pack/lua/pLAyME/setup-pack/mini.lua	/^            custom_commentstring = function()$/;"	f
+cycle_dap_tab	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function cycle_dap_tab()$/;"	f
 da	bashrc/bashrc.sh	/^alias da='date "+%Y-%m-%d %A %T %Z"'$/;"	a
 dapui_config	lazy-nvim/lua/pLAyME/lazy/nvim-dap.lua	/^        dap.listeners.before.attach.dapui_config = function() dapui.open() end$/;"	f	unknown:dap.listeners.before.attach
 dapui_config	lazy-nvim/lua/pLAyME/lazy/nvim-dap.lua	/^        dap.listeners.before.event_exited.dapui_config = function() dapui.close() end$/;"	f	unknown:dap.listeners.before.event_exited
 dapui_config	lazy-nvim/lua/pLAyME/lazy/nvim-dap.lua	/^        dap.listeners.before.event_terminated.dapui_config = function() dapui.close() end$/;"	f	unknown:dap.listeners.before.event_terminated
 dapui_config	lazy-nvim/lua/pLAyME/lazy/nvim-dap.lua	/^        dap.listeners.before.launch.dapui_config = function() dapui.open() end$/;"	f	unknown:dap.listeners.before.launch
-dapui_config	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    dap.listeners.after.event_initialized.dapui_config = function() dapui.open() end$/;"	f	unknown:dap.listeners.after.event_initialized
-dapui_config	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    dap.listeners.before.event_exited.dapui_config     = function() dapui.close() end$/;"	f	unknown:dap.listeners.before.event_exited
-dapui_config	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    dap.listeners.before.event_terminated.dapui_config = function() dapui.close() end$/;"	f	unknown:dap.listeners.before.event_terminated
 debug.disassemblyView.showSourceCode	other/attemp_catppuccine_setting.json	/^    "debug.disassemblyView.showSourceCode": false,$/;"	b
 debug.disassemblyView.showSourceCode	other/settings.json	/^    "debug.disassemblyView.showSourceCode": false,$/;"	b
+decode_f32_le	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function decode_f32_le(b1, b2, b3, b4)$/;"	f
+decode_f64_le	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function decode_f64_le(b1, b2, b3, b4, b5, b6, b7, b8)$/;"	f
+default_mem_expr	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function default_mem_expr()$/;"	f
 df	other/Microsoft.PowerShell_profile.ps1	/^function df {$/;"	f
 diagnostics	hypr/.luarc.json	/^  "diagnostics": {$/;"	o
 diffEditor.ignoreTrimWhitespace	other/attemp_catppuccine_setting.json	/^    "diffEditor.ignoreTrimWhitespace": true,$/;"	b
@@ -981,6 +983,8 @@ env	hypr/old/hyprland.conf	/^env = HYPRCURSOR_SIZE,24$/;"	k
 env	hypr/old/hyprland.conf	/^env = QT_QPA_PLATFORMTHEME,qt6ct$/;"	k
 env	hypr/old/hyprland.conf	/^env = XCURSOR_SIZE,24$/;"	k
 env	hypr/old/hyprland.conf	/^env = XDG_SESSION_TYPE,wayland$/;"	k
+eval_expr	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^        local function eval_expr(expr_to_eval, allow_addr_fallback)$/;"	f
+evaluate["hex_mode_formatter"]	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    dap.listeners.before.evaluate["hex_mode_formatter"] = function(session, err, response)$/;"	f	unknown:dap.listeners.before
 exec-once	hypr/old/hyprland.conf	/^exec-once = \/usr\/lib\/polkit-gnome\/polkit-gnome-authentication-agent-1$/;"	k
 exec-once	hypr/old/hyprland.conf	/^exec-once = \/usr\/lib\/polkit-kde-authentication-agent-1$/;"	k
 exec-once	hypr/old/hyprland.conf	/^exec-once = awww-daemon$/;"	k
@@ -1005,6 +1009,7 @@ export	other/Microsoft.PowerShell_profile.ps1	/^function export($name, $value) {
 extensions.ignoreRecommendations	other/attemp_catppuccine_setting.json	/^    "extensions.ignoreRecommendations": true,$/;"	b
 extensions.ignoreRecommendations	other/settings.json	/^    "extensions.ignoreRecommendations": true,$/;"	b
 extract	bashrc/bashrc.sh	/^extract() {$/;"	f
+extract_tag_snippet	nvim-pack/lua/pLAyME/remap.lua	/^local function extract_tag_snippet(tag, max_lines)$/;"	f
 f	bashrc/bashrc.sh	/^alias f="find . | grep "$/;"	a
 ff	other/Microsoft.PowerShell_profile.ps1	/^function ff($name) {$/;"	f
 fh	bashrc/bashrc.sh	/^fh() {$/;"	f
@@ -1016,6 +1021,7 @@ files.watcherExclude	other/attemp_catppuccine_setting.json	/^    "files.watcherE
 files.watcherExclude	other/settings.json	/^    "files.watcherExclude": {$/;"	o
 files.watcherInclude	other/attemp_catppuccine_setting.json	/^    "files.watcherInclude": [$/;"	a
 files.watcherInclude	other/settings.json	/^    "files.watcherInclude": [$/;"	a
+find_dap_win	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function find_dap_win()$/;"	f
 find_project_root	nvim-pack/lua/pLAyME/compile_langs.lua	/^    local function find_project_root(start, depth_max)$/;"	f
 flushdns	other/Microsoft.PowerShell_profile.ps1	/^function flushdns {$/;"	f
 flutter-tools.nvim	lazy-nvim/lazy-lock.json	/^  "flutter-tools.nvim": { "branch": "main", "commit": "677cc07c16e8b89999108d2ebeefcfc5f539b73c"/;"	o
@@ -1029,6 +1035,9 @@ folkeTokyonight	lazy-nvim/lazy-lock.json	/^  "folkeTokyonight": { "branch": "mai
 foreground	other/attemp_catppuccine_setting.json	/^        "foreground": "#8f8f8f",$/;"	s	object:workbench.colorCustomizations
 format	lazy-nvim/lua/pLAyME/lazy/nvim-cmp.lua	/^				format = function(entry, vim_item)$/;"	f
 format	nvim-pack/lua/pLAyME/setup-pack/nvim-cmp.lua	/^        format = function(entry, vim_item)$/;"	f
+format_int_value	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function format_int_value(val, to_hex, var_type)$/;"	f
+format_item	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            format_item = function(item)$/;"	f
+format_le_memory_lines	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function format_le_memory_lines(expr, addr_str, region_info, raw_bytes_str)$/;"	f
 fr	bashrc/bashrc.sh	/^fr() {$/;"	f
 freshclam	bashrc/bashrc.sh	/^alias freshclam='sudo freshclam'$/;"	a
 friendly-snippets	lazy-nvim/lazy-lock.json	/^  "friendly-snippets": { "branch": "main", "commit": "6cd7280adead7f586db6fccbd15d2cac7e2188b9" /;"	o
@@ -1067,6 +1076,7 @@ height	lazy-nvim/lua/pLAyME/lazy/telescope.lua	/^            height = function(_
 height	nvim-pack/lua/pLAyME/setup-pack/telescope.lua	/^            height = function(_, _, lines)$/;"	f
 highlight_filename	nvim-pack/lua/pLAyME/setup-pack/oil.lua	/^        highlight_filename = function(entry, is_hidden, is_link_target, is_link_orphan)$/;"	f
 hlp	bashrc/bashrc.sh	/^alias hlp='less ~\/.bashrc_help'$/;"	a
+host	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            host = function() return "127.0.0.1" end,$/;"	f
 html.format.wrapAttributes	other/attemp_catppuccine_setting.json	/^    "html.format.wrapAttributes": "force",$/;"	s
 html.format.wrapAttributes	other/settings.json	/^    "html.format.wrapAttributes": "force",$/;"	s
 hug	bashrc/bashrc.sh	/^alias hug="systemctl --user restart hugo"$/;"	a
@@ -1077,9 +1087,12 @@ init	lazy-nvim/lua/pLAyME/lazy/data-viewer.lua	/^    init = function()$/;"	f
 init	lazy-nvim/lua/pLAyME/lazy/rendermarkdown.lua	/^    init = function()$/;"	f
 inlineChat.lineNaturalLanguageHint	other/attemp_catppuccine_setting.json	/^    "inlineChat.lineNaturalLanguageHint": false,$/;"	b
 inlineChat.lineNaturalLanguageHint	other/settings.json	/^    "inlineChat.lineNaturalLanguageHint": false,$/;"	b
+inspect_memory_prompt	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function inspect_memory_prompt()$/;"	f
 isAdmin	other/Microsoft.PowerShell_profile.ps1	/^$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurren/;"	v
 is_always_hidden	nvim-pack/lua/pLAyME/setup-pack/oil.lua	/^        is_always_hidden = function(name, bufnr) return false end,$/;"	f
+is_dap_filetype	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function is_dap_filetype(ft)$/;"	f
 is_hidden_file	nvim-pack/lua/pLAyME/setup-pack/oil.lua	/^        is_hidden_file = function(name, bufnr)$/;"	f
+is_pointer_type	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function is_pointer_type(var_type)$/;"	f
 javadbg	lazy-nvim/lua/pLAyME/lazy/nvim-dap.lua	/^                javadbg = function(config)$/;"	f
 k9	other/Microsoft.PowerShell_profile.ps1	/^function k9 { Stop-Process -Name $args[0] }$/;"	f
 kanagawa.nvim	lazy-nvim/lazy-lock.json	/^  "kanagawa.nvim": { "branch": "master", "commit": "8ad3b4cdcc804b332c32db8f9743667e1bb82b99" },$/;"	o
@@ -1104,6 +1117,7 @@ lk	bashrc/bashrc.sh	/^alias lk='ls -lSrh'               # sort by size$/;"	a
 ll	bashrc/bashrc.sh	/^alias ll='ls -Fls'                # long listing format$/;"	a
 ll	other/Microsoft.PowerShell_profile.ps1	/^function ll { Get-ChildItem -Force | Format-Table -AutoSize }$/;"	f
 lla	bashrc/bashrc.sh	/^alias lla='lsd -la --group-directories-first'               # List and Hidden Files$/;"	a
+lldb_virtual_memory_menu	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function lldb_virtual_memory_menu()$/;"	f
 lm	bashrc/bashrc.sh	/^alias lm='ls -alh |more'          # pipe through 'more'$/;"	a
 logs	bashrc/bashrc.sh	/^alias logs="sudo find \/var\/log -type f -exec file {} \\; | grep 'text' | cut -d' ' -f1 | sed -/;"	a
 lr	bashrc/bashrc.sh	/^alias lr='ls -lRh'                # recursive ls$/;"	a
@@ -1203,6 +1217,8 @@ on_exit	nvim-pack/lua/pLAyME/init.lua	/^        on_exit = function(_, code)$/;"	
 on_highlights	lazy-nvim/lua/pLAyME/lazy/colorscheme.lua	/^                on_highlights = function(hl, c)$/;"	f
 on_init	nvim-pack/lsp/clangd.lua	/^  on_init = function(client, init_result)$/;"	f
 onedarkpro.nvim	lazy-nvim/lazy-lock.json	/^  "onedarkpro.nvim": { "branch": "main", "commit": "f5fddfd5122fe00421e199151ae4fe8571a02898" },$/;"	o
+open_live_memview_prompt	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function open_live_memview_prompt()$/;"	f
+open_scratch_float	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function open_scratch_float(title, lines, ft)$/;"	f
 openports	bashrc/bashrc.sh	/^alias openports='netstat -nape --inet'$/;"	a
 overrides	lazy-nvim/lua/pLAyME/lazy/colorscheme.lua	/^                overrides = function(colors) -- add\/modify highlights$/;"	f
 p	bashrc/bashrc.sh	/^alias p="ps aux | grep "$/;"	a
@@ -1210,6 +1226,7 @@ package.json	other/attemp_catppuccine_setting.json	/^        "package.json": "pa
 package.json	other/settings.json	/^        "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, bun.lock",$/;"	s	object:explorer.fileNesting.patterns
 pacman / package storage — research notes	other/edit_pacman.md	/^# pacman \/ package storage — research notes$/;"	c
 panel.border	other/attemp_catppuccine_setting.json	/^        "panel.border": "#9500ff"$/;"	s	object:workbench.colorCustomizations
+parse_cli_args	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function parse_cli_args(raw)$/;"	f
 path_display	lazy-nvim/lua/pLAyME/lazy/telescope.lua	/^        path_display = function(_, path)$/;"	f
 path_display	nvim-pack/lua/pLAyME/setup-pack/telescope.lua	/^        path_display = function (_, path)$/;"	f
 path_display	nvim-pack/lua/pLAyME/setup-pack/telescope.lua	/^        path_display = function(_, path)$/;"	f
@@ -1222,11 +1239,15 @@ pkill	other/Microsoft.PowerShell_profile.ps1	/^function pkill($name) {$/;"	f
 plenary.nvim	lazy-nvim/lazy-lock.json	/^  "plenary.nvim": { "branch": "master", "commit": "74b06c6c75e4eeb3108ec01852001636d85a932b" },$/;"	o
 plenary.nvim	nvim-pack/nvim-pack-lock.json	/^    "plenary.nvim": {$/;"	o	object:plugins
 plugins	nvim-pack/nvim-pack-lock.json	/^  "plugins": {$/;"	o
+port	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            port = function()$/;"	f
 program	lazy-nvim/lua/pLAyME/lazy/nvim-dap.lua	/^                program = function()$/;"	f
 program	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            program = function()$/;"	f
 promise-async	lazy-nvim/lazy-lock.json	/^  "promise-async": { "branch": "main", "commit": "119e8961014c9bfaf1487bf3c2a393d254f337e2" },$/;"	o
 promise-async	nvim-pack/nvim-pack-lock.json	/^    "promise-async": {$/;"	o	object:plugins
+prompt	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^                vim.ui.input({ prompt = "Address (0x... or &var): ", default = def }, function(a/;"	f
 prompt	other/Microsoft.PowerShell_profile.ps1	/^function prompt {$/;"	f
+prompt_cli_args	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function prompt_cli_args()$/;"	f
+prompt_exec_path	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function prompt_exec_path()$/;"	f
 provider_selector	lazy-nvim/lua/pLAyME/lazy/nvim-ufo.lua	/^				provider_selector = function(_, _, _)$/;"	f
 ps	bashrc/bashrc.sh	/^alias ps='ps auxf'$/;"	a
 pst	other/Microsoft.PowerShell_profile.ps1	/^function pst { Get-Clipboard }$/;"	f
@@ -1235,6 +1256,9 @@ python	lazy-nvim/lua/pLAyME/lazy/nvim-dap.lua	/^                python = functio
 pythonPath	lazy-nvim/lua/pLAyME/lazy/nvim-dap.lua	/^                pythonPath = function()$/;"	f
 pythonPath	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            pythonPath = function()$/;"	f
 ramboe-dotnet-utils	nvim-pack/nvim-pack-lock.json	/^    "ramboe-dotnet-utils": {$/;"	o	object:plugins
+rank_tag	nvim-pack/lua/pLAyME/remap.lua	/^local function rank_tag(tag, cur_file, cur_ext)$/;"	f
+read_and_display_memory	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function read_and_display_memory(session, expr, mem_ref, addr_label)$/;"	f
+read_source_line	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            local function read_source_line(path, line_num)$/;"	f
 reboot	bashrc/bashrc.sh	/^alias reboot='sudo shutdown -r now'$/;"	a
 rebootf	bashrc/bashrc.sh	/^alias rebootf='sudo shutdown -r -n now'$/;"	a
 redhat.telemetry.enabled	other/attemp_catppuccine_setting.json	/^    "redhat.telemetry.enabled": false,$/;"	b
@@ -1242,8 +1266,10 @@ redhat.telemetry.enabled	other/settings.json	/^    "redhat.telemetry.enabled": f
 reload-profile	other/Microsoft.PowerShell_profile.ps1	/^function reload-profile {$/;"	f
 render-markdown.nvim	lazy-nvim/lazy-lock.json	/^  "render-markdown.nvim": { "branch": "main", "commit": "0fd43fb4b1f073931c4b481f5f3b7cea3749e19/;"	o
 render-markdown.nvim	nvim-pack/nvim-pack-lock.json	/^    "render-markdown.nvim": {$/;"	o	object:plugins
+request	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^        Session.request = function(self, command, arguments, callback)$/;"	f	unknown:Session
 resize_split	lazy-nvim/lua/pLAyME/remap.lua	/^local function resize_split(count, op)$/;"	f
 resize_split	nvim-pack/lua/pLAyME/remap.lua	/^local function resize_split(count, op)$/;"	f
+resolve_and_inspect_memory	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function resolve_and_inspect_memory(input_expr)$/;"	f
 rev	nvim-pack/nvim-pack-lock.json	/^      "rev": "0303a7208dba448c459767486a38a6ec05c4216b",$/;"	s	object:plugins.nvim
 rev	nvim-pack/nvim-pack-lock.json	/^      "rev": "07e92e22114cc5b1ba4938d99897d85b58e20475",$/;"	s	object:plugins.vim-dadbod-ui
 rev	nvim-pack/nvim-pack-lock.json	/^      "rev": "0a695750d747db1e7e70bcf0267ef8951c95fc83",$/;"	s	object:plugins.mason-lspconfig.nvim
@@ -1309,6 +1335,7 @@ roslyn.nvim	nvim-pack/nvim-pack-lock.json	/^    "roslyn.nvim": {$/;"	o	object:pl
 rules	other/settings.json	/^            "rules": {}$/;"	o	object:editor.semanticTokenColorCustomizations.[One Dark Pro Night Flat]
 runPlaylist	bashrc/bashrc.sh	/^runPlaylist() {$/;"	f
 run_ctags	nvim-pack/lua/pLAyME/init.lua	/^local function run_ctags()$/;"	f
+run_repl_cmd	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            local function run_repl_cmd(cmd_str, title)$/;"	f
 safe_markdown_cmd	lazy-nvim/after/plugin/markdown.lua	/^local function safe_markdown_cmd(cmd, success_msg)$/;"	f
 scriptblock	other/Microsoft.PowerShell_profile.ps1	/^$scriptblock = {$/;"	v
 search_home_dirs	lazy-nvim/lua/pLAyME/lazy/telescope.lua	/^local search_home_dirs = function()$/;"	f
@@ -1327,6 +1354,8 @@ setup	nvim-pack/colors/clear-as-night.lua	/^function M.setup()$/;"	f	unknown:M
 sha1	bashrc/bashrc.sh	/^alias sha1='openssl sha1'$/;"	a
 shift_width	lazy-nvim/lua/pLAyME/lazy/nvim-cmp.lua	/^		local shift_width = function()$/;"	f
 show_hover_or_tag	nvim-pack/lua/pLAyME/remap.lua	/^local function show_hover_or_tag()$/;"	f
+show_interleaved_source_asm	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function show_interleaved_source_asm()$/;"	f
+show_with_region	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            local function show_with_region(region_text)$/;"	f
 shutd	bashrc/bashrc.sh	/^alias shutd='sudo shutdown now'$/;"	a
 sideBar.background	other/attemp_catppuccine_setting.json	/^        "sideBar.background": "#000000",$/;"	s	object:workbench.colorCustomizations
 sideBar.border	other/attemp_catppuccine_setting.json	/^        "sideBar.border": "#9500ff",$/;"	s	object:workbench.colorCustomizations
@@ -1411,9 +1440,12 @@ statusBar.focusBorder	other/settings.json	/^        "statusBar.focusBorder": "#9
 statusBar.foreground	other/attemp_catppuccine_setting.json	/^        "statusBar.foreground": "#FFFFFF",$/;"	s	object:workbench.colorCustomizations
 statusBar.foreground	other/settings.json	/^        "statusBar.foreground": "#FFFFFF",$/;"	s	object:workbench.colorCustomizations
 statusBar.noFolderForeground	other/attemp_catppuccine_setting.json	/^        "statusBar.noFolderForeground": "#dcdcdc",$/;"	s	object:workbench.colorCustomizations
+step_opts	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function step_opts()$/;"	f
 svi	bashrc/bashrc.sh	/^alias svi='sudo nvim'$/;"	a
+switch_dap_view	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function switch_dap_view(target_id, target_key)$/;"	f
 switch_source_header	nvim-pack/lsp/clangd.lua	/^local function switch_source_header(bufnr, client)$/;"	f
 symbol_info	nvim-pack/lsp/clangd.lua	/^local function symbol_info(bufnr, client)$/;"	f
+sync_tab_index	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function sync_tab_index(target_id)$/;"	f
 sysinfo	other/Microsoft.PowerShell_profile.ps1	/^function sysinfo { Get-ComputerInfo }$/;"	f
 tail	other/Microsoft.PowerShell_profile.ps1	/^function tail {$/;"	f
 tailwindcss-colorizer-cmp.nvim	lazy-nvim/lazy-lock.json	/^  "tailwindcss-colorizer-cmp.nvim": { "branch": "main", "commit": "3d3cd95e4a4135c250faf83dd5ed6/;"	o
@@ -1439,7 +1471,10 @@ titleBar.border	other/attemp_catppuccine_setting.json	/^        "titleBar.border
 titleBar.border	other/settings.json	/^        "titleBar.border": "#9500ff",$/;"	s	object:workbench.colorCustomizations
 titleBar.inactiveBackground	other/attemp_catppuccine_setting.json	/^        "titleBar.inactiveBackground": "#c26cff",$/;"	s	object:workbench.colorCustomizations
 titleBar.inactiveBackground	other/settings.json	/^        "titleBar.inactiveBackground": "#c26cff",$/;"	s	object:workbench.colorCustomizations
+toggle_assembly_mode	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function toggle_assembly_mode()$/;"	f
+toggle_fullscreen_element	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function toggle_fullscreen_element()$/;"	f
 toggle_heading	lazy-nvim/after/plugin/markdown.lua	/^local function toggle_heading(level)$/;"	f
+toggle_hex_mode	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function toggle_hex_mode()$/;"	f
 topcpu	bashrc/bashrc.sh	/^alias topcpu="\/bin\/ps -eo pcpu,pid,user,args | sort -k 1 -r | head -10"$/;"	a
 touch	other/Microsoft.PowerShell_profile.ps1	/^function touch($file) { "" | Out-File $file -Encoding ASCII }$/;"	f
 trash	other/Microsoft.PowerShell_profile.ps1	/^function trash($path) {$/;"	f
@@ -1460,6 +1495,7 @@ unzip	other/Microsoft.PowerShell_profile.ps1	/^function unzip ($file) {$/;"	f
 up	bashrc/bashrc.sh	/^up() {$/;"	f
 uptime	other/Microsoft.PowerShell_profile.ps1	/^function uptime {$/;"	f
 value in colors *>	matugen/templates/colors.css	/^<* for name, value in colors *>$/;"	s
+variables["hex_mode_formatter"]	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    dap.listeners.before.variables["hex_mode_formatter"] = function(session, err, response)$/;"	f	unknown:dap.listeners.before
 ver	bashrc/bashrc.sh	/^ver() {$/;"	f
 verify apps launch, then: sudo rm -rf /opt.old	other/edit_pacman.md	/^# verify apps launch, then: sudo rm -rf \/opt.old$/;"	c
 vi	bashrc/bashrc.sh	/^alias vi='nvim'$/;"	a
@@ -1507,3 +1543,4 @@ workspace	hypr/.luarc.json	/^  "workspace": {$/;"	o
 yayf	bashrc/bashrc.sh	/^alias yayf="yay -Slq | fzf --multi --preview 'yay -Sii {1}' --preview-window=down:75% | xargs -r/;"	a
 ytdlm	bashrc/bashrc.sh	/^ytdlm() {$/;"	f
 ytdlv	bashrc/bashrc.sh	/^ytdlv() {$/;"	f
+~	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            if not vim.base64 or type(vim.base64.decode) ~= "function" then$/;"	f

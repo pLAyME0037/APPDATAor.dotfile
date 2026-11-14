@@ -58,6 +58,9 @@ vim.pack.add({
 -- dap + deps:
     { src = "https://github.com/mfussenegger/nvim-dap" },
     { src = "https://github.com/rcarriga/nvim-dap-ui" },
+    { src = "https://github.com/igorlfs/nvim-dap-view" },
+    { src = "https://codeberg.org/Jorenar/nvim-dap-disasm" },
+    { src = "https://github.com/rabrooks/nvim-dap-memview" },
     { src = "https://github.com/jay-babu/mason-nvim-dap.nvim" },
     { src = "https://github.com/nvim-neotest/nvim-nio" },
     { src = "https://github.com/nvim-neotest/neotest" },
