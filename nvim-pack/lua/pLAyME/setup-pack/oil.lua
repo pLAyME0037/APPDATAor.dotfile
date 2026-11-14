@@ -53,3 +53,54 @@ require("oil").setup({
         end,
     },
 })
+
+local oil_session_group = vim.api.nvim_create_augroup("OilSessionRestart", { clear = true })
+
+vim.api.nvim_create_autocmd("SessionLoadPre", {
+    group = oil_session_group,
+    desc = "Wipe loaded oil:// buffers before session load to prevent E95 on :file",
+    callback = function()
+        local scratch
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+            if vim.api.nvim_buf_is_valid(buf) then
+                local name = vim.api.nvim_buf_get_name(buf)
+                if vim.startswith(name, "oil://") then
+                    -- Move windows off the buffer first: deleting a buffer that is
+                    -- displayed in the last remaining window fails with E444.
+                    for _, win in ipairs(vim.fn.win_findbuf(buf)) do
+                        if vim.api.nvim_win_is_valid(win) then
+                            if scratch == nil or not vim.api.nvim_buf_is_valid(scratch) then
+                                scratch = vim.api.nvim_create_buf(true, false)
+                            end
+                            pcall(vim.api.nvim_win_set_buf, win, scratch)
+                        end
+                    end
+                    pcall(vim.api.nvim_buf_delete, buf, { force = true })
+                end
+            end
+        end
+    end,
+})
+
+vim.api.nvim_create_autocmd("SessionLoadPost", {
+    group = oil_session_group,
+    desc = "Reload empty oil:// buffers restored via enew + :file",
+    callback = function()
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+            if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_is_loaded(buf) then
+                local name = vim.api.nvim_buf_get_name(buf)
+                if vim.startswith(name, "oil://") then
+                    local line_count = vim.api.nvim_buf_line_count(buf)
+                    if line_count == 1 then
+                        local first_line = vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1]
+                        if first_line == "" then
+                            vim.api.nvim_buf_call(buf, function()
+                                pcall(vim.cmd, "edit")
+                            end)
+                        end
+                    end
+                end
+            end
+        end
+    end,
+})

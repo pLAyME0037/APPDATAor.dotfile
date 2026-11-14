@@ -23,9 +23,12 @@ local function try_tmux(dir)
     local orig = vim.fn.winnr()
     vim.cmd("wincmd " .. dir)
     if vim.fn.winnr() == orig then
+        if vim.env.TMUX == nil or vim.env.TMUX == "" then
+            return
+        end
         local tmux_flag = tmux_dirs[dir]
         if tmux_flag ~= nil then
-            vim.fn.system("tmux select-pane -" .. tmux_flag)
+            vim.system({ "tmux", "select-pane", "-" .. tmux_flag })
         end
     end
 end
@@ -42,13 +45,14 @@ local function try_quickfix_or_tmux(dir)
         if dir == "j" then
             cmd = "cprev"
         end
-        local ok = pcall(vim.cmd, cmd .. " | zz")
-        if not ok then
-            try_tmux(dir)
+        local ok = pcall(vim.cmd, cmd)
+        if ok then
+            vim.cmd("normal! zz")
+            return
         end
-    else
-        try_tmux(dir)
     end
+
+    try_tmux(dir)
 end
 
 -- Window navigation & Tmux integration
@@ -72,7 +76,6 @@ vim.keymap.set("n", "=ap", "ma=ap'a")
 
 vim.keymap.set("n", "gd", "<C-]>", { desc = "Tags: Jump to Definition" })
 vim.keymap.set("n", "gD", "g<C-]>", { desc = "Tags: Select Definition" })
-vim.keymap.set("n", "<leader>b", "<C-t>", { desc = "Tags: Jump Back" })
 
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 vim.keymap.set("n", "<leader>lt", function()
@@ -90,7 +93,7 @@ vim.keymap.set("n", "tlc", "guw")
 vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
 vim.keymap.set("n", "<leader>Y", [["+Y]])
 
-vim.keymap.set({ "n", "v" }, "<leader>d", '"_d')
+vim.keymap.set({ "n", "v" }, "<leader>D", '"_d', { desc = "Delete to blackhole register" })
 
 vim.keymap.set("n", "Q", "<nop>")
 
@@ -102,8 +105,8 @@ vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
 vim.keymap.set("n", "<M-h>", "<cmd>silent !tmux-sessionizer -s 0 --vsplit<CR>")
 vim.keymap.set("n", "<M-H>", "<cmd>silent !tmux neww tmux-sessionizer -s 0<CR>")
 
-vim.keymap.set("n", "<leader>k", "<cmd>lNext<CR>zz")
-vim.keymap.set("n", "<leader>j", "<cmd>lprevious<CR>zz")
+vim.keymap.set("n", "<leader>k", "<cmd>lnext<CR>zz", { desc = "Location list next" })
+vim.keymap.set("n", "<leader>j", "<cmd>lprevious<CR>zz", { desc = "Location list prev" })
 
 vim.keymap.set("n", "<leader>ls", "<cmd>!pwd && ls -laFh --group-directories-first<CR>", { silent = true })
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
@@ -132,21 +135,25 @@ vim.keymap.set("n", "<leader>el", 'oif err != nil {<CR>}<Esc>O.logger.Error("err
 -- ============================================================================
 -- Spilt Window Buffer & Resize
 -- ============================================================================
-local zoomed = false
-local prev_winwidth = nil
-local prev_winheight = nil
-
 vim.keymap.set("n", "<leader>sm", function()
-    if zoomed then
-        if prev_winwidth then vim.api.nvim_win_set_width(0, prev_winwidth) end
-        if prev_winheight then vim.api.nvim_win_set_height(0, prev_winheight) end
-        zoomed = false
+    local cur_win = vim.api.nvim_get_current_win()
+    local zoom_state = vim.t.split_zoom_state
+    if type(zoom_state) == "table" and zoom_state.win == cur_win then
+        if zoom_state.width then
+            pcall(vim.api.nvim_win_set_width, cur_win, zoom_state.width)
+        end
+        if zoom_state.height then
+            pcall(vim.api.nvim_win_set_height, cur_win, zoom_state.height)
+        end
+        vim.t.split_zoom_state = nil
     else
-        prev_winwidth = vim.api.nvim_win_get_width(0)
-        prev_winheight = vim.api.nvim_win_get_height(0)
+        vim.t.split_zoom_state = {
+            win = cur_win,
+            width = vim.api.nvim_win_get_width(cur_win),
+            height = vim.api.nvim_win_get_height(cur_win),
+        }
         vim.cmd("wincmd |")
         vim.cmd("wincmd _")
-        zoomed = true
     end
 end, { desc = "Toggle split zoom." })
 
@@ -170,48 +177,88 @@ end
 
 vim.keymap.set("n", "<leader>s]", function() resize_split(vim.v.count, "inc_h") end, { desc = "Increase split height." })
 vim.keymap.set("n", "<leader>s[", function() resize_split(vim.v.count, "dec_h") end, { desc = "Decrease split height." })
-vim.keymap.set("n", "<leader><", function() resize_split(vim.v.count, "inc_w") end, { desc = "Increase split width." })
-vim.keymap.set("n", "<leader>>", function() resize_split(vim.v.count, "dec_w") end, { desc = "Decrease split width." })
+vim.keymap.set("n", "<leader>>", function() resize_split(vim.v.count, "inc_w") end, { desc = "Increase split width." })
+vim.keymap.set("n", "<leader><", function() resize_split(vim.v.count, "dec_w") end, { desc = "Decrease split width." })
 vim.keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split." })
 
 -- ============================================================================
 -- Align Pattern
 -- ============================================================================
 local function align_to_char()
-    local char = vim.fn.input("Align to character: ")
-    if char == "" then return end
-
-    local start_line = vim.fn.line("'<")
-    local end_line = vim.fn.line("'>")
-    local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
-
-    local max_pos = 0
-    for _, line in ipairs(lines) do
-        local pos = line:find(char, 1, true)
-        if pos and pos > max_pos then max_pos = pos end
+    local function exit_visual()
+        local esc = vim.api.nvim_replace_termcodes("<Esc>", true, false, true)
+        vim.api.nvim_feedkeys(esc, "nx", false)
     end
 
-    local new_lines = {}
-    for _, line in ipairs(lines) do
+    local start_line = vim.fn.getpos("v")[2]
+    local end_line = vim.fn.getpos(".")[2]
+    if start_line > end_line then
+        start_line, end_line = end_line, start_line
+    end
+
+    local sentinel = "__ALIGN_CANCEL__"
+    local char = vim.fn.input({
+        prompt = "Align to character: ",
+        cancelreturn = sentinel,
+    })
+    if char == sentinel or char == "" then
+        exit_visual()
+        return
+    end
+
+    local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
+
+    local max_width = 0
+    local parsed = {}
+    for idx, line in ipairs(lines) do
         local pos = line:find(char, 1, true)
         if pos then
             local before = line:sub(1, pos - 1):gsub("%s+$", "")
             local after = line:sub(pos)
-            local padding = string.rep(" ", max_pos - #before - 1)
-            table.insert(new_lines, before .. padding .. after)
+            local width = vim.fn.strdisplaywidth(before)
+            if width > max_width then
+                max_width = width
+            end
+            parsed[idx] = { before = before, after = after, width = width }
+        end
+    end
+
+    local sep_space = 1
+    if max_width == 0 then
+        sep_space = 0
+    end
+
+    local new_lines = {}
+    for idx, line in ipairs(lines) do
+        local item = parsed[idx]
+        if item ~= nil then
+            local padding = string.rep(" ", math.max(0, max_width - item.width + sep_space))
+            table.insert(new_lines, item.before .. padding .. item.after)
         else
             table.insert(new_lines, line)
         end
     end
 
     vim.api.nvim_buf_set_lines(0, start_line - 1, end_line, false, new_lines)
+    exit_visual()
 end
 
-vim.keymap.set("v", "<leader>a=", align_to_char, { desc = "Align selection to char" })
+vim.keymap.set("x", "<leader>a=", align_to_char, { desc = "Align selection to char" })
 
 -- ============================================================================
 -- Show Definition without LSP
 -- ============================================================================
+local function unescape_ctag_pattern(raw_cmd)
+    local pat = raw_cmd
+    if pat:sub(1, 1) == "/" then
+        pat = pat:gsub("^/%^?", ""):gsub("%$?/$", "")
+    elseif pat:sub(1, 1) == "?" then
+        pat = pat:gsub("^%?%^?", ""):gsub("%$?%?$", "")
+    end
+    pat = pat:gsub("\\/", "/"):gsub("\\%?", "?"):gsub("\\\\", "\\")
+    return pat
+end
+
 local function extract_tag_snippet(tag, max_lines)
     local target_path = vim.fs.normalize(tag.filename)
     if vim.fn.filereadable(target_path) ~= 1 then
@@ -230,11 +277,13 @@ local function extract_tag_snippet(tag, max_lines)
         if raw_cmd:match("^%d+$") then
             target_line = tonumber(raw_cmd)
         else
-            local pat = raw_cmd:gsub("^/%^?", ""):gsub("%$?/$", "")
-            for idx, line in ipairs(file_lines) do
-                if line:find(pat, 1, true) then
-                    target_line = idx
-                    break
+            local pat = unescape_ctag_pattern(raw_cmd)
+            if pat ~= "" then
+                for idx, line in ipairs(file_lines) do
+                    if line:find(pat, 1, true) then
+                        target_line = idx
+                        break
+                    end
                 end
             end
         end
@@ -272,7 +321,7 @@ local function extract_tag_snippet(tag, max_lines)
         local line = file_lines[j]
         if line:find("{", 1, true) then break end
         if line:find(";", 1, true) then break end
-        if line:find(":", 1, true) and not line:find("::", 1, true) then break end
+        if line:match(":%s*$") then break end
     end
 
     local snippet = {}
@@ -330,7 +379,8 @@ local function show_hover_or_tag()
         return
     end
 
-    local raw_tags = vim.fn.taglist("^" .. cword .. "$")
+    local escaped_cword = vim.fn.escape(cword, "\\/.*$^~[]")
+    local raw_tags = vim.fn.taglist("^" .. escaped_cword .. "$")
     if #raw_tags == 0 then
         pcall(vim.cmd, "normal! K")
         return
@@ -363,7 +413,7 @@ local function show_hover_or_tag()
 
             local snippet = extract_tag_snippet(tag, 8)
             local kind = tag.kind
-            if kind == nil then
+            if kind == nil or kind == "" then
                 kind = "definition"
             end
 
@@ -377,8 +427,7 @@ local function show_hover_or_tag()
                 end
                 table.insert(lines, "```")
             elseif tag.cmd ~= nil then
-                local clean_cmd = tag.cmd:gsub("^/%^?", ""):gsub("%$?/$", "")
-                clean_cmd = vim.trim(clean_cmd)
+                local clean_cmd = vim.trim(unescape_ctag_pattern(tag.cmd))
                 table.insert(lines, "```" .. cur_ft)
                 table.insert(lines, clean_cmd)
                 table.insert(lines, "```")

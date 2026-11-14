@@ -157,15 +157,27 @@ local dotnet = require("easy-dotnet")
 --     },
 -- })
 
-local external_terminal = {
-    command = "wt",
-    args = { "-w", "-1", "nt", "--" },
-}
+local external_terminal = nil
+local debugger_console = "integratedTerminal"
+
+if vim.fn.executable("kitty") == 1 then
+    external_terminal = { command = "kitty", args = { "--" } }
+    debugger_console = "externalTerminal"
+elseif vim.fn.executable("alacritty") == 1 then
+    external_terminal = { command = "alacritty", args = { "-e" } }
+    debugger_console = "externalTerminal"
+elseif vim.fn.executable("wezterm") == 1 then
+    external_terminal = { command = "wezterm", args = { "start", "--" } }
+    debugger_console = "externalTerminal"
+elseif vim.fn.executable("wt") == 1 then
+    external_terminal = { command = "wt", args = { "-w", "-1", "nt", "--" } }
+    debugger_console = "externalTerminal"
+end
 
 dotnet.setup({
     external_terminal = external_terminal,
     debugger = {
-        console = "externalTerminal",
+        console = debugger_console,
     },
     notifications = {
         handler = false,

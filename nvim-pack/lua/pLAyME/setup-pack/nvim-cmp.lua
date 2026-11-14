@@ -53,7 +53,7 @@ end
 
 local confirm = function(entry)
     local behavior = cmp.ConfirmBehavior.Replace
-    if entry then
+    if entry and entry.replace_range and entry.replace_range["end"] then
         local completion_item = entry.completion_item
         local newText = ""
         if completion_item.textEdit then
@@ -68,7 +68,7 @@ local confirm = function(entry)
             end
         end
         local diff_after = math.max(0, entry.replace_range["end"].character + 1) - entry.context.cursor.col
-        if entry.context.cursor_after_line:sub(1, diff_after) ~= newText:sub(-diff_after) then
+        if diff_after > 0 and entry.context.cursor_after_line:sub(1, diff_after) ~= newText:sub(-diff_after) then
             behavior = cmp.ConfirmBehavior.Insert
         end
     end
@@ -103,7 +103,6 @@ cmp.setup({
     sources = cmp.config.sources({
         { name = "nvim_lsp", priority = 1000 },
         { name = "luasnip", priority = 750 },
-        { name = "tailwindcss-colorizer-cmp", priority = 700 },
         { name = "lazydev", priority = 650 },
         { name = "path", priority = 500 },
         { name = "buffer", priority = 250 },
@@ -188,4 +187,11 @@ cmp.setup.cmdline({ "/", "?" }, {
 --     }),
 --     matching = { disallow_symbol_nonprefix_matching = false },
 -- })
+--
+cmp.setup.filetype({ "sql", "mysql", "plsql" }, {
+    sources = cmp.config.sources({
+        { name = "vim-dadbod-completion" },
+        { name = "buffer" },
+    }),
+})
 

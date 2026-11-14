@@ -1,4 +1,5 @@
 local modules = {
+    "pLAyME.setup-pack.colorscheme",
     "pLAyME.setup-pack.treesitter",
     "pLAyME.setup-pack.autopairs",
     "pLAyME.setup-pack.mini",
@@ -6,13 +7,13 @@ local modules = {
     "pLAyME.setup-pack.snacks",
     "pLAyME.setup-pack.oil",
     "pLAyME.setup-pack.telescope",
+    "pLAyME.setup-pack.dotnet",
     "pLAyME.setup-pack.lualine",
     "pLAyME.setup-pack.data-viewer",
     "pLAyME.setup-pack.lsp",
     "pLAyME.setup-pack.nvim-cmp",
     "pLAyME.setup-pack.nvim-lint",
     "pLAyME.setup-pack.nvim-dap",
-    "pLAyME.setup-pack.dotnet",
     "pLAyME.setup-pack.flutter",
 }
 

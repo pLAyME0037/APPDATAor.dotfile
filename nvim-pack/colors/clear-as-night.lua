@@ -24,6 +24,10 @@ local colors = {
     git_added                 = "#a6da95",
     git_modified              = "#ca9ee6",
     git_deleted               = "#f7768e",
+
+    red                       = "#ed8796",
+    peach                     = "#f5a97f",
+    teal                      = "#8bd5ca",
 }
 
 local groups = {

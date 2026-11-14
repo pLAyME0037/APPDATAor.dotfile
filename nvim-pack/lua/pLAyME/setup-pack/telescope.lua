@@ -72,8 +72,8 @@ telescope.setup({
     },
 })
 
-telescope.load_extension("fzf")
-telescope.load_extension("themes")
+pcall(telescope.load_extension, "fzf")
+pcall(telescope.load_extension, "themes")
 
 -- Custom picker: functions in current file
 -- ┌─────────────┬─────────────────────────────────────────────────────────────┐
@@ -126,7 +126,8 @@ local patterns = {
     rust = {
         definition = {
             "^%s*[%w_%s%*%(%)]*%s*fn%s+([%w_]+)%s*%(",
-            "^%s*impl%s+",
+            "^%s*impl%b<>%s+([%w_]+)",
+            "^%s*impl%s+([%w_]+)",
         },
     },
     c = {
@@ -260,21 +261,112 @@ local reject_start = {
     ["new"]=true,     ["delete"]=true
 }
 
+local function strip_line_comments(line, style, state)
+    local out = {}
+    local idx = 1
+    local len = #line
+
+    while idx <= len do
+        if state.in_block then
+            local end_idx = line:find(style.block_end, idx, true)
+            if end_idx then
+                state.in_block = false
+                idx = end_idx + #style.block_end
+            else
+                return table.concat(out)
+            end
+        elseif state.in_block_alt then
+            local end_idx = line:find(style.block_end_alt, idx, true)
+            if end_idx then
+                state.in_block_alt = false
+                idx = end_idx + #style.block_end_alt
+            else
+                return table.concat(out)
+            end
+        else
+            local b_idx = nil
+            if style.block_start then
+                b_idx = line:find(style.block_start, idx, true)
+            end
+            local ba_idx = nil
+            if style.block_start_alt then
+                ba_idx = line:find(style.block_start_alt, idx, true)
+            end
+            local s_idx = nil
+            if style.single then
+                s_idx = line:find(style.single, idx, true)
+            end
+
+            -- Treat block comment start as higher priority when at same index (e.g. "--[[" vs "--")
+            local earliest = nil
+            local kind = nil
+
+            if b_idx then
+                earliest = b_idx
+                kind = "block"
+            end
+            if ba_idx and (earliest == nil or ba_idx < earliest) then
+                earliest = ba_idx
+                kind = "block_alt"
+            end
+            if s_idx and (earliest == nil or s_idx < earliest) then
+                earliest = s_idx
+                kind = "single"
+            end
+
+            if earliest == nil then
+                table.insert(out, line:sub(idx))
+                break
+            end
+
+            if earliest > idx then
+                table.insert(out, line:sub(idx, earliest - 1))
+            end
+
+            if kind == "single" then
+                break
+            elseif kind == "block" then
+                state.in_block = true
+                idx = earliest + #style.block_start
+            else
+                state.in_block_alt = true
+                idx = earliest + #style.block_start_alt
+            end
+        end
+    end
+
+    return table.concat(out)
+end
+
 local function list_functions()
-    local buf   = vim.api.nvim_get_current_buf()
-    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local buf     = vim.api.nvim_get_current_buf()
+    local lines   = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
     local results = {}
     local lang    = vim.bo.filetype
 
-    local lang_patterns = patterns[lang] or patterns.lua
+    local lang_patterns = patterns[lang]
+    if lang_patterns == nil then
+        lang_patterns = patterns.lua
+    end
     local current_scope = ""
     local scope_indent  = 0
-    local sp = scope_patterns[lang] or {}
-    local keywords = (lang == "javascript" or lang == "cpp") and reserve_words or nil
-    local is_comment_style = comment_chars[lang] or comment_chars.c
+    local sp = scope_patterns[lang]
+    if sp == nil then
+        sp = {}
+    end
+    local keywords = nil
+    if lang == "javascript" or lang == "typescript" or lang == "cpp" then
+        keywords = reserve_words
+    end
+    local comment_style = comment_chars[lang]
+    if comment_style == nil then
+        comment_style = comment_chars.c
+    end
 
-    local in_block_comment     = false
-    local in_block_comment_alt = false
+    local comment_state = {
+        in_block     = false,
+        in_block_alt = false,
+    }
 
     local function add_result(i, line, name, raw_name)
         table.insert(results, {
@@ -286,60 +378,18 @@ local function list_functions()
         })
     end
 
-    for i, line in ipairs(lines) do
-        -- Pre-declared loop locals to avoid jumps into scopes
-        local is_c_like, first_word, is_rejected, is_closing, current_indent, recv, fn_name
-        local start_idx, start_idx_alt
+    for i, raw_line in ipairs(lines) do
+        local is_c_like, first_word, is_closing, current_indent, recv, fn_name
+        local line = strip_line_comments(raw_line, comment_style, comment_state)
+        local trimmed = line:match("^%s*(.-)%s*$")
+        if trimmed == nil then
+            trimmed = ""
+        end
 
-        local trimmed = line:match("^%s*(.-)%s*$") or ""
-
-        -- Skip completely empty lines
         if trimmed == "" then
             goto continue
         end
 
-        -- Parse comment blocks
-        if not in_block_comment and not in_block_comment_alt then
-            -- Check single line comment
-            if is_comment_style.single and trimmed:sub(1, #is_comment_style.single) == is_comment_style.single then
-                goto continue
-            end
-            -- Check block comment start
-            start_idx = is_comment_style.block_start and line:find(is_comment_style.block_start, 1, true)
-            if start_idx then
-                in_block_comment = true
-                if is_comment_style.block_end and line:find(is_comment_style.block_end, start_idx + #is_comment_style.block_start, true) then
-                    in_block_comment = false
-                end
-                goto continue
-            end
-            -- Check alternate block comment start (python triple quotes)
-            start_idx_alt = is_comment_style.block_start_alt and line:find(is_comment_style.block_start_alt, 1, true)
-            if start_idx_alt then
-                in_block_comment_alt = true
-                if is_comment_style.block_end_alt and line:find(is_comment_style.block_end_alt, start_idx_alt + #is_comment_style.block_start_alt, true) then
-                    in_block_comment_alt = false
-                end
-                goto continue
-            end
-        else
-            -- Check block comment exits
-            if in_block_comment and is_comment_style.block_end then
-                if line:find(is_comment_style.block_end, 1, true) then
-                    in_block_comment = false
-                end
-                goto continue
-            end
-            if in_block_comment_alt and is_comment_style.block_end_alt then
-                if line:find(is_comment_style.block_end_alt, 1, true) then
-                    in_block_comment_alt = false
-                end
-                goto continue
-            end
-            goto continue
-        end
-
-        -- Python Scope indent reset
         if lang == "python" then
             local indent = line:match("^%s*")
             if #indent == 0 and line:match("%w") then
@@ -347,7 +397,6 @@ local function list_functions()
             end
         end
 
-        -- Brace Scope Indentation Reset
         if current_scope ~= "" then
             is_closing = line:match("^%s*}%s*;?%s*$")
             if is_closing then
@@ -358,7 +407,6 @@ local function list_functions()
             end
         end
 
-        -- Track Scope
         for _, pat in ipairs(sp) do
             local s = line:match(pat)
             if s then
@@ -373,27 +421,23 @@ local function list_functions()
                      lang == "go" or lang == "rust" or lang == "javascript" or
                      lang == "typescript")
 
-        -- Semicolon skip
         if is_c_like and line:match(";%s*$") then
             goto continue
         end
 
-        -- Rejected keyword skip
         first_word = line:match("^%s*([%w_]+)")
         if first_word and reject_start[first_word] then
             goto continue
         end
 
-        -- Go receiver patterns
         recv, fn_name = line:match("^%s*func%s+%(%s*[%w_]+%s+[%*]?([%w_]+)%s*%)%s*([%w_]+)%s*%(")
         if recv and fn_name then
             add_result(i, line, recv .. "." .. fn_name, fn_name)
             goto continue
         end
 
-        -- Standard definitions
         for _, pattern in ipairs(lang_patterns.definition) do
-            local captures = {line:match(pattern)}
+            local captures = { line:match(pattern) }
             if #captures > 0 then
                 local raw = captures[#captures]
                 if raw and raw ~= "" and not (keywords and keywords[raw]) then
@@ -410,9 +454,14 @@ local function list_functions()
         ::continue::
     end
 
-    -- Process accurate call counting, safe from magic character exceptions
     for _, entry in ipairs(results) do
-        local raw = entry.raw_name or entry.name:match("[^.]*$") or entry.name
+        local raw = entry.raw_name
+        if not raw then
+            raw = entry.name:match("[^.]*$")
+        end
+        if not raw then
+            raw = entry.name
+        end
         local safe_raw = raw:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%1")
         local count = 0
         for i, line in ipairs(lines) do
@@ -435,7 +484,7 @@ local function list_functions()
                     sig = entry.name .. sig:sub(start + #entry.raw_name):gsub("^%s*=%s*", ""):gsub("%s+$", "")
                 end
                 local left = "fn(" .. entry.call_count .. ")"
-                local pad = string.rep(" ", 6 - #left)
+                local pad = string.rep(" ", math.max(0, 6 - #left))
                 return {
                     value = entry,
                     display = left .. pad .. " | " .. sig,
@@ -447,6 +496,9 @@ local function list_functions()
         attach_mappings = function(prompt_bufnr, _)
             actions.select_default:replace(function()
                 local selection = action_state.get_selected_entry()
+                if not selection or not selection.value then
+                    return
+                end
                 local entry = selection.value
                 actions.close(prompt_bufnr)
                 vim.api.nvim_win_set_cursor(0, { entry.line, 0 })
@@ -460,12 +512,23 @@ end
 
 local search_home_dirs = function(is_cd)
     local home = vim.fn.expand("~")
-    local dirs = {
+    local candidate_dirs = {
         home,
         home .. "/mythings/studying_code",
         home .. "/Projects/github",
-        home .. "/opt_at_home",
+        home .. "/opt",
     }
+    local dirs = {}
+    for _, d in ipairs(candidate_dirs) do
+        if vim.fn.isdirectory(d) == 1 then
+            table.insert(dirs, d)
+        end
+    end
+
+    if #dirs == 0 then
+        vim.notify("No configured search directories exist", vim.log.levels.WARN)
+        return
+    end
 
     builtin.find_files({
         prompt_title = "jump to dir",
@@ -477,6 +540,7 @@ local search_home_dirs = function(is_cd)
             "--max-depth", "3",
             "--exclude", ".git",
             "--exclude", ".gitignore",
+            "--exclude", ".cache",
             "--exclude", ".analysis-driver",
             "--exclude", "node_modules",
             "--exclude", "vendors",
@@ -488,9 +552,11 @@ local search_home_dirs = function(is_cd)
             unpack(dirs)
         },
 
-        path_display = function (_, path)
-            if type(path) ~= "string" then return tostring(path) end
-            local parts = vim.split(path, "/", { plain = true, trimempty = true})
+        path_display = function(_, path)
+            if type(path) ~= "string" then
+                return tostring(path)
+            end
+            local parts = vim.split(path, "/", { plain = true, trimempty = true })
             if #parts >= 2 then
                 return parts[#parts - 1] .. "/" .. parts[#parts]
             end
@@ -500,12 +566,17 @@ local search_home_dirs = function(is_cd)
         attach_mappings = function(prompt_bufnr, _)
             actions.select_default:replace(function()
                 local selection = action_state.get_selected_entry()
+                if not selection or not selection.value then
+                    return
+                end
                 local dir = selection.value
 
                 actions.close(prompt_bufnr)
-                if is_cd == true then vim.api.nvim_set_current_dir(dir) end
+                if is_cd == true then
+                    vim.api.nvim_set_current_dir(dir)
+                    print("Switch to " .. dir)
+                end
                 builtin.find_files({ cwd = dir })
-                print("Switch to " .. dir)
             end)
             return true
         end,

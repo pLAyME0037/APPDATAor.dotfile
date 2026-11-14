@@ -57,6 +57,34 @@ local filename = {
 
 local branch = {'branch', icon = {'', color={fg='#A6D4DE'}}, '|'}
 
+local lualine_a = { mode }
+
+if has_dotnet and dotnet.lualine then
+    table.insert(lualine_a, dotnet.lualine.jobs)
+end
+
+local lualine_x = {
+    { "filetype" },
+    {
+        function()
+            if type(_G.compile_perf_component) == "function" then
+                return _G.compile_perf_component()
+            end
+            return ""
+        end,
+        color = { fg = "#cba6f7" },
+    },
+}
+
+if has_dotnet and dotnet.lualine then
+    table.insert(lualine_x, dotnet.lualine.active_project)
+    table.insert(lualine_x, {
+        dotnet.lualine.run_status,
+        color = dotnet.lualine.run_status_color,
+        on_click = dotnet.lualine.run_status_click,
+    })
+end
+
 lualine.setup({
     icons_enabled = true,
     options = {
@@ -66,30 +94,9 @@ lualine.setup({
         globalstatus = true, -- Single statusline for the entire Neovim window
     },
     sections = {
-        lualine_a = {
-            mode,
-            has_dotnet and dotnet.lualine.jobs or nil,
-        },
+        lualine_a = lualine_a,
         lualine_b = { branch },
         lualine_c = { diff, filename },
-        lualine_x = {
-            { "filetype" },
-            {
-                function()
-                    return _G.compile_perf_component   and
-                           _G.compile_perf_component() or
-                           ""
-                end,
-                color = { fg = "#cba6f7" }
-            },
-            {
-                has_dotnet and dotnet.lualine.active_project or nil,
-                {
-                    dotnet.lualine.run_status,
-                    color = dotnet.lualine.run_status_color,
-                    on_click = dotnet.lualine.run_status_click,
-                },
-            }
-        }
+        lualine_x = lualine_x,
     }
 })

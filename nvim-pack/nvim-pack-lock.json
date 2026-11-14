@@ -116,13 +116,25 @@
       "rev": "531771530d4f82ad2d21e436e3cc052d68d7aebb",
       "src": "https://github.com/mfussenegger/nvim-dap"
     },
+    "nvim-dap-disasm": {
+      "rev": "8aed212c9fbd5516048c90e1cedc163b27a507e8",
+      "src": "https://codeberg.org/Jorenar/nvim-dap-disasm"
+    },
     "nvim-dap-go": {
       "rev": "b4421153ead5d726603b02743ea40cf26a51ed5f",
       "src": "https://github.com/leoluz/nvim-dap-go"
     },
+    "nvim-dap-memview": {
+      "rev": "19935e8d74f354ce392a21ba7b6d04831c9d11b8",
+      "src": "https://github.com/rabrooks/nvim-dap-memview"
+    },
     "nvim-dap-ui": {
       "rev": "1a66cabaa4a4da0be107d5eda6d57242f0fe7e49",
       "src": "https://github.com/rcarriga/nvim-dap-ui"
+    },
+    "nvim-dap-view": {
+      "rev": "bfaf50b3f513f78d8ab3e5fe02128dda05be4945",
+      "src": "https://github.com/igorlfs/nvim-dap-view"
     },
     "nvim-dap-virtual-text": {
       "rev": "fbdb48c2ed45f4a8293d0d483f7730d24467ccb6",

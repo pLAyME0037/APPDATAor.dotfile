@@ -1,3 +1,32 @@
+vim.api.nvim_create_autocmd("PackChanged", {
+    callback = function(ev)
+        local kind = ev.data.kind
+        if kind ~= "install" and kind ~= "update" then
+            return
+        end
+
+        local name = ev.data.spec.name
+        local path = ev.data.path
+        local build_cmd = nil
+
+        if name == "LuaSnip" then
+            build_cmd = { "make", "install_jsregexp" }
+        elseif name == "telescope-fzf-native.nvim" then
+            build_cmd = { "make" }
+        end
+
+        if build_cmd ~= nil then
+            vim.system(build_cmd, { cwd = path }, function(obj)
+                if obj.code ~= 0 then
+                    vim.schedule(function()
+                        vim.notify("Build failed for " .. name .. ": " .. (obj.stderr or ""), vim.log.levels.ERROR)
+                    end)
+                end
+            end)
+        end
+    end,
+})
+
 vim.pack.add({
 -- local dependencies:
     { src = 'https://github.com/nvim-tree/nvim-web-devicons' },
@@ -47,10 +76,7 @@ vim.pack.add({
     { src = "https://github.com/hrsh7th/cmp-path" },
     { src = "https://github.com/f3fora/cmp-spell" },
     { src = "https://github.com/hrsh7th/cmp-nvim-lsp" },
-    {
-        src = "https://github.com/L3MON4D3/LuaSnip",
-        build = "make install_jsregexp",
-    },
+    { src = "https://github.com/L3MON4D3/LuaSnip", },
     { src = "https://github.com/saadparwaiz1/cmp_luasnip" },
     { src = "https://github.com/rafamadriz/friendly-snippets" },
     { src = "https://github.com/onsails/lspkind.nvim" },

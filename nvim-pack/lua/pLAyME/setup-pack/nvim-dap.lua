@@ -118,6 +118,11 @@ vim.schedule(function()
         ensure_installed = { "codelldb" },
     })
 
+    local ok_dap_go, dap_go = pcall(require, "dap-go")
+    if ok_dap_go then
+        dap_go.setup()
+    end
+
     -- ----------------------------------------------------
     -- 2. LANGUAGE CONFIGURATIONS
     -- ----------------------------------------------------
@@ -140,9 +145,7 @@ vim.schedule(function()
             name = "LAUNCH directly from nvim",
             request = "launch",
             runInTerminal = true,
-            program = function()
-                return vim.fn.input("Path to exec: ", vim.fn.getcwd() .. "/", "file")
-            end,
+            program = prompt_exec_path,
         },
     }
 
@@ -151,12 +154,11 @@ vim.schedule(function()
             name = "Launch Executable",
             type = "codelldb",
             request = "launch",
-            program = function()
-                return vim.fn.input("Path to exec: ", vim.fn.getcwd() .. "/", "file")
-            end,
+            program = prompt_exec_path,
             cwd = "${workspaceFolder}",
             stopOnEntry = false,
-        }, {
+        },
+        {
             name = "Launch Executable (with args)",
             type = "codelldb",
             request = "launch",
@@ -331,8 +333,19 @@ vim.schedule(function()
         return false
     end
 
-    local function find_dap_win()
+    local function find_dap_win(prefer_winbar)
         local wins = vim.api.nvim_tabpage_list_wins(0)
+        if prefer_winbar then
+            for _, win in ipairs(wins) do
+                local buf = vim.api.nvim_win_get_buf(win)
+                local ft = vim.bo[buf].filetype
+                if ft == "dap-view" or ft == "dap-disasm" then
+                    return win
+                end
+            end
+            return nil
+        end
+
         for _, win in ipairs(wins) do
             local buf = vim.api.nvim_win_get_buf(win)
             local ft = vim.bo[buf].filetype
@@ -362,18 +375,23 @@ vim.schedule(function()
         local orig_buf = vim.api.nvim_win_get_buf(orig_win)
         local was_in_dap = is_dap_filetype(vim.bo[orig_buf].filetype)
 
-        if find_dap_win() == nil then
+        if find_dap_win(false) == nil then
             pcall(dap_view.open)
         end
 
         sync_tab_index(target_id)
 
         if type(dap_view.show_view) == "function" then
-            pcall(dap_view.show_view, target_id)
-            return
+            local ok_sv = pcall(dap_view.show_view, target_id)
+            if ok_sv then
+                return
+            end
         end
 
-        local dap_win = find_dap_win()
+        local dap_win = find_dap_win(true)
+        if dap_win == nil then
+            dap_win = find_dap_win(false)
+        end
         if dap_win == nil or not vim.api.nvim_win_is_valid(dap_win) then
             return
         end
@@ -457,6 +475,116 @@ vim.schedule(function()
             return true
         end
         return false
+    end
+
+    local function u53_to_hex(num)
+        if num == 0 then
+            return "0x0"
+        end
+        local lo = num % 4294967296
+        local hi = math.floor(num / 4294967296)
+        if hi > 0 then
+            return string.format("0x%x%08x", hi, lo)
+        end
+        return string.format("0x%x", lo)
+    end
+
+    local function format_int_value(val, to_hex, var_type)
+        if type(val) ~= "string" then
+            return val
+        end
+        local trimmed = vim.trim(val)
+        if to_hex then
+            local sign, digits = trimmed:match("^(-?)(%d+)$")
+            if digits then
+                local num = tonumber(digits)
+                if num and num <= 9007199254740991 then
+                    local hex_str = u53_to_hex(num)
+                    if sign == "-" and num > 0 then
+                        return "-" .. hex_str
+                    end
+                    return hex_str
+                end
+            end
+        else
+            if is_pointer_type(var_type) then
+                return val
+            end
+            local sign, hex_digits = trimmed:match("^(-?)0[xX](%x+)$")
+            if hex_digits then
+                local num = tonumber(hex_digits, 16)
+                if num and num <= 9007199254740991 then
+                    if sign == "-" and num > 0 then
+                        return string.format("-%.0f", num)
+                    end
+                    return string.format("%.0f", num)
+                end
+            end
+        end
+        return val
+    end
+
+    if not Session._hex_format_patched then
+        Session._hex_format_patched = true
+        local orig_request = Session.request
+        Session.request = function(self, command, arguments, callback)
+            local args = arguments
+            if command == "variables" or command == "evaluate" then
+                local caps = self.capabilities
+                if type(caps) == "table" and caps.supportsValueFormattingOptions then
+                    local base = {}
+                    if type(arguments) == "table" then
+                        base = arguments
+                    end
+                    args = vim.tbl_extend("force", base, {
+                        format = { hex = hex_mode },
+                    })
+                end
+            end
+            return orig_request(self, command, args, callback)
+        end
+    end
+
+    dap.listeners.before.variables["hex_mode_formatter"] = function(session, err, response)
+        if err or type(response) ~= "table" or type(response.variables) ~= "table" then
+            return
+        end
+        local caps = nil
+        if session then
+            caps = session.capabilities
+        end
+        local native_hex = type(caps) == "table" and caps.supportsValueFormattingOptions == true
+        if not hex_mode and native_hex then
+            return
+        end
+        for _, var in ipairs(response.variables) do
+            if type(var) == "table" and type(var.value) == "string" then
+                if hex_mode then
+                    var.value = format_int_value(var.value, true, var.type)
+                elseif type(var.type) == "string" then
+                    var.value = format_int_value(var.value, false, var.type)
+                end
+            end
+        end
+    end
+
+    dap.listeners.before.evaluate["hex_mode_formatter"] = function(session, err, response)
+        if err or type(response) ~= "table" or type(response.result) ~= "string" then
+            return
+        end
+        local caps = nil
+        if session then
+            caps = session.capabilities
+        end
+        local native_hex = type(caps) == "table" and caps.supportsValueFormattingOptions == true
+        if not hex_mode and native_hex then
+            return
+        end
+        if hex_mode then
+            response.result = format_int_value(response.result, true, response.type)
+        elseif type(response.type) == "string" then
+            response.result = format_int_value(response.result, false, response.type)
+        end
     end
 
     local function format_int_value(val, to_hex, var_type)
@@ -549,17 +677,12 @@ vim.schedule(function()
         if not hex_mode and native_hex then
             return
         end
-        if hex_mode then
-            response.result = format_int_value(response.result, true, response.type)
-        elseif type(response.type) == "string" then
-            response.result = format_int_value(response.result, false, response.type)
-        end
     end
 
     local function toggle_hex_mode()
         hex_mode = not hex_mode
         local session = dap.session()
-        if session and session.current_frame then
+        if session and session.current_frame and type(session._frame_set) == "function" then
             pcall(function()
                 session:_frame_set(session.current_frame)
             end)
@@ -581,7 +704,43 @@ vim.schedule(function()
     -- ----------------------------------------------------
     -- 4b. RAD MEMORY & INTERLEAVED SOURCE+ASM INSPECTORS
     -- ----------------------------------------------------
-    local function open_scratch_float(title, lines, ft)
+    local function normalize_hex_addr(addr)
+        if type(addr) ~= "string" then
+            return ""
+        end
+        local digits = addr:match("^0[xX](%x+)$")
+        if not digits then
+            return vim.trim(addr):lower()
+        end
+        local stripped = digits:gsub("^0+", "")
+        if stripped == "" then
+            stripped = "0"
+        end
+        return "0x" .. stripped:lower()
+    end
+
+    local function add_hex_offset(addr_str, offset)
+        local digits = addr_str:match("^0[xX](%x+)$")
+        if not digits or #digits > 16 then
+            return string.format("%s+%d", addr_str, offset)
+        end
+        local padded = string.rep("0", 16 - #digits) .. digits
+        local hi = tonumber(padded:sub(1, 8), 16)
+        local lo = tonumber(padded:sub(9, 16), 16)
+        if not hi or not lo then
+            return string.format("%s+%d", addr_str, offset)
+        end
+        local new_lo = lo + offset
+        local carry = math.floor(new_lo / 4294967296)
+        new_lo = new_lo % 4294967296
+        local new_hi = (hi + carry) % 4294967296
+        if new_hi > 0 then
+            return string.format("0x%x%08x", new_hi, new_lo)
+        end
+        return string.format("0x%x", new_lo)
+    end
+
+    local function open_scratch_float(title, lines, ft, initial_line)
         vim.schedule(function()
             local buf = vim.api.nvim_create_buf(false, true)
             vim.bo[buf].bufhidden = "wipe"
@@ -612,6 +771,10 @@ vim.schedule(function()
                 title = " " .. title .. " ",
                 title_pos = "center",
             })
+
+            if type(initial_line) == "number" and initial_line >= 1 and initial_line <= #lines then
+                pcall(vim.api.nvim_win_set_cursor, win, { initial_line, 0 })
+            end
 
             vim.keymap.set("n", "q", function()
                 if vim.api.nvim_win_is_valid(win) then
@@ -801,7 +964,6 @@ vim.schedule(function()
         table.insert(lines, string.rep("-", 72))
         table.insert(lines, "Raw Memory Dump (8 bytes/row, press 'm' for live DapMemView, 'q' to close):")
 
-        local base_num = tonumber(addr_str)
         for row_offset = 0, #bytes - 1, 8 do
             local hex_col = {}
             local ascii_col = {}
@@ -820,12 +982,7 @@ vim.schedule(function()
                     table.insert(ascii_col, " ")
                 end
             end
-            local row_label
-            if base_num then
-                row_label = string.format("0x%x", base_num + row_offset)
-            else
-                row_label = string.format("%s+%d", addr_str, row_offset)
-            end
+            local row_label = add_hex_offset(addr_str, row_offset)
             table.insert(lines, string.format(
                 "  %s:  %-24s  |%s|",
                 row_label, table.concat(hex_col, " "), table.concat(ascii_col)
@@ -846,6 +1003,71 @@ vim.schedule(function()
             return cword
         end
         return ""
+    end
+
+    local function resolve_addr_expr(session, input_expr, callback)
+        local trimmed = vim.trim(input_expr)
+        if trimmed == "" then
+            return
+        end
+
+        if trimmed:match("^0[xX]%x+$") then
+            callback(trimmed, trimmed)
+            return
+        end
+
+        local frame_id = nil
+        if session.current_frame then
+            frame_id = session.current_frame.id
+        end
+
+        local function eval_expr(expr_to_eval, allow_addr_fallback)
+            session:request("evaluate", {
+                expression = expr_to_eval,
+                frameId = frame_id,
+                context = "watch",
+            }, function(eval_err, eval_resp)
+                if eval_err or type(eval_resp) ~= "table" then
+                    vim.schedule(function()
+                        vim.notify("Failed to evaluate: " .. expr_to_eval, vim.log.levels.ERROR)
+                    end)
+                    return
+                end
+
+                local is_register = expr_to_eval:sub(1, 1) == "$"
+                local is_addr_expr = expr_to_eval:sub(1, 1) == "&"
+                local is_ptr = is_pointer_type(eval_resp.type)
+                local addr_from_result = nil
+                if type(eval_resp.result) == "string" and (is_ptr or is_addr_expr or is_register) then
+                    addr_from_result = eval_resp.result:match("0[xX]%x+")
+                end
+
+                local mem_ref = eval_resp.memoryReference
+                if (type(mem_ref) ~= "string" or mem_ref == "") and addr_from_result then
+                    mem_ref = addr_from_result
+                end
+
+                if allow_addr_fallback and not is_addr_expr and not is_register and not is_ptr then
+                    eval_expr("&(" .. expr_to_eval .. ")", false)
+                    return
+                end
+
+                if type(mem_ref) ~= "string" or mem_ref == "" then
+                    vim.schedule(function()
+                        vim.notify("No memory reference for: " .. expr_to_eval, vim.log.levels.WARN)
+                    end)
+                    return
+                end
+
+                local addr_label = mem_ref
+                if addr_from_result then
+                    addr_label = addr_from_result
+                end
+                callback(mem_ref, addr_label)
+            end)
+        end
+
+        eval_expr(trimmed, true)
     end
 
     local function read_and_display_memory(session, expr, mem_ref, addr_label)
@@ -945,7 +1167,7 @@ vim.schedule(function()
 
             if session.config and session.config.type == "codelldb" then
                 session:request("evaluate", {
-                    expression = "memory region " .. final_addr,
+                    expression = "`memory region " .. final_addr,
                     frameId = frame_id,
                     context = "repl",
                 }, function(reg_err, reg_resp)
@@ -961,75 +1183,6 @@ vim.schedule(function()
         end)
     end
 
-    local function resolve_and_inspect_memory(input_expr)
-        local session = dap.session()
-        if not session then
-            vim.notify("No active DAP session", vim.log.levels.WARN)
-            return
-        end
-
-        local trimmed = vim.trim(input_expr)
-        if trimmed == "" then
-            return
-        end
-
-        if trimmed:match("^0[xX]%x+$") then
-            read_and_display_memory(session, trimmed, trimmed, trimmed)
-            return
-        end
-
-        local frame_id = nil
-        if session.current_frame then
-            frame_id = session.current_frame.id
-        end
-
-        local function eval_expr(expr_to_eval, allow_addr_fallback)
-            session:request("evaluate", {
-                expression = expr_to_eval,
-                frameId = frame_id,
-                context = "watch",
-            }, function(eval_err, eval_resp)
-                if eval_err or type(eval_resp) ~= "table" then
-                    vim.schedule(function()
-                        vim.notify("Failed to evaluate: " .. expr_to_eval, vim.log.levels.ERROR)
-                    end)
-                    return
-                end
-
-                local addr_from_result = nil
-                if type(eval_resp.result) == "string" then
-                    addr_from_result = eval_resp.result:match("0[xX]%x+")
-                end
-
-                local mem_ref = eval_resp.memoryReference
-                if (type(mem_ref) ~= "string" or mem_ref == "") and addr_from_result then
-                    mem_ref = addr_from_result
-                end
-
-                local is_addr_expr = expr_to_eval:sub(1, 1) == "&"
-                if allow_addr_fallback and not is_addr_expr and not addr_from_result then
-                    eval_expr("&(" .. expr_to_eval .. ")", false)
-                    return
-                end
-
-                if type(mem_ref) ~= "string" or mem_ref == "" then
-                    vim.schedule(function()
-                        vim.notify("No memory reference for: " .. expr_to_eval, vim.log.levels.WARN)
-                    end)
-                    return
-                end
-
-                local addr_label = mem_ref
-                if addr_from_result then
-                    addr_label = addr_from_result
-                end
-                read_and_display_memory(session, expr_to_eval, mem_ref, addr_label)
-            end)
-        end
-
-        eval_expr(trimmed, true)
-    end
-
     local function inspect_memory_prompt()
         local session = dap.session()
         if not session then
@@ -1042,7 +1195,10 @@ vim.schedule(function()
             default = default_mem_expr(),
         }, function(input)
             if input and vim.trim(input) ~= "" then
-                resolve_and_inspect_memory(input)
+                local expr = vim.trim(input)
+                resolve_addr_expr(session, expr, function(mem_ref, addr_label)
+                    read_and_display_memory(session, expr, mem_ref, addr_label)
+                end)
             end
         end)
     end
@@ -1102,8 +1258,12 @@ vim.schedule(function()
             end
 
             local function run_repl_cmd(cmd_str, title)
+                local eval_cmd = cmd_str
+                if session.config and session.config.type == "codelldb" and eval_cmd:sub(1, 1) ~= "`" then
+                    eval_cmd = "`" .. eval_cmd
+                end
                 session:request("evaluate", {
-                    expression = cmd_str,
+                    expression = eval_cmd,
                     frameId = frame_id,
                     context = "repl",
                 }, function(err, resp)
@@ -1135,12 +1295,13 @@ vim.schedule(function()
                     if not addr_in or vim.trim(addr_in) == "" then
                         return
                     end
-                    local target = vim.trim(addr_in)
-                    if choice.id == "region" then
-                        run_repl_cmd("memory region " .. target, "Memory Region")
-                    else
-                        run_repl_cmd("image lookup -a " .. target, "Image Lookup")
-                    end
+                    resolve_addr_expr(session, addr_in, function(_, resolved_addr)
+                        if choice.id == "region" then
+                            run_repl_cmd("memory region " .. resolved_addr, "Memory Region")
+                        else
+                            run_repl_cmd("image lookup -a " .. resolved_addr, "Image Lookup")
+                        end
+                    end)
                 end)
                 return
             end
@@ -1171,6 +1332,7 @@ vim.schedule(function()
             vim.notify("Current adapter/frame has no instructionPointerReference", vim.log.levels.WARN)
             return
         end
+        local norm_pc = normalize_hex_addr(pc_ref)
 
         session:request("disassemble", {
             memoryReference = pc_ref,
@@ -1237,8 +1399,9 @@ vim.schedule(function()
                 local addr = inst.address or ""
                 local bytes = inst.instructionBytes or ""
                 local asm = inst.instruction or ""
+                local is_pc = normalize_hex_addr(addr) == norm_pc
                 local marker = "  "
-                if addr == pc_ref then
+                if is_pc then
                     marker = "->"
                 end
                 local sym = ""
@@ -1250,22 +1413,14 @@ vim.schedule(function()
                     "%s %-14s  %-22s  %s%s",
                     marker, addr, bytes, sym, asm
                 ))
-                if addr == pc_ref then
+                if is_pc then
                     pc_line_nr = #lines
                 end
             end
 
-            vim.schedule(function()
-                open_scratch_float("Interleaved Source + ASM", lines, "asm")
-                if pc_line_nr then
-                    vim.defer_fn(function()
-                        pcall(vim.api.nvim_win_set_cursor, 0, { pc_line_nr, 0 })
-                    end, 20)
-                end
-            end)
+            open_scratch_float("Interleaved Source + ASM", lines, "asm", pc_line_nr)
         end)
     end
-
     -- ----------------------------------------------------
     -- 5. KEYMAPS
     -- ----------------------------------------------------
@@ -1312,4 +1467,3 @@ vim.schedule(function()
         end, { desc = "DAP Add word under cursor to Watches" })
     end
 end)
-

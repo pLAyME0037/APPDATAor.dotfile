@@ -23,6 +23,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 -- ==========================================================
 -- Auto-update tags safely on save (with HOME safety guards)
 -- ==========================================================
+local uv = vim.uv
+if uv == nil then
+    uv = vim.loop
+end
+
 local ctags_job = nil
 local ctags_timer = nil
 local home_dir = vim.fs.normalize(vim.fn.expand("~"))
@@ -43,13 +48,16 @@ local ctags_excludes = {
     "--exclude=compile_commands.json",
 }
 
-local function run_ctags()
+local function run_ctags(root)
+    if vim.fn.executable("ctags") ~= 1 then
+        return
+    end
+
     if ctags_job then
         vim.fn.jobstop(ctags_job)
         ctags_job = nil
     end
 
-    local root = vim.fs.root(0, { ".git" })
     if not root or root == "" then
         return
     end
@@ -72,6 +80,11 @@ local function run_ctags()
 end
 
 vim.api.nvim_create_user_command("TagsGenerate", function()
+    if vim.fn.executable("ctags") ~= 1 then
+        vim.notify("ctags binary not found", vim.log.levels.WARN)
+        return
+    end
+
     local root = vim.fs.root(0, { ".git" })
     if not root or root == "" then
         root = vim.fs.normalize(vim.fn.getcwd())
@@ -103,15 +116,35 @@ end, { desc = "Generate ctags file safely" })
 vim.api.nvim_create_autocmd("BufWritePost", {
     group = vim.api.nvim_create_augroup("AutoCtags", { clear = true }),
     pattern = "*",
-    callback = function()
-        if vim.bo.buftype ~= "" or vim.fn.expand("%"):match("^%.git") then
+    callback = function(args)
+        if not vim.api.nvim_buf_is_valid(args.buf) then
+            return
+        end
+        if vim.bo[args.buf].buftype ~= "" then
             return
         end
 
-        if ctags_timer then
+        local buf_name = vim.api.nvim_buf_get_name(args.buf)
+        if buf_name:match("/%.git/") or buf_name:match("^%.git") then
+            return
+        end
+
+        local root = vim.fs.root(args.buf, { ".git" })
+        if not root or root == "" then
+            return
+        end
+
+        if ctags_timer == nil or ctags_timer:is_closing() then
+            ctags_timer = uv.new_timer()
+        else
             ctags_timer:stop()
         end
-        ctags_timer = vim.defer_fn(run_ctags, 1500)
+
+        if ctags_timer ~= nil then
+            ctags_timer:start(1500, 0, vim.schedule_wrap(function()
+                run_ctags(root)
+            end))
+        end
     end,
 })
 
@@ -130,7 +163,11 @@ autocmd("FileType", {
             local line = vim.fn.expand("<cfile>")
             local file = line:gsub("%.", "/")
             local filepath = "resources/views/" .. file .. ".blade.php"
-            vim.cmd("edit " .. filepath)
+            if vim.fn.filereadable(filepath) == 1 then
+                vim.cmd("edit " .. vim.fn.fnameescape(filepath))
+            else
+                vim.cmd("normal! gf")
+            end
         end, { buffer = args.buf, desc = "Go to Laravel View" })
 
         vim.opt_local.isfname:append("@-@")

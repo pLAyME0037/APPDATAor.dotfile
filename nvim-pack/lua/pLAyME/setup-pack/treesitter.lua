@@ -23,6 +23,10 @@ if ok_ts then
 end
 
 local ts_auto_group = vim.api.nvim_create_augroup("TreesitterAutoStart", { clear = true })
+local ok_lang, has_lang = pcall(vim.treesitter.language.add, lang)
+if ok_lang and has_lang then
+    pcall(vim.treesitter.start, args.buf, lang)
+end
 
 vim.api.nvim_create_autocmd("FileType", {
     group = ts_auto_group,
