@@ -10,6 +10,7 @@ vim.api.nvim_set_keymap("n", "<leader>tf", "<Plug>PlenaryTestFile",
                         { noremap = false, silent = false })
 
 vim.keymap.set("i", "jk", "<Esc>")
+vim.keymap.set("t", "jk", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 vim.keymap.set("n", "J", "mzJ`z")
 
 local tmux_dirs = {
