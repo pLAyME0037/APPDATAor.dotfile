@@ -13,9 +13,9 @@ PanelWindow {
         right:      true;
     }
     margins {
-        top:        1;
-        left:       1;
-        right:      1;
+        top:        0;
+        left:       0;
+        right:      0;
     }
     implicitHeight: 25
     color:          "#1e1e2e"

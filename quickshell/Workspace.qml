@@ -6,7 +6,7 @@ import QtQuick.Layouts
 Rectangle {
     implicitWidth:                    row.implicitWidth + 22
     implicitHeight:                   25
-    radius:                           height/2
+    radius:                           1
     color:                            "#121218"
     property int activeWs:            Hyprland.focusedWorkspace?.id ?? 1
     RowLayout {
@@ -19,7 +19,7 @@ Rectangle {
                 property int wsIndex: index + 1
                 implicitWidth:        wsIndex === activeWs ? 25 : 18
                 implicitHeight:       25
-                radius:               3
+                radius:               0
                 color:                wsIndex === activeWs ? "#45475a" : "transparent"
                 Text {
                     anchors.centerIn: parent

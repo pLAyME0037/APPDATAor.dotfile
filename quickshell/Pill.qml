@@ -10,7 +10,7 @@ Rectangle {
     implicitWidth:                 row.implicitWidth + 22
     implicitHeight:                25
     radius:                        height/2
-    color:                         "#121218"
+    color:                         "#1e1e2e"
     RowLayout {
         id:                        row
         anchors.centerIn:          parent

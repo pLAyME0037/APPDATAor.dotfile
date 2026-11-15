@@ -17,14 +17,15 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 hl.monitor({
     output   = "eDP-1",
-    mode     = "1920x1080@60",
+    mode     = "preferred",
     position = "0x0",
     scale    = "1",
 })
 
 hl.monitor({
     output   = "HDMI-A-1",
-    mode     = "1024x768@60",
+    -- mode     = "1024x768@60",
+    mode     = "preferred",
     position = "1920x0",
     scale    = "1",
     mirror   = "eDP-1"
@@ -38,7 +39,7 @@ hl.monitor({
 -- Set programs that you use
 local terminal    = "kitty"
 local fileManager = "dolphin"
-local menu        = "rofi -show run"
+local menu        = "rofi -show drun -drun-reload"
 
 
 -------------------
@@ -49,23 +50,17 @@ local menu        = "rofi -show run"
 
 -- Autostart necessary processes (like notifications daemons, status bars, etc.)
 -- Or execute your favorite apps at launch like this:
---
+
 hl.on("hyprland.start", function ()
-  --   hl.exec_cmd(terminal)
-  --   hl.exec_cmd("nm-applet")
-  --   hl.exec_cmd("hyprpaper & firefox")
-  hl.exec_cmd("waybar & awww-daemon & mako")
-  hl.exec_cmd("~/.config/hypr/scripts/battery_check.sh")
-  hl.exec_cmd("~/.local/bin/chWall.sh ~/github/wallpapers/wallpaper/b-396.jpg")
-  hl.exec_cmd("wl-paste --type text --watch cliphist store")
-  hl.exec_cmd("wl-paste --type image --watch cliphist store")
   -- access windows partition
   hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
   hl.exec_cmd("/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1")
-  -- Dark mode for GTK4/Libadwaita apps
-  hl.exec_cmd("gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'")
-  -- Dark theme for GTK3 apps
-  hl.exec_cmd("gsettings set org.gnome.desktop.interface gtk-theme 'KvArcDark'")
+  -- script
+  hl.exec_cmd("~/.config/hypr/scripts/battery_check.sh")
+  hl.exec_cmd("~/.config/hypr/scripts/chWall.sh /mnt/disk2/github/wallpapers/wallpaper/b-396.jpg")
+  -- hl.exec_cmd("protonvpn-app")
+  hl.exec_cmd("~/.config/brave-css/brave-css-watch")
+  hl.exec_cmd("quickshell & awww-daemon & mako")
 end)
 
 
@@ -98,18 +93,27 @@ hl.env("QT_SCALE_FACTOR", "1.25")
 
 hl.env("GDK_DPI_SCALE", "1.25")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
-
+---------------------
 -- NVIDIA Specific
--- To force GBM as a backend, set the following environment variables:
+--   To force GBM as a backend, set the following environment
+--   variables:
+---------------------
 -- hl.env("GBM_BACKEND", "nvidia-drm")
 hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 -- Hardware acceleration on NVIDIA GPUs
 hl.env("LIBVA_DRIVER_NAME", "nvidia")
+---------------------
 -- Controls if G-Sync capable monitors should use Variable Refresh Rate (VRR)
+---------------------
 -- __GL_GSYNC_ALLOWED
--- Controls if Adaptive Sync should be used. Recommended to set as “0” to avoid having problems on some games.
+---------------------
+-- Controls if Adaptive Sync should be used. Recommended to set as “0” to avoid
+-- having problems on some games.
+---------------------
 -- __GL_VRR_ALLOWED
+---------------------
 -- use legacy DRM interface instead of atomic mode setting. NOT recommended.
+---------------------
 -- hl.env("AQ_NO_ATOMIC", "1")
 
 
@@ -139,13 +143,13 @@ hl.env("LIBVA_DRIVER_NAME", "nvidia")
 -- Refer to https://wiki.hypr.land/Configuring/Basics/Variables/
 hl.config({
     general = {
-        gaps_in  = 3,
-        gaps_out = 6,
+        gaps_in  = 2,
+        gaps_out = 3,
 
-        border_size = 2,
+        border_size = 1,
 
         col = {
-            active_border   = { colors = {"rgba(33ccffee)", "rgba(00ff99ee)"}, angle = 45 },
+            active_border   = { colors = {"rgba(89b4faee)", "rgba(b4befeee)"}, angle = 45 },
             inactive_border = "rgba(595959aa)",
         },
 
@@ -159,8 +163,8 @@ hl.config({
     },
 
     decoration = {
-        rounding       = 3,
-        rounding_power = 3,
+        rounding       = 0,
+        rounding_power = 1,
 
         -- Change transparency of focused and unfocused windows
         active_opacity   = 1.0,
@@ -182,7 +186,7 @@ hl.config({
     },
 
     animations = {
-        enabled = true,
+        enabled = false,
     },
 })
 
@@ -288,8 +292,8 @@ hl.config({
         kb_rules   = "",
 
         follow_mouse = 1,
-        sensitivity = 0, -- -1.0 - 1.0, 0 means no modification.
-        repeat_rate = 40,
+        sensitivity  = 0, -- -1.0 - 1.0, 0 means no modification.
+        repeat_rate  = 40,
         repeat_delay = 240,
 
         touchpad = {
@@ -323,7 +327,6 @@ local shftMod = "SUPER + SHIFT" -- Sets "Windows" key as main modifier
 hl.bind(mainMod .. " +  Return", hl.dsp.exec_cmd(terminal))
 local closeWindowBind = hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 -- closeWindowBind:set_enabled(false)
-hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(menu))
@@ -331,11 +334,13 @@ hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle"}))
 hl.bind(shftMod .. " + F", hl.dsp.window.fullscreen({ action = "toggle"}))
-hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("brave"))
+hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("~/.config/brave-css/brave-css"))
+hl.bind(shftMod .. " + B", hl.dsp.exec_cmd("~/.config/brave-css/brave-plain"))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("Telegram"))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("killall -9 waybar && waybar &"))
-hl.bind(mainMod .. " + G", hl.dsp.exec_cmd("gparted"))
-hl.bind("PRINT",           hl.dsp.exec_cmd("grim ~/Document/pictures/$(date +'%Y-%m-%d-%H%M%S_grim.png')"))
+hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("~/.config/quickshell/lock.sh"))
+hl.bind("PRINT",           hl.dsp.exec_cmd("grim ~/Pictures/$(date +'%Y-%m-%d-%H%M%S_grim.png')"))
+hl.bind(shftMod .. " + M", hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'"))
 hl.bind(shftMod .. " + PRINT", hl.dsp.exec_cmd("grim -g '$(slurp)' - | wl-copy"))
 hl.bind(mainMod .. " + PRINT", hl.dsp.exec_cmd("grim -g '$(slurp)' - | swappy -f -"))
 
@@ -424,7 +429,15 @@ hl.window_rule({
 hl.window_rule({
     name  = "move-hyprland-run",
     match = { class = "hyprland-run" },
-
     move  = "20 monitor_h-120",
     float = true,
+})
+
+hl.window_rule({
+    name  = "mpv-music-dir-to-w4",
+    match = {
+        class = "^(mpv)$",
+        title = ".*/mnt/disk2/img-mp3-mp4/musics.*"
+    },
+    workspace = "4 silent",
 })

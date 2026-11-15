@@ -1,3 +1,8 @@
 # don't steal my api
-nvim/lua/pLAyME/lazy/copilot.lua
+
+tmux/plugins/*
+emacs/elpaca
+emacs/config.el
+emacs/eln-cache
+quickshell/notes.json
 
