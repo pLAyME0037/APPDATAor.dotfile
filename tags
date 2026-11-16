@@ -4326,6 +4326,8 @@ activityBarBadge.foreground	other/settings.json	/^        "activityBarBadge.fore
 add-trace-for	emacs/elpaca/sources/lua-mode/init-tryout.el	/^(defmacro add-trace-for (fn)$/;"	m
 add_files_to_gitignore	tmux/plugins/tmux-resurrect/lib/tmux-test/setup	/^add_files_to_gitignore() {$/;"	f
 add_hex_offset	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function add_hex_offset(addr_str, offset)$/;"	f
+add_hl	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^        local function add_hl(row_0, col_start, col_end, group)$/;"	f
+add_kv_line	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^        local function add_kv_line(key_label, val_text, val_group, extra_text, extra_group)$/;"	f
 add_path	tmux/plugins/tmux-sessionx/scripts/sessionx.sh	/^		add_path() {$/;"	f
 add_result	lazy-nvim/lua/pLAyME/lazy/telescope.lua	/^    local function add_result(i, line, name, raw_name)$/;"	f
 add_result	nvim-pack/lua/pLAyME/setup-pack/telescope.lua	/^    local function add_result(i, line, name, raw_name)$/;"	f
@@ -4906,6 +4908,7 @@ build	emacs/elpaca/sources/shrink-path/Makefile	/^build:$/;"	t
 build-$(EMACS_VERSION)	emacs/elpaca/sources/haskell-mode/Makefile	/^build-$(EMACS_VERSION) :$/;"	t
 build-$(EMACS_VERSION)/%.elc	emacs/elpaca/sources/haskell-mode/Makefile	/^build-$(EMACS_VERSION)\/%.elc : %.el $(ELFILES)$/;"	t
 build-$(EMACS_VERSION)/build-flag	emacs/elpaca/sources/haskell-mode/Makefile	/^build-$(EMACS_VERSION)\/build-flag : build-$(EMACS_VERSION) $(patsubst %.el,build-$(EMACS_VERSIO/;"	t
+build_mem_inspector_content	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function build_mem_inspector_content()$/;"	f
 build_xxd_lines	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function build_xxd_lines()$/;"	f
 bump-minor-pre-major	tmux/plugins/tmux/.github/release-please-config.json	/^      "bump-minor-pre-major": true,$/;"	b	object:packages..
 bump-patch-for-minor-pre-major	tmux/plugins/tmux/.github/release-please-config.json	/^      "bump-patch-for-minor-pre-major": false,$/;"	b	object:packages..
@@ -4914,6 +4917,8 @@ button.foreground	other/attemp_catppuccine_setting.json	/^        "button.foregr
 button.foreground	other/settings.json	/^        "button.foreground": "#000000",$/;"	s	object:workbench.colorCustomizations
 buz	emacs/elpaca/sources/php-mode/tests/8.0/attribute/class.php	/^    function buz() {}$/;"	f	class:Klass
 byte_to_bin	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function byte_to_bin(byte)$/;"	f
+bytes_le_to_i64_str	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function bytes_le_to_i64_str(bytes)$/;"	f
+bytes_le_to_u64_str	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function bytes_le_to_u64_str(bytes)$/;"	f
 c	emacs/elpaca/sources/php-mode/tests/issue-439.php	/^$c = <<<'A_B_C'$/;"	v
 c	emacs/elpaca/sources/php-mode/tests/issue-66-namespace.php	/^$c = new \\my\\name\\MyClass; \/\/ see "Global Space" section$/;"	v	namespace:my\\name
 cache_tmux_default_command	tmux/plugins/tmux-resurrect/scripts/restore.sh	/^cache_tmux_default_command() {$/;"	f
@@ -4935,6 +4940,7 @@ callback	nvim-pack/lua/pLAyME/compile_langs.lua	/^        callback = function()$
 callback	nvim-pack/lua/pLAyME/init.lua	/^    callback = function()$/;"	f
 callback	nvim-pack/lua/pLAyME/init.lua	/^    callback = function(args)$/;"	f
 callback	nvim-pack/lua/pLAyME/pack.lua	/^    callback = function(ev)$/;"	f
+callback	nvim-pack/lua/pLAyME/remap.lua	/^    callback = function()$/;"	f
 callback	nvim-pack/lua/pLAyME/setup-pack/data-viewer.lua	/^    callback = function(args)$/;"	f
 callback	nvim-pack/lua/pLAyME/setup-pack/mini.lua	/^        callback = function()$/;"	f
 callback	nvim-pack/lua/pLAyME/setup-pack/nvim-lint.lua	/^    callback = function()$/;"	f
@@ -5065,6 +5071,7 @@ clipPath53	emacs/elpaca/sources/elpaca/images/elpaca.svg	/^       id="clipPath53
 clipPath53	emacs/elpaca/sources/elpaca/images/elpaca.svg	/^       id="clipPath53">$/;"	i
 clone	tmux/plugins/tpm/scripts/install_plugins.sh	/^clone() {$/;"	f
 clone_plugin	tmux/plugins/tpm/scripts/install_plugins.sh	/^clone_plugin() {$/;"	f
+close_inspector	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            local function close_inspector()$/;"	f
 closure	emacs/elpaca/sources/php-mode/tests/issue-19.php	/^$closure = function() {$/;"	f
 cls	bashrc/bashrc.sh	/^alias cls='clear'$/;"	a
 cmake-mode	emacs/elpaca/builds/evil-collection/modes/cmake-mode/README.org	/^* cmake-mode$/;"	p
@@ -8098,6 +8105,7 @@ debug	emacs/elpaca/builds/evil-collection/modes/debug/README.org	/^* debug$/;"	p
 debug	emacs/elpaca/sources/evil-collection/modes/debug/README.org	/^* debug$/;"	p
 debug.disassemblyView.showSourceCode	other/attemp_catppuccine_setting.json	/^    "debug.disassemblyView.showSourceCode": false,$/;"	b
 debug.disassemblyView.showSourceCode	other/settings.json	/^    "debug.disassemblyView.showSourceCode": false,$/;"	b
+dec_digits_to_hex	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function dec_digits_to_hex(digits)$/;"	f
 decode_f32_le	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function decode_f32_le(b1, b2, b3, b4)$/;"	f
 decode_f64_le	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function decode_f64_le(b1, b2, b3, b4, b5, b6, b7, b8)$/;"	f
 def-example-group	emacs/elpaca/sources/dash/dev/dash-defs.el	/^(defmacro def-example-group (name doc &rest examples)$/;"	m
@@ -10428,6 +10436,7 @@ enable_tmux_unit_on_boot	tmux/plugins/tmux-continuum/scripts/handle_tmux_automat
 end	emacs/elpaca/sources/evil/doc/make.bat	/^:end$/;"	l
 end_message	tmux/plugins/tpm/scripts/helpers/tmux_echo_functions.sh	/^end_message() {$/;"	f
 enough_time_since_last_run_passed	tmux/plugins/tmux-continuum/scripts/continuum_save.sh	/^enough_time_since_last_run_passed() {$/;"	f
+ensure_mem_highlights	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function ensure_mem_highlights()$/;"	f
 ensure_tpm_path_exists	tmux/plugins/tpm/scripts/helpers/utility.sh	/^ensure_tpm_path_exists() {$/;"	f
 entry_maker	lazy-nvim/lua/pLAyME/lazy/telescope.lua	/^            entry_maker = function(entry)$/;"	f
 entry_maker	nvim-pack/lua/pLAyME/setup-pack/telescope.lua	/^            entry_maker = function(entry)$/;"	f
@@ -10594,6 +10603,7 @@ eval-sexp-fu	emacs/elpaca/sources/evil-collection/modes/eval-sexp-fu/README.org	
 eval_expr	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^        local function eval_expr(expr_to_eval, allow_addr_fallback)$/;"	f
 evaluate["hex_mode_formatter"]	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    dap.listeners.before.evaluate["hex_mode_formatter"] = function(session, err, response)$/;"	f	unknown:dap.listeners.before
 even?	emacs/elpaca/sources/dash/dev/examples.el	/^(defun even? (num) (= 0 (% num 2)))$/;"	f
+event_stopped["mem_inspector_refresh"]	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    dap.listeners.after.event_stopped["mem_inspector_refresh"] = function()$/;"	f	unknown:dap.listeners.after
 event_stopped["xxd_memview_refresh"]	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    dap.listeners.after.event_stopped["xxd_memview_refresh"] = function()$/;"	f	unknown:dap.listeners.after
 evil	emacs/elpaca/builds/evil/evil-vars.el	/^(defgroup evil nil$/;"	G
 evil	emacs/elpaca/sources/evil/evil-vars.el	/^(defgroup evil nil$/;"	G
@@ -14455,10 +14465,10 @@ forge-add-default-bindings	emacs/elpaca/builds/evil-collection/modes/forge/evil-
 forge-add-default-bindings	emacs/elpaca/sources/evil-collection/modes/forge/evil-collection-forge.el	/^(defvar forge-add-default-bindings)$/;"	v
 format	lazy-nvim/lua/pLAyME/lazy/nvim-cmp.lua	/^				format = function(entry, vim_item)$/;"	f
 format	nvim-pack/lua/pLAyME/setup-pack/nvim-cmp.lua	/^        format = function(entry, vim_item)$/;"	f
+format_dump_addr	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function format_dump_addr(addr_str, use_dec)$/;"	f
 format_instruction_bytes	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function format_instruction_bytes(raw_bytes, to_hex)$/;"	f
 format_int_value	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function format_int_value(val, to_hex, var_type)$/;"	f
 format_item	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            format_item = function(item)$/;"	f
-format_le_memory_lines	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function format_le_memory_lines(expr, addr_str, region_info, raw_bytes_str)$/;"	f
 format_sessions_with_git_branch	tmux/plugins/tmux-sessionx/scripts/git-branch.sh	/^format_sessions_with_git_branch() {$/;"	f
 format_xxd_addr	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function format_xxd_addr(addr_str, use_dec)$/;"	f
 fors	emacs/elpaca/sources/php-mode/tests/issue-333.php	/^    protected $fors;$/;"	v	class:SlowNamespace\\More\\Levels\\Hello
@@ -14501,6 +14511,7 @@ frame-local-set	emacs/elpaca/builds/frame-local/frame-local.el	/^(defun frame-lo
 frame-local-set	emacs/elpaca/sources/frame-local/frame-local.el	/^(defun frame-local-set (name value &optional frame)$/;"	f
 frame-local-setq	emacs/elpaca/builds/frame-local/frame-local.el	/^(defmacro frame-local-setq (name value &optional frame)$/;"	m
 frame-local-setq	emacs/elpaca/sources/frame-local/frame-local.el	/^(defmacro frame-local-setq (name value &optional frame)$/;"	m
+frameId	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^                session:request("scopes", { frameId = frame.id }, function(err, resp)$/;"	f
 free-keys-mode-map	emacs/elpaca/builds/evil-collection/modes/free-keys/evil-collection-free-keys.el	/^(defvar free-keys-mode-map)$/;"	v
 free-keys-mode-map	emacs/elpaca/sources/evil-collection/modes/free-keys/evil-collection-free-keys.el	/^(defvar free-keys-mode-map)$/;"	v
 freshclam	bashrc/bashrc.sh	/^alias freshclam='sudo freshclam'$/;"	a
@@ -17499,6 +17510,7 @@ helpful	emacs/elpaca/sources/evil-collection/modes/helpful/README.org	/^* helpfu
 helpful-mode-map (normal state)	emacs/elpaca/builds/evil-collection/modes/helpful/README.org	/^*** helpful-mode-map (normal state)$/;"	s
 helpful-mode-map (normal state)	emacs/elpaca/sources/evil-collection/modes/helpful/README.org	/^*** helpful-mode-map (normal state)$/;"	s
 hex_addr_to_dec	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function hex_addr_to_dec(addr_str)$/;"	f
+hex_digits_to_dec	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function hex_digits_to_dec(digits)$/;"	f
 hideshow	emacs/elpaca/builds/evil-collection/modes/hideshow/README.org	/^* hideshow$/;"	p
 hideshow	emacs/elpaca/sources/evil-collection/modes/hideshow/README.org	/^* hideshow$/;"	p
 hif-ifx-else-endif-regexp	emacs/elpaca/builds/evil/evil-commands.el	/^(defvar hif-ifx-else-endif-regexp)$/;"	v
@@ -23220,6 +23232,7 @@ newsticker-mode-map (plainview)	emacs/elpaca/builds/evil-collection/modes/newsti
 newsticker-mode-map (plainview)	emacs/elpaca/sources/evil-collection/modes/newsticker/README.org	/^*** newsticker-mode-map (plainview)$/;"	s
 newsticker-treeview-mode-map	emacs/elpaca/builds/evil-collection/modes/newsticker/README.org	/^*** newsticker-treeview-mode-map$/;"	s
 newsticker-treeview-mode-map	emacs/elpaca/sources/evil-collection/modes/newsticker/README.org	/^*** newsticker-treeview-mode-map$/;"	s
+next_interp_mode	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function next_interp_mode(cur)$/;"	f
 nf	other/Microsoft.PowerShell_profile.ps1	/^function nf { param($name) New-Item -ItemType "file" -Path . -Name $name }$/;"	f
 noie8	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^      "noie8": true,$/;"	b	object:preferences.fontPref
 none	emacs/elpaca/sources/php-mode/tests/type-hints.php	/^    public function none($title): void$/;"	f	class:SomeClass	typeref:unknown:void
@@ -23462,7 +23475,6 @@ online_status	tmux/plugins/tmux-online-status/scripts/online_status_icon.sh	/^on
 open_live_memview_prompt	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function open_live_memview_prompt()$/;"	f
 open_scratch_float	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function open_scratch_float(title, lines, ft, initial_line)$/;"	f
 open_xxd_memview	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    open_xxd_memview = function(expr, mem_ref, addr_label)$/;"	f
-open_xxd_memview_prompt	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function open_xxd_memview_prompt()$/;"	f
 openports	bashrc/bashrc.sh	/^alias openports='netstat -nape --inet'$/;"	a
 optional_arguments	emacs/elpaca/sources/evil/doc/source/_ext/elisp.py	/^    optional_arguments = 2$/;"	v	class:Variable
 options	emacs/elpaca/sources/php-mode/tests/type-hints.php	/^    public function options(array $options): array$/;"	f	class:SomeClass	typeref:unknown:array
@@ -23739,6 +23751,7 @@ parse_cli_args	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function
 parse_params	tmux/plugins/tmux/tests/harness.sh	/^parse_params() {$/;"	f
 pass-mode-map	emacs/elpaca/builds/evil-collection/modes/pass/evil-collection-pass.el	/^(defvar pass-mode-map)$/;"	v
 pass-mode-map	emacs/elpaca/sources/evil-collection/modes/pass/evil-collection-pass.el	/^(defvar pass-mode-map)$/;"	v
+paste_keep_col	nvim-pack/lua/pLAyME/remap.lua	/^local function paste_keep_col(cmd, is_visual)$/;"	f
 path13	emacs/elpaca/sources/elpaca/images/elpaca.svg	/^         sodipodi:nodetypes="sscsscssssssscssscscscsssssscsssscscsssccsscssccssssscssscssssssssc/;"	i
 path14	emacs/elpaca/sources/elpaca/images/elpaca.svg	/^             sodipodi:nodetypes="ssssssssscscssssssscsssssscssssssssssscsssssssscsscsssssssssscs/;"	i
 path16	emacs/elpaca/sources/elpaca/images/elpaca.svg	/^               sodipodi:nodetypes="ssssssssssssssssssssssssssscsssssssssssssssssssssssscssssscss/;"	i
@@ -25385,6 +25398,7 @@ redo-docs	emacs/elpaca/sources/magit/Makefile	/^redo-docs:$/;"	t
 redo-docs	emacs/elpaca/sources/magit/docs/Makefile	/^redo-docs:$/;"	t
 redo-docs	emacs/elpaca/sources/with-editor/Makefile	/^redo-docs:$/;"	t
 redo-docs	emacs/elpaca/sources/with-editor/docs/Makefile	/^redo-docs:$/;"	t
+refresh_mem_inspector	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    refresh_mem_inspector = function(re_read, sync_global_hex)$/;"	f
 refresh_xxd_view	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    refresh_xxd_view = function(re_read)$/;"	f
 refs/wip/index/refs/heads/master	emacs/elpaca/sources/magit/docs/magit.org	/^  ,*--*--*--*--*--*       refs\/wip\/index\/refs\/heads\/master$/;"	p
 reftex	emacs/elpaca/builds/evil-collection/modes/reftex/README.org	/^* reftex$/;"	p
@@ -25411,6 +25425,7 @@ remove_old_backups	tmux/plugins/tmux-resurrect/scripts/save.sh	/^remove_old_back
 rename_current_session	tmux/plugins/tmux-resurrect/tests/helpers/expect_helpers.exp	/^proc rename_current_session {name} {$/;"	p
 render-markdown.nvim	lazy-nvim/lazy-lock.json	/^  "render-markdown.nvim": { "branch": "main", "commit": "0fd43fb4b1f073931c4b481f5f3b7cea3749e19/;"	o
 render-markdown.nvim	nvim-pack/nvim-pack-lock.json	/^    "render-markdown.nvim": {$/;"	o	object:plugins
+render_mem_inspector_window	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function render_mem_inspector_window()$/;"	f
 render_xxd_window	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function render_xxd_window()$/;"	f
 replace	emacs/elpaca/builds/evil-collection/modes/replace/README.org	/^* replace$/;"	p
 replace	emacs/elpaca/sources/evil-collection/modes/replace/README.org	/^* replace$/;"	p
@@ -25439,6 +25454,7 @@ restore_active_and_alternate_windows_for_grouped_sessions	tmux/plugins/tmux-resu
 restore_active_pane_for_each_window	tmux/plugins/tmux-resurrect/scripts/restore.sh	/^restore_active_pane_for_each_window() {$/;"	f
 restore_all_pane_processes	tmux/plugins/tmux-resurrect/scripts/restore.sh	/^restore_all_pane_processes() {$/;"	f
 restore_all_panes	tmux/plugins/tmux-resurrect/scripts/restore.sh	/^restore_all_panes() {$/;"	f
+restore_focus_and_cursor	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function restore_focus_and_cursor(orig_win, orig_buf, orig_cursor)$/;"	f
 restore_from_scratch_true	tmux/plugins/tmux-resurrect/scripts/restore.sh	/^restore_from_scratch_true() {$/;"	f
 restore_grouped_session	tmux/plugins/tmux-resurrect/scripts/restore.sh	/^restore_grouped_session() {$/;"	f
 restore_grouped_sessions	tmux/plugins/tmux-resurrect/scripts/restore.sh	/^restore_grouped_sessions() {$/;"	f
@@ -25573,6 +25589,7 @@ run_tests_on_virtual_machines	tmux/plugins/tmux-resurrect/lib/tmux-test/run_test
 run_tests_on_virtual_machines	tmux/plugins/tmux-resurrect/run_tests	/^run_tests_on_virtual_machines() {$/;"	f
 run_tests_on_vm	tmux/plugins/tmux-resurrect/lib/tmux-test/run_tests	/^run_tests_on_vm() {$/;"	f
 run_tests_on_vm	tmux/plugins/tmux-resurrect/run_tests	/^run_tests_on_vm() {$/;"	f
+run_ui_refresh	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            local function run_ui_refresh()$/;"	f
 run_vagrant	tmux/plugins/tmux-resurrect/lib/tmux-test/run_tests	/^run_vagrant() {$/;"	f
 run_vagrant	tmux/plugins/tmux-resurrect/run_tests	/^run_vagrant() {$/;"	f
 s--aget	emacs/elpaca/builds/s/s.el	/^(defun s--aget (alist key)$/;"	f
@@ -25853,6 +25870,7 @@ safe_markdown_cmd	lazy-nvim/after/plugin/markdown.lua	/^local function safe_mark
 samp	emacs/elpaca/sources/haskell-mode/doc/haskell-mode.css	/^code, kbd, samp, pre {$/;"	s
 samp	emacs/elpaca/sources/haskell-mode/doc/haskell-mode.css	/^code, pre, samp {$/;"	s
 save_all	tmux/plugins/tmux-resurrect/scripts/save.sh	/^save_all() {$/;"	f
+save_yank_cursor	nvim-pack/lua/pLAyME/remap.lua	/^local function save_yank_cursor(keys)$/;"	f
 savehist-additional-variables	emacs/elpaca/builds/evil/evil-jumps.el	/^(defvar savehist-additional-variables)$/;"	v
 savehist-additional-variables	emacs/elpaca/sources/evil/evil-jumps.el	/^(defvar savehist-additional-variables)$/;"	v
 scheme	emacs/elpaca/builds/evil-collection/modes/scheme/README.org	/^* scheme$/;"	p
@@ -26073,6 +26091,7 @@ should-lua-font-lock-equal	emacs/elpaca/sources/lua-mode/test/utils.el	/^(defmac
 should-match	emacs/elpaca/sources/haskell-mode/tests/interactive-haskell-mode-tests.el	/^(defun should-match (str)$/;"	f
 should-not	emacs/elpaca/sources/s/dev/ert.el	/^(defmacro* should-not (form)$/;"	m
 should-not-exist	emacs/elpaca/sources/f/test/test-helper.el	/^(defun should-not-exist (filename)$/;"	f
+should_refresh_event_stopped_key	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function should_refresh_event_stopped_key(key, has_dap_win)$/;"	f
 showCodes	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^    "showCodes": true,$/;"	b	object:preferences
 showGlyphs	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^    "showGlyphs": true,$/;"	b	object:preferences
 showGrid	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^    "showGrid": true,$/;"	b	object:preferences

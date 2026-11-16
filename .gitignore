@@ -1,8 +1,8 @@
 # don't steal my api
 
-tmux/plugins/*
+tmux/plugins
 emacs/elpaca
 emacs/config.el
 emacs/eln-cache
 quickshell/notes.json
-
+tags

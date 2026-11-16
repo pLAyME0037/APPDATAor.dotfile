@@ -483,6 +483,57 @@ vim.schedule(function()
         return false
     end
 
+    local function hex_digits_to_dec(digits)
+        local dec = { 0 }
+        for i = 1, #digits do
+            local nibble = tonumber(digits:sub(i, i), 16)
+            if nibble == nil then
+                return nil
+            end
+            local carry = nibble
+            for j = #dec, 1, -1 do
+                local val = dec[j] * 16 + carry
+                dec[j] = val % 10
+                carry = math.floor(val / 10)
+            end
+            while carry > 0 do
+                table.insert(dec, 1, carry % 10)
+                carry = math.floor(carry / 10)
+            end
+        end
+        return table.concat(dec)
+    end
+
+    local function dec_digits_to_hex(digits)
+        local bytes = {}
+        local n = {}
+        for i = 1, #digits do
+            local d = tonumber(digits:sub(i, i))
+            if d == nil then
+                return nil
+            end
+            table.insert(n, d)
+        end
+        while #n > 0 do
+            local rem = 0
+            local next_n = {}
+            for i = 1, #n do
+                local cur = rem * 10 + n[i]
+                local q = math.floor(cur / 16)
+                rem = cur % 16
+                if #next_n > 0 or q > 0 then
+                    table.insert(next_n, q)
+                end
+            end
+            table.insert(bytes, 1, string.format("%x", rem))
+            n = next_n
+        end
+        if #bytes == 0 then
+            return "0x0"
+        end
+        return "0x" .. table.concat(bytes)
+    end
+
     local function u53_to_hex(num)
         if num == 0 then
             return "0x0"
@@ -504,9 +555,14 @@ vim.schedule(function()
             local sign, digits = trimmed:match("^(-?)(%d+)$")
             if digits then
                 local num = tonumber(digits)
+                local hex_str = nil
                 if num and num <= 9007199254740991 then
-                    local hex_str = u53_to_hex(num)
-                    if sign == "-" and num > 0 then
+                    hex_str = u53_to_hex(num)
+                else
+                    hex_str = dec_digits_to_hex(digits)
+                end
+                if hex_str ~= nil then
+                    if sign == "-" and hex_str ~= "0x0" then
                         return "-" .. hex_str
                     end
                     return hex_str
@@ -519,11 +575,17 @@ vim.schedule(function()
             local sign, hex_digits = trimmed:match("^(-?)0[xX](%x+)$")
             if hex_digits then
                 local num = tonumber(hex_digits, 16)
+                local dec_str = nil
                 if num and num <= 9007199254740991 then
-                    if sign == "-" and num > 0 then
-                        return string.format("-%.0f", num)
+                    dec_str = string.format("%.0f", num)
+                else
+                    dec_str = hex_digits_to_dec(hex_digits)
+                end
+                if dec_str ~= nil then
+                    if sign == "-" and dec_str ~= "0" then
+                        return "-" .. dec_str
                     end
-                    return string.format("%.0f", num)
+                    return dec_str
                 end
             end
         end
@@ -624,29 +686,112 @@ vim.schedule(function()
         end
     end
 
-    local refresh_xxd_view = nil
+    local refresh_mem_inspector = nil
+
+    local function restore_focus_and_cursor(orig_win, orig_buf, orig_cursor)
+        if not vim.api.nvim_win_is_valid(orig_win) then
+            return
+        end
+        local cur_win = vim.api.nvim_get_current_win()
+        if cur_win ~= orig_win then
+            pcall(vim.api.nvim_set_current_win, orig_win)
+        end
+        if vim.api.nvim_win_get_buf(orig_win) == orig_buf then
+            local line_count = vim.api.nvim_buf_line_count(orig_buf)
+            local target_row = math.min(orig_cursor[1], line_count)
+            if target_row < 1 then
+                target_row = 1
+            end
+            local target_line = vim.api.nvim_buf_get_lines(orig_buf, target_row - 1, target_row, false)[1]
+            local max_col = 0
+            if type(target_line) == "string" and #target_line > 0 then
+                max_col = #target_line - 1
+            end
+            local target_col = math.min(orig_cursor[2], max_col)
+            pcall(vim.api.nvim_win_set_cursor, orig_win, { target_row, target_col })
+        end
+    end
+
+    local function should_refresh_event_stopped_key(key, has_dap_win)
+        if type(key) ~= "string" then
+            return false
+        end
+        if key:find("virtual_text", 1, true) then
+            return true
+        end
+        if not has_dap_win then
+            return false
+        end
+        if key:find("disasm", 1, true) then
+            return true
+        end
+        if key:find("dap%-view") or key:find("dap_view") then
+            return true
+        end
+        if key:find("dapui", 1, true) then
+            return true
+        end
+        return false
+    end
 
     local function toggle_hex_mode()
+        local orig_win = vim.api.nvim_get_current_win()
+        local orig_buf = vim.api.nvim_win_get_buf(orig_win)
+        local orig_cursor = vim.api.nvim_win_get_cursor(orig_win)
+
         hex_mode = not hex_mode
-        local session = dap.session()
-        if session and session.current_frame and type(session._frame_set) == "function" then
-            pcall(function()
-                session:_frame_set(session.current_frame)
-            end)
+
+        if type(refresh_mem_inspector) == "function" then
+            refresh_mem_inspector(false, true)
         end
-        if session and ok_disasm then
-            for key, listener in pairs(dap.listeners.after.event_stopped) do
-                if type(key) == "string" and key:find("disasm", 1, true) then
-                    pcall(listener, session, nil, {
-                        reason = "step",
-                        threadId = session.stopped_thread_id,
-                    })
+
+        local session = dap.session()
+        if session then
+            local function run_ui_refresh()
+                local has_dap_win = find_dap_win(false) ~= nil
+                local stopped_body = {
+                    reason = "step",
+                    threadId = session.stopped_thread_id,
+                }
+                for key, listener in pairs(dap.listeners.after.event_stopped) do
+                    if should_refresh_event_stopped_key(key, has_dap_win) then
+                        pcall(listener, session, nil, stopped_body)
+                    end
                 end
+                if ok_dap_view and has_dap_win and type(dap_view.show_view) == "function" then
+                    local ok_state, dv_state = pcall(require, "dap-view.state")
+                    if ok_state and type(dv_state) == "table" and type(dv_state.current_section) == "string" then
+                        pcall(dap_view.show_view, dv_state.current_section)
+                    end
+                end
+                restore_focus_and_cursor(orig_win, orig_buf, orig_cursor)
+                vim.schedule(function()
+                    restore_focus_and_cursor(orig_win, orig_buf, orig_cursor)
+                end)
+                vim.defer_fn(function()
+                    local cur_win = vim.api.nvim_get_current_win()
+                    if cur_win ~= orig_win then
+                        local cur_ft = vim.bo[vim.api.nvim_win_get_buf(cur_win)].filetype
+                        if is_dap_filetype(cur_ft) then
+                            restore_focus_and_cursor(orig_win, orig_buf, orig_cursor)
+                        end
+                    end
+                end, 35)
+            end
+
+            if session.current_frame and type(session.current_frame.id) == "number" then
+                local frame = session.current_frame
+                session:request("scopes", { frameId = frame.id }, function(err, resp)
+                    if not err and type(resp) == "table" and type(resp.scopes) == "table" then
+                        frame.scopes = resp.scopes
+                    end
+                    vim.schedule(run_ui_refresh)
+                end)
+            else
+                run_ui_refresh()
             end
         end
-        if type(refresh_xxd_view) == "function" then
-            refresh_xxd_view(false)
-        end
+
         if hex_mode then
             vim.notify("DAP Display Mode: HEX", vim.log.levels.INFO)
         else
@@ -823,118 +968,314 @@ vim.schedule(function()
         return string.format("%.15g", val)
     end
 
-    local function format_le_memory_lines(expr, addr_str, region_info, raw_bytes_str)
+    local mem_insp_ns = vim.api.nvim_create_namespace("dap_memory_inspector")
+
+    local function ensure_mem_highlights()
+        vim.api.nvim_set_hl(0, "DapMemHeader",    { link = "Title",          default = true })
+        vim.api.nvim_set_hl(0, "DapMemSeparator", { link = "WinSeparator",   default = true })
+        vim.api.nvim_set_hl(0, "DapMemAddr",      { link = "Constant",       default = true })
+        vim.api.nvim_set_hl(0, "DapMemBitWidth",  { link = "Type",           default = true })
+        vim.api.nvim_set_hl(0, "DapMemBytes",     { link = "Comment",        default = true })
+        vim.api.nvim_set_hl(0, "DapMemModeTag",   { link = "DiagnosticInfo", default = true })
+        vim.api.nvim_set_hl(0, "DapMemLabel",     { link = "Keyword",        default = true })
+        vim.api.nvim_set_hl(0, "DapMemValue",     { link = "Number",         default = true })
+        vim.api.nvim_set_hl(0, "DapMemSecondary", { link = "Special",        default = true })
+        vim.api.nvim_set_hl(0, "DapMemAscii",     { link = "String",         default = true })
+        vim.api.nvim_set_hl(0, "DapMemHint",      { link = "Comment",        default = true })
+    end
+
+    local function hex_addr_to_dec(addr_str)
+        local digits = addr_str:match("^0?[xX]?(%x+)$")
+        if not digits then
+            return addr_str
+        end
+        local res = hex_digits_to_dec(digits)
+        if res == nil then
+            return addr_str
+        end
+        return res
+    end
+
+    local function format_xxd_addr(addr_str, use_dec)
+        if use_dec then
+            return hex_addr_to_dec(addr_str)
+        end
+        local stripped = addr_str:gsub("^0[xX]", "")
+        return stripped:lower()
+    end
+
+    local function format_dump_addr(addr_str, use_dec)
+        if use_dec then
+            return hex_addr_to_dec(addr_str)
+        end
+        return addr_str:lower()
+    end
+
+    local function bytes_le_to_u64_str(bytes)
+        local hex_str = string.format(
+            "%02x%02x%02x%02x%02x%02x%02x%02x",
+            bytes[8], bytes[7], bytes[6], bytes[5],
+            bytes[4], bytes[3], bytes[2], bytes[1]
+        )
+        local dec_str = hex_digits_to_dec(hex_str)
+        if dec_str == nil then
+            return "0x" .. hex_str
+        end
+        return dec_str
+    end
+
+    local function bytes_le_to_i64_str(bytes)
+        if bytes[8] < 128 then
+            return bytes_le_to_u64_str(bytes)
+        end
+        local inv = {}
+        local carry = 1
+        for i = 1, 8 do
+            local v = (255 - bytes[i]) + carry
+            inv[i] = v % 256
+            carry = math.floor(v / 256)
+        end
+        local hex_str = string.format(
+            "%02x%02x%02x%02x%02x%02x%02x%02x",
+            inv[8], inv[7], inv[6], inv[5],
+            inv[4], inv[3], inv[2], inv[1]
+        )
+        local mag = hex_digits_to_dec(hex_str)
+        if mag == nil then
+            return "-?"
+        end
+        if mag == "0" then
+            return "0"
+        end
+        return "-" .. mag
+    end
+
+    local mem_insp_state = {
+        buf         = nil,
+        win         = nil,
+        expr        = nil,
+        mem_ref     = nil,
+        addr_label  = nil,
+        base_addr   = nil,
+        region_text = "",
+        offset      = 0,
+        count       = 256,
+        interp_mode = "hex",
+        dec_addr    = false,
+        raw_bytes   = nil,
+    }
+
+    local function next_interp_mode(cur)
+        if cur == "dec" then
+            return "hex"
+        end
+        if cur == "hex" then
+            return "bin"
+        end
+        return "dec"
+    end
+
+    local function build_mem_inspector_content()
+        local raw = mem_insp_state.raw_bytes
+        if type(raw) ~= "string" or #raw == 0 then
+            return { "(no memory bytes)" }, {}
+        end
+
         local bytes = {}
-        for i = 1, #raw_bytes_str do
-            table.insert(bytes, string.byte(raw_bytes_str, i))
+        for i = 1, #raw do
+            table.insert(bytes, string.byte(raw, i))
         end
 
-        local lines = {
-            "Expr   : " .. expr,
-            "Address: " .. addr_str,
+        local lines = {}
+        local hls = {}
+
+        local function add_hl(row_0, col_start, col_end, group)
+            if col_end > col_start then
+                table.insert(hls, { row_0, col_start, col_end, group })
+            end
+        end
+
+        local function add_kv_line(key_label, val_text, val_group, extra_text, extra_group)
+            local prefix = string.format("%-7s: ", key_label)
+            local line = prefix .. val_text
+            if extra_text ~= nil and extra_text ~= "" then
+                line = line .. extra_text
+            end
+            local row_0 = #lines
+            table.insert(lines, line)
+            add_hl(row_0, 0, #prefix, "DapMemHeader")
+            add_hl(row_0, #prefix, #prefix + #val_text, val_group)
+            if extra_text ~= nil and extra_text ~= "" and extra_group ~= nil then
+                add_hl(row_0, #prefix + #val_text, #line, extra_group)
+            end
+        end
+
+        local cur_hex_addr = add_hex_offset(mem_insp_state.base_addr, mem_insp_state.offset)
+        local cur_addr_display = format_dump_addr(cur_hex_addr, mem_insp_state.dec_addr)
+        add_kv_line("Expr", mem_insp_state.expr, "DapMemValue", nil, nil)
+        add_kv_line(
+            "Address",
+            cur_addr_display,
+            "DapMemAddr",
+            string.format("  (Offset: %+d)", mem_insp_state.offset),
+            "DapMemHint"
+        )
+        if type(mem_insp_state.region_text) == "string" and mem_insp_state.region_text ~= "" then
+            add_kv_line("Region", mem_insp_state.region_text, "DapMemHint", nil, nil)
+        end
+
+        local sep_line = string.rep("-", 78)
+        table.insert(lines, sep_line)
+        add_hl(#lines - 1, 0, #sep_line, "DapMemSeparator")
+
+        local mode_tag     = "[" .. mem_insp_state.interp_mode:upper() .. "]"
+        local interp_title = "Little-Endian Interpretations "
+        local interp_hint  = "  [f/Tab] Mode: dec -> hex -> bin"
+        local interp_hdr   = interp_title .. mode_tag .. interp_hint
+        table.insert(lines, interp_hdr)
+        add_hl(#lines - 1, 0, #interp_title, "DapMemHeader")
+        add_hl(#lines - 1, #interp_title, #interp_title + #mode_tag, "DapMemModeTag")
+        add_hl(#lines - 1, #interp_title + #mode_tag, #interp_hdr, "DapMemHint")
+
+        local rows_spec = {
+            { width = "8-bit",  n = 1, bin_label = "bin8:" },
+            { width = "16-bit", n = 2, bin_label = "bin16:" },
+            { width = "32-bit", n = 4, bin_label = "bin32:" },
+            { width = "64-bit", n = 8, bin_label = "bin64:" },
         }
-        if region_info and region_info ~= "" then
-            table.insert(lines, "Region : " .. region_info)
-        end
-        table.insert(lines, string.rep("-", 72))
-        table.insert(lines, "Little-Endian Interpretations (at " .. addr_str .. "):")
 
-        if #bytes >= 1 then
-            local u8 = bytes[1]
-            local i8 = u8
-            if u8 >= 128 then
-                i8 = u8 - 256
+        local left_col_width = 40
+        for _, spec in ipairs(rows_spec) do
+            if #bytes >= spec.n then
+                local hex_parts = {}
+                for idx = 1, spec.n do
+                    table.insert(hex_parts, string.format("%02x", bytes[idx]))
+                end
+                local bit_col       = string.format("%-6s", spec.width)
+                local le_col        = "[LE: " .. table.concat(hex_parts, " ") .. "]"
+                local left_text     = "  " .. bit_col .. " " .. le_col
+                local pad_len       = math.max(2, left_col_width - #left_text)
+                local padding       = string.rep(" ", pad_len)
+
+                local fmt_label     = ""
+                local primary_val   = ""
+                local secondary_val = ""
+
+                if mem_insp_state.interp_mode == "hex" then
+                    fmt_label = string.format("%-7s", "hex:")
+                    local be_hex = {}
+                    for idx = spec.n, 1, -1 do
+                        table.insert(be_hex, string.format("%02x", bytes[idx]))
+                    end
+                    primary_val = "0x" .. table.concat(be_hex)
+                elseif mem_insp_state.interp_mode == "bin" then
+                    fmt_label = string.format("%-7s", spec.bin_label)
+                    local bin_parts = {}
+                    for idx = spec.n, 1, -1 do
+                        table.insert(bin_parts, byte_to_bin(bytes[idx]))
+                    end
+                    primary_val = table.concat(bin_parts, " ")
+                else
+                    fmt_label = string.format("%-7s", "dec:")
+                    if spec.n == 1 then
+                        local u8 = bytes[1]
+                        local i8 = u8
+                        if u8 >= 128 then
+                            i8 = u8 - 256
+                        end
+                        primary_val = tostring(u8)
+                        secondary_val = string.format("  (i8: %d)", i8)
+                    elseif spec.n == 2 then
+                        local u16 = bytes[1] + bytes[2] * 256
+                        local i16 = u16
+                        if u16 >= 32768 then
+                            i16 = u16 - 65536
+                        end
+                        primary_val = tostring(u16)
+                        secondary_val = string.format("  (i16: %d)", i16)
+                    elseif spec.n == 4 then
+                        local u32 = bytes[1] + bytes[2] * 256 + bytes[3] * 65536 + bytes[4] * 16777216
+                        local i32 = u32
+                        if u32 >= 2147483648 then
+                            i32 = u32 - 4294967296
+                        end
+                        local f32 = decode_f32_le(bytes[1], bytes[2], bytes[3], bytes[4])
+                        primary_val = string.format("%.0f", u32)
+                        secondary_val = string.format("  (i32: %.0f, f32: %s)", i32, f32)
+                    else
+                        local u64_str = bytes_le_to_u64_str(bytes)
+                        local i64_str = bytes_le_to_i64_str(bytes)
+                        local f64 = decode_f64_le(
+                            bytes[1], bytes[2], bytes[3], bytes[4],
+                            bytes[5], bytes[6], bytes[7], bytes[8]
+                        )
+                        primary_val = u64_str
+                        secondary_val = string.format("  (i64: %s, f64: %s)", i64_str, f64)
+                    end
+                end
+
+                local line = left_text .. padding .. fmt_label .. primary_val .. secondary_val
+                local row_0 = #lines
+                table.insert(lines, line)
+
+                local bit_start = 2
+                local bit_end   = bit_start + #bit_col
+                local le_start  = bit_end + 1
+                local le_end    = le_start + #le_col
+                local lbl_start = #left_text + pad_len
+                local lbl_end   = lbl_start + #fmt_label
+                local val_start = lbl_end
+                local val_end   = val_start + #primary_val
+
+                add_hl(row_0, bit_start, bit_end, "DapMemBitWidth")
+                add_hl(row_0, le_start,  le_end,  "DapMemBytes")
+                add_hl(row_0, lbl_start, lbl_end, "DapMemLabel")
+                add_hl(row_0, val_start, val_end, "DapMemValue")
+                if secondary_val ~= "" then
+                    add_hl(row_0, val_end, #line, "DapMemSecondary")
+                end
             end
-            table.insert(lines, string.format(
-                "  8-bit  [LE: %02x]             hex: 0x%02x  |  dec: %d (i8: %d)  |  bin: %s",
-                bytes[1], u8, u8, i8, byte_to_bin(bytes[1])
-            ))
         end
 
-        if #bytes >= 2 then
-            local u16 = bytes[1] + bytes[2] * 256
-            local i16 = u16
-            if u16 >= 32768 then
-                i16 = u16 - 65536
-            end
-            table.insert(lines, string.format(
-                "  16-bit [LE: %02x %02x]          hex: 0x%04x  |  dec: %d (i16: %d)  |  bin: %s %s",
-                bytes[1], bytes[2], u16, u16, i16,
-                byte_to_bin(bytes[2]), byte_to_bin(bytes[1])
-            ))
+        table.insert(lines, sep_line)
+        add_hl(#lines - 1, 0, #sep_line, "DapMemSeparator")
+
+        local byte_tag = "[Bytes: DEC]"
+        if hex_mode then
+            byte_tag = "[Bytes: HEX]"
+        end
+        local addr_tag = "[Addr: HEX]"
+        if mem_insp_state.dec_addr then
+            addr_tag = "[Addr: DEC]"
         end
 
-        if #bytes >= 4 then
-            local u32 = bytes[1] + bytes[2] * 256 + bytes[3] * 65536 + bytes[4] * 16777216
-            local i32 = u32
-            if u32 >= 2147483648 then
-                i32 = u32 - 4294967296
-            end
-            local f32 = decode_f32_le(bytes[1], bytes[2], bytes[3], bytes[4])
-            table.insert(lines, string.format(
-                "  32-bit [LE: %02x %02x %02x %02x]    hex: 0x%08x  |  dec: %.0f (i32: %.0f)  |  f32: %s",
-                bytes[1], bytes[2], bytes[3], bytes[4], u32, u32, i32, f32
-            ))
-            table.insert(lines, string.format(
-                "         bin32: %s %s %s %s",
-                byte_to_bin(bytes[4]), byte_to_bin(bytes[3]),
-                byte_to_bin(bytes[2]), byte_to_bin(bytes[1])
-            ))
+        local dump_title = "Raw Memory Dump (8 bytes/row)"
+        local dump_tags  = byte_tag .. " " .. addr_tag
+        local dump_hints = "  [x] Bytes  [a] Addr  [ [|] ] Page  [m] MemView  [r] Refresh  [q] Close"
+        local dump_hdr = dump_title .. dump_tags .. dump_hints
+        table.insert(lines, dump_hdr)
+        add_hl(#lines - 1, 0, #dump_title, "DapMemHeader")
+        add_hl(#lines - 1, #dump_title, #dump_title + #dump_tags, "DapMemModeTag")
+        add_hl(#lines - 1, #dump_title + #dump_tags, #dump_hdr, "DapMemHint")
+
+        local half_width = 31
+        if hex_mode then
+            half_width = 23
         end
 
-        if #bytes >= 8 then
-            local hex64 = string.format(
-                "0x%02x%02x%02x%02x%02x%02x%02x%02x",
-                bytes[8], bytes[7], bytes[6], bytes[5],
-                bytes[4], bytes[3], bytes[2], bytes[1]
-            )
-            local dec64 = "(>53-bit; hex exact)"
-            if bytes[8] == 0 and bytes[7] < 32 then
-                local u64 = bytes[1]
-                + bytes[2] * (2 ^ 8)
-                + bytes[3] * (2 ^ 16)
-                + bytes[4] * (2 ^ 24)
-                + bytes[5] * (2 ^ 32)
-                + bytes[6] * (2 ^ 40)
-                + bytes[7] * (2 ^ 48)
-                dec64 = string.format("%.0f", u64)
-            end
-            local f64 = decode_f64_le(
-                bytes[1], bytes[2], bytes[3], bytes[4],
-                bytes[5], bytes[6], bytes[7], bytes[8]
-            )
-            table.insert(lines, string.format(
-                "  64-bit [LE: %02x %02x %02x %02x %02x %02x %02x %02x]",
-                bytes[1], bytes[2], bytes[3], bytes[4],
-                bytes[5], bytes[6], bytes[7], bytes[8]
-            ))
-            table.insert(lines, string.format(
-                "         hex: %s  |  dec: %s  |  f64: %s",
-                hex64, dec64, f64
-            ))
-            table.insert(lines, string.format(
-                "         bin64: %s %s %s %s %s %s %s %s",
-                byte_to_bin(bytes[8]), byte_to_bin(bytes[7]),
-                byte_to_bin(bytes[6]), byte_to_bin(bytes[5]),
-                byte_to_bin(bytes[4]), byte_to_bin(bytes[3]),
-                byte_to_bin(bytes[2]), byte_to_bin(bytes[1])
-            ))
-        end
-
-        table.insert(lines, string.rep("-", 72))
-        table.insert(lines, "Raw Memory Dump (8 bytes/row, 'x' xxd view, 'm' DapMemView, 'q' to close):")
-
-        for row_offset = 0, #bytes - 1, 8 do
-            local byte_col = {}
+        for row_offset = 0, #bytes - 1, 16 do
+            local left_col = {}
+            local right_col = {}
             local ascii_col = {}
-            for col = 1, 8 do
+            for col = 1, 16 do
                 local idx = row_offset + col
+                local token
                 if idx <= #bytes then
                     local b = bytes[idx]
                     if hex_mode then
-                        table.insert(byte_col, string.format("%02x", b))
+                        token = string.format("%02x", b)
                     else
-                        table.insert(byte_col, string.format("%03d", b))
+                        token = string.format("%03d", b)
                     end
                     if b >= 32 and b <= 126 then
                         table.insert(ascii_col, string.char(b))
@@ -943,25 +1284,196 @@ vim.schedule(function()
                     end
                 else
                     if hex_mode then
-                        table.insert(byte_col, "  ")
+                        token = "  "
                     else
-                        table.insert(byte_col, "   ")
+                        token = "   "
                     end
                     table.insert(ascii_col, " ")
                 end
+
+                if col <= 8 then
+                    table.insert(left_col, token)
+                else
+                    table.insert(right_col, token)
+                end
             end
-            local row_label = add_hex_offset(addr_str, row_offset)
-            local byte_width = 32
-            if hex_mode then
-                byte_width = 24
-            end
-            table.insert(lines, string.format(
-                "  %s:  %-" .. tostring(byte_width) .. "s  |%s|",
-                row_label, table.concat(byte_col, " "), table.concat(ascii_col)
-            ))
+
+            local row_hex_addr = add_hex_offset(mem_insp_state.base_addr, mem_insp_state.offset + row_offset)
+            local row_label = format_dump_addr(row_hex_addr, mem_insp_state.dec_addr)
+            local left_str = string.format("%-" .. tostring(half_width) .. "s", table.concat(left_col, " "))
+            local right_str = string.format("%-" .. tostring(half_width) .. "s", table.concat(right_col, " "))
+            local bytes_str = left_str .. "  " .. right_str
+            local ascii_str = "|" .. table.concat(ascii_col) .. "|"
+            local prefix = "  " .. row_label .. ":  "
+            local line = prefix .. bytes_str .. "  " .. ascii_str
+            local row_0 = #lines
+            table.insert(lines, line)
+            add_hl(row_0, 2, 2 + #row_label, "DapMemAddr")
+            add_hl(row_0, #prefix, #prefix + #bytes_str, "DapMemValue")
+            add_hl(row_0, #prefix + #bytes_str + 2, #line, "DapMemAscii")
         end
 
-        return lines
+        return lines, hls
+    end
+
+    local function render_mem_inspector_window()
+        ensure_mem_highlights()
+        local lines, hls = build_mem_inspector_content()
+        local max_w = 0
+        for _, line in ipairs(lines) do
+            if #line > max_w then
+                max_w = #line
+            end
+        end
+        local width  = math.min(math.max(max_w + 4, 86), math.floor(vim.o.columns * 0.94))
+        local height = math.min(math.max(#lines + 2, 12), math.floor(vim.o.lines * 0.85))
+
+        if mem_insp_state.buf == nil or not vim.api.nvim_buf_is_valid(mem_insp_state.buf) then
+            local buf = vim.api.nvim_create_buf(false, true)
+            vim.bo[buf].bufhidden = "wipe"
+            mem_insp_state.buf = buf
+
+            local function close_inspector()
+                if mem_insp_state.win ~= nil and vim.api.nvim_win_is_valid(mem_insp_state.win) then
+                    vim.api.nvim_win_close(mem_insp_state.win, true)
+                end
+                mem_insp_state.win = nil
+            end
+
+            vim.keymap.set("n", "q", close_inspector, { buffer = buf, nowait = true, silent = true })
+            vim.keymap.set("n", "<Esc>", close_inspector, { buffer = buf, nowait = true, silent = true })
+
+            vim.keymap.set("n", "f", function()
+                mem_insp_state.interp_mode = next_interp_mode(mem_insp_state.interp_mode)
+                render_mem_inspector_window()
+            end, { buffer = buf, nowait = true, silent = true })
+
+            vim.keymap.set("n", "<Tab>", function()
+                mem_insp_state.interp_mode = next_interp_mode(mem_insp_state.interp_mode)
+                render_mem_inspector_window()
+            end, { buffer = buf, nowait = true, silent = true })
+
+            vim.keymap.set("n", "x", function()
+                toggle_hex_mode()
+            end, { buffer = buf, nowait = true, silent = true })
+
+            vim.keymap.set("n", "a", function()
+                mem_insp_state.dec_addr = not mem_insp_state.dec_addr
+                render_mem_inspector_window()
+            end, { buffer = buf, nowait = true, silent = true })
+
+            vim.keymap.set("n", "r", function()
+                if type(refresh_mem_inspector) == "function" then
+                    refresh_mem_inspector(true, false)
+                end
+            end, { buffer = buf, nowait = true, silent = true })
+
+            vim.keymap.set("n", "]", function()
+                mem_insp_state.offset = mem_insp_state.offset + mem_insp_state.count
+                if type(refresh_mem_inspector) == "function" then
+                    refresh_mem_inspector(true, false)
+                end
+            end, { buffer = buf, nowait = true, silent = true })
+
+            vim.keymap.set("n", "[", function()
+                mem_insp_state.offset = mem_insp_state.offset - mem_insp_state.count
+                if type(refresh_mem_inspector) == "function" then
+                    refresh_mem_inspector(true, false)
+                end
+            end, { buffer = buf, nowait = true, silent = true })
+
+            vim.keymap.set("n", "m", function()
+                local target_addr = add_hex_offset(mem_insp_state.base_addr, mem_insp_state.offset)
+                close_inspector()
+                if ok_memview then
+                    vim.cmd("DapMemView " .. target_addr)
+                else
+                    vim.notify("nvim-dap-memview not loaded", vim.log.levels.WARN)
+                end
+            end, { buffer = buf, nowait = true, silent = true })
+        end
+
+        vim.bo[mem_insp_state.buf].modifiable = true
+        vim.api.nvim_buf_set_lines(mem_insp_state.buf, 0, -1, false, lines)
+        vim.bo[mem_insp_state.buf].modifiable = false
+
+        vim.api.nvim_buf_clear_namespace(mem_insp_state.buf, mem_insp_ns, 0, -1)
+        for _, item in ipairs(hls) do
+            pcall(vim.api.nvim_buf_add_highlight, mem_insp_state.buf, mem_insp_ns, item[4], item[1], item[2], item[3])
+        end
+
+        if mem_insp_state.win == nil or not vim.api.nvim_win_is_valid(mem_insp_state.win) then
+            mem_insp_state.win = vim.api.nvim_open_win(mem_insp_state.buf, true, {
+                relative  = "editor",
+                width     = width,
+                height    = height,
+                row       = math.floor((vim.o.lines - height) / 2),
+                col       = math.floor((vim.o.columns - width) / 2),
+                style     = "minimal",
+                border    = "rounded",
+                title     = " Memory Inspector ",
+                title_pos = "center",
+            })
+        else
+            pcall(vim.api.nvim_win_set_config, mem_insp_state.win, {
+                relative  = "editor",
+                width     = width,
+                height    = height,
+                row       = math.floor((vim.o.lines - height) / 2),
+                col       = math.floor((vim.o.columns - width) / 2),
+            })
+        end
+    end
+
+    refresh_mem_inspector = function(re_read, sync_global_hex)
+        if mem_insp_state.win == nil or not vim.api.nvim_win_is_valid(mem_insp_state.win) then
+            return
+        end
+        if sync_global_hex and mem_insp_state.interp_mode ~= "bin" then
+            if hex_mode then
+                mem_insp_state.interp_mode = "hex"
+            else
+                mem_insp_state.interp_mode = "dec"
+            end
+        end
+        if not re_read and type(mem_insp_state.raw_bytes) == "string" then
+            render_mem_inspector_window()
+            return
+        end
+        local session = dap.session()
+        if not session or type(mem_insp_state.mem_ref) ~= "string" then
+            return
+        end
+        session:request("readMemory", {
+            memoryReference = mem_insp_state.mem_ref,
+            offset          = mem_insp_state.offset,
+            count           = mem_insp_state.count,
+        }, function(mem_err, mem_resp)
+            if mem_err or type(mem_resp) ~= "table" or type(mem_resp.data) ~= "string" then
+                vim.schedule(function()
+                    vim.notify("readMemory failed in Memory Inspector", vim.log.levels.ERROR)
+                end)
+                return
+            end
+            if not vim.base64 or type(vim.base64.decode) ~= "function" then
+                return
+            end
+            local ok_dec, decoded = pcall(vim.base64.decode, mem_resp.data)
+            if not ok_dec or type(decoded) ~= "string" or #decoded == 0 then
+                return
+            end
+            mem_insp_state.raw_bytes = decoded
+            if type(mem_resp.address) == "string" and mem_resp.address ~= "" and mem_insp_state.offset == 0 then
+                mem_insp_state.base_addr = mem_resp.address
+            end
+            vim.schedule(render_mem_inspector_window)
+        end)
+    end
+
+    dap.listeners.after.event_stopped["mem_inspector_refresh"] = function()
+        if mem_insp_state.win ~= nil and vim.api.nvim_win_is_valid(mem_insp_state.win) then
+            refresh_mem_inspector(true, false)
+        end
     end
 
     local function default_mem_expr()
@@ -1042,12 +1554,11 @@ vim.schedule(function()
         eval_expr(trimmed, true)
     end
 
-    local open_xxd_memview = nil
     local function read_and_display_memory(session, expr, mem_ref, addr_label)
         session:request("readMemory", {
             memoryReference = mem_ref,
             offset = 0,
-            count = 64,
+            count = mem_insp_state.count,
         }, function(mem_err, mem_resp)
             if mem_err or type(mem_resp) ~= "table" or type(mem_resp.data) ~= "string" then
                 vim.schedule(function()
@@ -1081,62 +1592,19 @@ vim.schedule(function()
             end
 
             local function show_with_region(region_text)
-                local lines = format_le_memory_lines(expr, final_addr, region_text, raw_bytes)
-                vim.schedule(function()
-                    local buf = vim.api.nvim_create_buf(false, true)
-                    vim.bo[buf].bufhidden = "wipe"
-                    vim.bo[buf].modifiable = true
-                    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-                    vim.bo[buf].modifiable = false
-
-                    local max_w = 0
-                    for _, line in ipairs(lines) do
-                        if #line > max_w then
-                            max_w = #line
-                        end
-                    end
-                    local width  = math.min(math.max(max_w + 4, 76), math.floor(vim.o.columns * 0.9))
-                    local height = math.min(math.max(#lines + 2, 12), math.floor(vim.o.lines * 0.8))
-
-                    local win = vim.api.nvim_open_win(buf, true, {
-                        relative  = "editor",
-                        width     = width,
-                        height    = height,
-                        row       = math.floor((vim.o.lines - height) / 2),
-                        col       = math.floor((vim.o.columns - width) / 2),
-                        style     = "minimal",
-                        border    = "rounded",
-                        title     = " RAD Memory Inspector ",
-                        title_pos = "center",
-                    })
-
-                    vim.keymap.set("n", "q", function()
-                        if vim.api.nvim_win_is_valid(win) then
-                            vim.api.nvim_win_close(win, true)
-                        end
-                    end, { buffer = buf, nowait = true, silent = true })
-                    vim.keymap.set("n", "<Esc>", function()
-                        if vim.api.nvim_win_is_valid(win) then
-                            vim.api.nvim_win_close(win, true)
-                        end
-                    end, { buffer = buf, nowait = true, silent = true })
-                    vim.keymap.set("n", "m", function()
-                        if vim.api.nvim_win_is_valid(win) then
-                            vim.api.nvim_win_close(win, true)
-                        end
-                        if ok_memview then
-                            vim.cmd("DapMemView " .. final_addr)
-                        else
-                            vim.notify("nvim-dap-memview not loaded", vim.log.levels.WARN)
-                        end
-                    end, { buffer = buf, nowait = true, silent = true })
-                    vim.keymap.set("n", "x", function()
-                        if vim.api.nvim_win_is_valid(win) then
-                            vim.api.nvim_win_close(win, true)
-                        end
-                        open_xxd_memview(expr, mem_ref, final_addr)
-                    end, { buffer = buf, nowait = true, silent = true })
-                end)
+                mem_insp_state.expr        = expr
+                mem_insp_state.mem_ref     = mem_ref
+                mem_insp_state.addr_label  = addr_label
+                mem_insp_state.base_addr   = final_addr
+                mem_insp_state.region_text = region_text
+                mem_insp_state.offset      = 0
+                mem_insp_state.raw_bytes   = raw_bytes
+                if hex_mode then
+                    mem_insp_state.interp_mode = "hex"
+                else
+                    mem_insp_state.interp_mode = "dec"
+                end
+                vim.schedule(render_mem_inspector_window)
             end
 
             local frame_id = nil
@@ -1180,36 +1648,6 @@ vim.schedule(function()
                 end)
             end
         end)
-    end
-
-    local function hex_addr_to_dec(addr_str)
-        local digits = addr_str:match("^0?[xX]?(%x+)$")
-        if not digits then
-            return addr_str
-        end
-        local dec = { 0 }
-        for i = 1, #digits do
-            local nibble = tonumber(digits:sub(i, i), 16)
-            local carry = nibble
-            for j = #dec, 1, -1 do
-                local val = dec[j] * 16 + carry
-                dec[j] = val % 10
-                carry = math.floor(val / 10)
-            end
-            while carry > 0 do
-                table.insert(dec, 1, carry % 10)
-                carry = math.floor(carry / 10)
-            end
-        end
-        return table.concat(dec)
-    end
-
-    local function format_xxd_addr(addr_str, use_dec)
-        if use_dec then
-            return hex_addr_to_dec(addr_str)
-        end
-        local stripped = addr_str:gsub("^0[xX]", "")
-        return stripped:lower()
     end
 
     local xxd_state = {
@@ -1477,25 +1915,26 @@ vim.schedule(function()
         end)
     end
 
-    local function open_xxd_memview_prompt()
-        local session = dap.session()
-        if not session then
-            vim.notify("Start a debug session and hit a breakpoint first", vim.log.levels.WARN)
-            return
-        end
+    -- local function open_xxd_memview_prompt()
+    --     local session = dap.session()
+    --     if not session then
+    --         vim.notify("Start a debug session and hit a breakpoint first", vim.log.levels.WARN)
+    --         return
+    --     end
+    --
+    --     vim.ui.input({
+    --         prompt = "XXD/Decimal memory (&var, var, or 0xADDR): ",
+    --         default = default_mem_expr(),
+    --     }, function(input)
+    --         if input and vim.trim(input) ~= "" then
+    --             local expr = vim.trim(input)
+    --             resolve_addr_expr(session, expr, function(mem_ref, addr_label)
+    --                 open_xxd_memview(expr, mem_ref, addr_label)
+    --             end)
+    --         end
+    --     end)
+    -- end
 
-        vim.ui.input({
-            prompt = "XXD/Decimal memory (&var, var, or 0xADDR): ",
-            default = default_mem_expr(),
-        }, function(input)
-            if input and vim.trim(input) ~= "" then
-                local expr = vim.trim(input)
-                resolve_addr_expr(session, expr, function(mem_ref, addr_label)
-                    open_xxd_memview(expr, mem_ref, addr_label)
-                end)
-            end
-        end)
-    end
     local function open_live_memview_prompt()
         if not ok_memview then
             vim.notify("nvim-dap-memview is not loaded", vim.log.levels.WARN)
@@ -1758,7 +2197,6 @@ vim.schedule(function()
     vim.keymap.set("n", "<leader>dh", toggle_hex_mode, { desc = "DAP: Toggle Hex / Decimal Mode" })
     vim.keymap.set("n", "<leader>dm", inspect_memory_prompt, { desc = "DAP: Inspect memory (Hex/Dec/Bin LE)" })
     vim.keymap.set("n", "<leader>dM", open_live_memview_prompt, { desc = "DAP: Open live DapMemView" })
-    vim.keymap.set("n", "<leader>dx", open_xxd_memview_prompt, { desc = "DAP: XXD / Decimal memory view" })
     vim.keymap.set("n", "<leader>dR", lldb_virtual_memory_menu, { desc = "DAP: Virtual memory region / search" })
     vim.keymap.set("n", "<leader>ds", show_interleaved_source_asm, { desc = "DAP: Interleaved Source + ASM" })
 

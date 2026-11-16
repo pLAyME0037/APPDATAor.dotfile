@@ -85,14 +85,13 @@ end)
 
 vim.keymap.set("n", "<leader>a", "mzggVG")
 
-vim.keymap.set("x", "<leader>p", [["_dP]])
-vim.keymap.set("v", "p", '"_dP', opts)
-
 vim.keymap.set("n", "tuc", "gUw")
 vim.keymap.set("n", "tlc", "guw")
 
-vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
-vim.keymap.set("n", "<leader>Y", [["+Y]])
+-- vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
+-- vim.keymap.set("n", "<leader>Y", [["+Y]])
+-- vim.keymap.set("x", "<leader>p", [["_dP]])
+-- vim.keymap.set("v", "p", '"_dP', opts)
 
 vim.keymap.set({ "n", "v" }, "<leader>D", '"_d', { desc = "Delete to blackhole register" })
 
@@ -132,6 +131,131 @@ vim.keymap.set("n", "<leader>ee", "oif err != nil {<CR>}<Esc>Oreturn err<Esc>")
 vim.keymap.set("n", "<leader>ea", 'oassert.NoError(err, "")<Esc>F";a')
 vim.keymap.set("n", "<leader>ef", 'oif err != nil {<CR>}<Esc>Olog.Fatalf("error: %s\\n", err.Error())<Esc>jj')
 vim.keymap.set("n", "<leader>el", 'oif err != nil {<CR>}<Esc>O.logger.Error("error", "error", err)<Esc>F.;i')
+
+-- ============================================================================
+-- Yank keep column on Paste 
+-- ============================================================================
+local pending_yank = nil
+local yank_keep_group = vim.api.nvim_create_augroup("KeepCursorOnYank", { clear = true })
+
+local function save_yank_cursor(keys)
+    local win = vim.api.nvim_get_current_win()
+    pending_yank = {
+        win = win,
+        buf = vim.api.nvim_win_get_buf(win),
+        pos = vim.api.nvim_win_get_cursor(win),
+    }
+    return keys
+end
+
+vim.api.nvim_create_autocmd("TextYankPost", {
+    group = yank_keep_group,
+    callback = function()
+        if pending_yank == nil then
+            return
+        end
+        if vim.v.event.operator ~= "y" then
+            return
+        end
+        local saved = pending_yank
+        pending_yank = nil
+        local cur_win = vim.api.nvim_get_current_win()
+        if cur_win == saved.win and vim.api.nvim_win_get_buf(cur_win) == saved.buf then
+            pcall(vim.api.nvim_win_set_cursor, cur_win, saved.pos)
+        end
+    end,
+})
+
+vim.api.nvim_create_autocmd({ "CursorHold", "InsertEnter" }, {
+    group = yank_keep_group,
+    callback = function()
+        pending_yank = nil
+    end,
+})
+
+local function paste_keep_col(cmd, is_visual)
+    local win = vim.api.nvim_get_current_win()
+    local prev_pos = vim.api.nvim_win_get_cursor(win)
+    local prev_virtcol = vim.fn.virtcol(".")
+    local reg = vim.v.register
+    if reg == nil or reg == "" then
+        reg = '"'
+    end
+    local count = vim.v.count1
+    local tick_before = vim.api.nvim_buf_get_changedtick(0)
+
+    if is_visual then
+        local mode = vim.fn.mode(1)
+        local was_visual_line = (mode == "V")
+        local old_line_count = vim.api.nvim_buf_line_count(0)
+        local esc = vim.api.nvim_replace_termcodes("<Esc>", true, false, true)
+        vim.api.nvim_feedkeys(esc, "nx", false)
+
+        local start_line = vim.api.nvim_buf_get_mark(0, "<")[1]
+        local end_line = vim.api.nvim_buf_get_mark(0, ">")[1]
+        local paste_cmd = "P"
+        if was_visual_line and end_line == old_line_count and start_line > 1 then
+            paste_cmd = "p"
+        end
+        pcall(vim.cmd, 'normal! gv"_d' .. count .. '"' .. reg .. paste_cmd)
+    else
+        pcall(vim.cmd, "normal! " .. count .. '"' .. reg .. cmd)
+    end
+
+    local tick_after = vim.api.nvim_buf_get_changedtick(0)
+    if tick_after == tick_before then
+        pcall(vim.api.nvim_win_set_cursor, win, prev_pos)
+        return
+    end
+
+    local mark = vim.api.nvim_buf_get_mark(0, "[")
+    local target_line = mark[1]
+    if target_line == nil or target_line < 1 then
+        target_line = prev_pos[1]
+    end
+    local line_count = vim.api.nvim_buf_line_count(0)
+    if target_line > line_count then
+        target_line = line_count
+    end
+
+    pcall(vim.api.nvim_win_set_cursor, win, { target_line, 0 })
+    if prev_virtcol > 1 then
+        pcall(vim.cmd, "normal! " .. prev_virtcol .. "|")
+    end
+end
+
+vim.keymap.set("n", "p", function() paste_keep_col("p", false) end, {
+    noremap = true, silent = true,
+    desc = "Paste below and keep column"
+})
+vim.keymap.set("n", "P", function() paste_keep_col("P", false) end, {
+    noremap = true, silent = true,
+    desc = "Paste above and keep column"
+})
+vim.keymap.set("x", "<leader>p", function() paste_keep_col("P", true) end, {
+    noremap = true, silent = true,
+    desc = "Visual paste blackhole and keep column"
+})
+vim.keymap.set("x", "p", function() paste_keep_col("P", true) end, {
+    noremap = true, silent = true,
+    desc = "Visual paste blackhole and keep column"
+})
+vim.keymap.set({ "n", "x" }, "y", function() return save_yank_cursor("y") end, {
+    expr = true, noremap = true,
+    desc = "Yank and keep cursor"
+})
+vim.keymap.set("n", "Y", function() return save_yank_cursor("Y") end, {
+    expr = true, noremap = true,
+    desc = "Yank EOL and keep cursor"
+})
+vim.keymap.set({ "n", "x" }, "<leader>y", function() return save_yank_cursor('"+y') end, {
+    expr = true, noremap = true,
+    desc = "Clipboard yank and keep cursor"
+})
+vim.keymap.set("n", "<leader>Y", function() return save_yank_cursor('"+Y') end, {
+    expr = true, noremap = true,
+    desc = "Clipboard yank EOL and keep cursor"
+})
 
 -- ============================================================================
 -- Spilt Window Buffer & Resize
