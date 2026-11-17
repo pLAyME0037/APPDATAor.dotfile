@@ -478,11 +478,15 @@ exec >> "$LOG_FILE" 2>&1
 echo "=== [$(date '+%F %T')] prepare/begin ==="
 
 rollback() {
+    set +e
     echo "[$(date '+%F %T')] ERROR: Rolling back host display..."
     modprobe nvidia || true
     modprobe nvidia_modeset || true
     modprobe nvidia_uvm || true
     modprobe nvidia_drm || true
+    if [ ! -e /sys/bus/pci/devices/0000:01:00.0/driver ]; then
+        echo "0000:01:00.0" > /sys/bus/pci/drivers_probe || true
+    fi
     for vtcon in /sys/class/vtconsole/vtcon*; do
         if [ -f "${vtcon}/bind" ]; then
             echo 1 > "${vtcon}/bind" || true
@@ -492,8 +496,12 @@ rollback() {
     exit 1
 }
 
+if systemctl is-active --quiet nvidia-powerd.service; then
+    systemctl stop nvidia-powerd.service || true
+fi
+
 if systemctl is-active --quiet nvidia-persistenced.service; then
-    systemctl stop nvidia-persistenced.service
+    systemctl stop nvidia-persistenced.service || true
 fi
 
 systemctl stop lightdm.service
@@ -523,10 +531,18 @@ for drv in efi-framebuffer simple-framebuffer vesa-framebuffer; do
     fi
 done
 
+if command -v fuser >/dev/null 2>&1; then
+    fuser -v /dev/nvidia* /dev/dri/* || true
+fi
+
 for mod in nvidia_drm nvidia_modeset nvidia_uvm nvidia; do
     if /usr/bin/grep -q "^${mod} " /proc/modules; then
         if ! modprobe -r "$mod"; then
             echo "[$(date '+%F %T')] Failed to unload ${mod}"
+            if command -v fuser >/dev/null 2>&1; then
+                fuser -v /dev/nvidia* /dev/dri/* || true
+            fi
+            lsmod | /usr/bin/grep -E "nvidia|drm" || true
             rollback
         fi
     fi
@@ -541,7 +557,7 @@ EOF
 
 sudo tee /etc/libvirt/hooks/qemu.d/win10/release/end/revert.sh >/dev/null <<'EOF'
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 LOG_FILE="/var/log/libvirt/qemu/win10-hook.log"
 mkdir -p "$(dirname "$LOG_FILE")"
@@ -549,17 +565,28 @@ exec >> "$LOG_FILE" 2>&1
 
 echo "=== [$(date '+%F %T')] release/end ==="
 
+if [ -L /sys/bus/pci/devices/0000:01:00.0/driver ]; then
+    current_drv="$(basename "$(readlink -f /sys/bus/pci/devices/0000:01:00.0/driver)")"
+    if [ "$current_drv" = "vfio-pci" ]; then
+        echo "0000:01:00.0" > /sys/bus/pci/drivers/vfio-pci/unbind || true
+    fi
+fi
+
 for drv in efi-framebuffer simple-framebuffer; do
     drv_dir="/sys/bus/platform/drivers/${drv}"
     if [ -d "$drv_dir" ] && [ ! -e "${drv_dir}/${drv}.0" ]; then
-        echo "${drv}.0" > "${drv_dir}/bind" 2>/dev/null || true
+        echo "${drv}.0" > "${drv_dir}/bind" || true
     fi
 done
 
-modprobe nvidia
-modprobe nvidia_modeset
-modprobe nvidia_uvm
-modprobe nvidia_drm
+modprobe nvidia || true
+modprobe nvidia_modeset || true
+modprobe nvidia_uvm || true
+modprobe nvidia_drm || true
+
+if [ ! -e /sys/bus/pci/devices/0000:01:00.0/driver ]; then
+    echo "0000:01:00.0" > /sys/bus/pci/drivers_probe || true
+fi
 
 for vtcon in /sys/class/vtconsole/vtcon*; do
     if [ -f "${vtcon}/bind" ]; then
@@ -567,7 +594,15 @@ for vtcon in /sys/class/vtconsole/vtcon*; do
     fi
 done
 
-systemctl start lightdm.service
+if systemctl is-enabled --quiet nvidia-persistenced.service 2>/dev/null; then
+    systemctl start nvidia-persistenced.service || true
+fi
+
+if systemctl is-enabled --quiet nvidia-powerd.service 2>/dev/null; then
+    systemctl start nvidia-powerd.service || true
+fi
+
+systemctl start lightdm.service || true
 
 echo "=== [$(date '+%F %T')] release/end complete ==="
 EOF
