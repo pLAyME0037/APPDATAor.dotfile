@@ -2184,6 +2184,7 @@ Changes and New Features in Evil	emacs/elpaca/sources/evil/CHANGES.org	/^* Chang
 Changes for PHP Mode by Version	emacs/elpaca/sources/php-mode/CHANGELOG.md	/^# Changes for PHP Mode by Version$/;"	c
 Changing plugins install dir	tmux/plugins/tpm/docs/changing_plugins_install_dir.md	/^# Changing plugins install dir$/;"	c
 Changing the Defaults	tmux/plugins/tmux-battery/README.md	/^#### Changing the Defaults$/;"	t	subsection:Tmux battery status""Usage""Defaults
+Check Hardware Requirement	other/singular_nvidia_passthough_no_igpu.md	/^## Check Hardware Requirement$/;"	s
 Checklist	emacs/elpaca/sources/evil-collection/.github/PULL_REQUEST_TEMPLATE.md	/^### Checklist$/;"	S
 Cherries	emacs/elpaca/sources/magit/docs/magit.org	/^*** Cherries$/;"	s
 Cherry Picking	emacs/elpaca/sources/magit/docs/magit.org	/^** Cherry Picking$/;"	c
@@ -2807,6 +2808,7 @@ INSTALLATION	emacs/elpaca/sources/lua-mode/README.md	/^## INSTALLATION$/;"	s	cha
 INSTALL_INFO	emacs/elpaca/sources/haskell-mode/Makefile	/^INSTALL_INFO = install-info$/;"	m
 INSTALL_INFO	emacs/elpaca/sources/magit/default.mk	/^INSTALL_INFO     ?= $(shell command -v ginstall-info || printf install-info)$/;"	m
 INSTALL_INFO	emacs/elpaca/sources/with-editor/default.mk	/^INSTALL_INFO     ?= $(shell command -v ginstall-info || printf install-info)$/;"	m
+IOMMU and vBIOS checks passed.	other/singular_nvidia_passthough_no_igpu.md	/^### IOMMU and vBIOS checks passed.$/;"	S	section:Start Preparation
 IRC	emacs/elpaca/sources/evil/README.md	/^# IRC$/;"	c
 IcoMoonType	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^  "IcoMoonType": "selection",$/;"	s
 Icons	emacs/elpaca/sources/company-box/README.md	/^### Icons$/;"	S	chapter:company-box
@@ -3529,6 +3531,7 @@ Predicates	emacs/elpaca/sources/f/README.org	/^** Predicates$/;"	c
 Predicates	emacs/elpaca/sources/general/README.org	/^*** Predicates$/;"	s
 Predicates	emacs/elpaca/sources/s/README.md	/^### Predicates$/;"	S	section:s.el [![s.el testing](https://github.com/magnars/s.el/actions/workflows/test.yml/badge.svg)](https://github.com/magnars/s.el/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/magnars/s.el/badge.svg?branch=master)](https://coveralls.io/r/magnars/s.el?branch=master) [![Latest Release](https://img.shields.io/github/v/release/magnars/s.el)](https://github.com/magnars/s.el/releases/latest)""Functions
 Preliminaries	emacs/elpaca/sources/evil-collection/README.org	/^** Preliminaries$/;"	c
+Prepare host packages and SSH recovery	other/singular_nvidia_passthough_no_igpu.md	/^### Prepare host packages and SSH recovery$/;"	S	section:What to prepare
 Prerequisites	emacs/elpaca/sources/all-the-icons-dired/README.org	/^** Prerequisites$/;"	c
 Prerequisites	emacs/elpaca/sources/doom-modeline/AGENTS.md	/^### Prerequisites$/;"	S	section:doom-modeline AGENTS.md""Build, Lint, and Test Commands
 Prerequisites 🛠️	tmux/plugins/tmux-sessionx/README.md	/^## Prerequisites 🛠️$/;"	s	chapter:Tmux SessionX
@@ -3573,6 +3576,7 @@ RMDIR	emacs/elpaca/sources/magit/default.mk	/^RMDIR    ?= rm -rf$/;"	m
 Range types	emacs/elpaca/sources/evil/doc/source/extension.rst	/^Range types$/;"	c	title:Extension
 Rationale	emacs/elpaca/sources/evil-collection/README.org	/^** Rationale$/;"	c
 Reading Recommendations	emacs/elpaca/sources/general/README.org	/^* Reading Recommendations$/;"	p
+Ready to deploy.	other/singular_nvidia_passthough_no_igpu.md	/^# Ready to deploy. $/;"	c
 Rebasing	emacs/elpaca/sources/magit/docs/magit.org	/^** Rebasing$/;"	c
 Rebind keys:	tmux/plugins/tmux-sessionx/README.md	/^### Rebind keys:$/;"	S	section:Tmux SessionX""Working with SessionX 👷
 Rebinding and disabling	emacs/elpaca/sources/evil-collection/README.org	/^*** Rebinding and disabling$/;"	s
@@ -3764,6 +3768,7 @@ Special state (point on a paren)	emacs/elpaca/sources/evil-collection/modes/lisp
 Stack operations	emacs/elpaca/sources/dired-hacks/README.md	/^### Stack operations$/;"	S	section:Packages""dired-filter
 Staging and Unstaging	emacs/elpaca/sources/magit/docs/magit.org	/^** Staging and Unstaging$/;"	c
 Staging from File-Visiting Buffers	emacs/elpaca/sources/magit/docs/magit.org	/^*** Staging from File-Visiting Buffers$/;"	s
+Start Preparation	other/singular_nvidia_passthough_no_igpu.md	/^## Start Preparation$/;"	s
 Stashing	emacs/elpaca/sources/magit/docs/magit.org	/^** Stashing$/;"	c
 States	emacs/elpaca/sources/evil/doc/source/extension.rst	/^States$/;"	c	title:Extension
 Stats	emacs/elpaca/sources/f/README.org	/^** Stats$/;"	c
@@ -4143,6 +4148,7 @@ WITH_EDITOR_DIR	emacs/elpaca/sources/magit/default.mk	/^WITH_EDITOR_DIR ?= $(she
 Weather modules	tmux/plugins/tmux/docs/reference/status-line.md	/^## Weather modules$/;"	s
 Welcome nice stranger!	emacs/elpaca/sources/haskell-mode/CONTRIBUTING.md	/^# Welcome nice stranger!$/;"	c
 What is posframe?	emacs/elpaca/sources/posframe/README.org	/^* What is posframe?$/;"	p
+What to prepare	other/singular_nvidia_passthough_no_igpu.md	/^## What to prepare$/;"	s
 What's with the built-in wrappers?	emacs/elpaca/sources/s/README.md	/^## What's with the built-in wrappers?$/;"	s	chapter:s.el [![s.el testing](https://github.com/magnars/s.el/actions/workflows/test.yml/badge.svg)](https://github.com/magnars/s.el/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/magnars/s.el/badge.svg?branch=master)](https://coveralls.io/r/magnars/s.el?branch=master) [![Latest Release](https://img.shields.io/github/v/release/magnars/s.el)](https://github.com/magnars/s.el/releases/latest)
 What's with the built-in wrappers?	emacs/elpaca/sources/s/readme-template.md	/^## What's with the built-in wrappers?$/;"	s	chapter:s.el [![s.el testing](https://github.com/magnars/s.el/actions/workflows/test.yml/badge.svg)](https://github.com/magnars/s.el/actions/workflows/test.yml) [![Coverage Status](https://coveralls.io/repos/magnars/s.el/badge.svg?branch=master)](https://coveralls.io/r/magnars/s.el?branch=master)
 Whatever	emacs/elpaca/sources/php-mode/tests/issue-19.php	/^class Whatever$/;"	c
@@ -8091,6 +8097,7 @@ dash-unload-function	emacs/elpaca/builds/dash/dash.el	/^(defun dash-unload-funct
 dash-unload-function	emacs/elpaca/sources/dash/dash.el	/^(defun dash-unload-function ()$/;"	f
 dashboard-mode-map	emacs/elpaca/builds/evil-collection/modes/dashboard/evil-collection-dashboard.el	/^(defvar dashboard-mode-map)$/;"	v
 dashboard-mode-map	emacs/elpaca/sources/evil-collection/modes/dashboard/evil-collection-dashboard.el	/^(defvar dashboard-mode-map)$/;"	v
+data	other/a.py	/^data = open('GL502VML-AS.306', 'rb').read()$/;"	v
 data_footer	emacs/elpaca/sources/nerd-icons/scripts/generate-data.py	/^data_footer = """;;; nerd-icons-data-{}.el ends here"""$/;"	v
 data_header	emacs/elpaca/sources/nerd-icons/scripts/generate-data.py	/^data_header = """;;; nerd-icons-data-{}.el --- glyphset {} -*- lexical-binding: t -*-$/;"	v
 dc	emacs/elpaca/sources/evil/doc/logo.svg	/^   inkscape:export-ydpi="150">$/;"	n	uri:http://purl.org/dc/elements/1.1/
@@ -8105,6 +8112,7 @@ debug	emacs/elpaca/builds/evil-collection/modes/debug/README.org	/^* debug$/;"	p
 debug	emacs/elpaca/sources/evil-collection/modes/debug/README.org	/^* debug$/;"	p
 debug.disassemblyView.showSourceCode	other/attemp_catppuccine_setting.json	/^    "debug.disassemblyView.showSourceCode": false,$/;"	b
 debug.disassemblyView.showSourceCode	other/settings.json	/^    "debug.disassemblyView.showSourceCode": false,$/;"	b
+dec	other/a.py	/^        dec = lzma.decompress(data[offset:], format=lzma.FORMAT_ALONE)$/;"	v
 dec_digits_to_hex	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function dec_digits_to_hex(digits)$/;"	f
 decode_f32_le	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function decode_f32_le(b1, b2, b3, b4)$/;"	f
 decode_f64_le	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function decode_f64_le(b1, b2, b3, b4, b5, b6, b7, b8)$/;"	f
@@ -23460,6 +23468,8 @@ of a	emacs/elpaca/sources/magit/docs/magit.org	/^section, the hunk-internal regi
 of such commands and the several *variants* within each	emacs/elpaca/sources/magit/docs/magit.org	/^several *groups* of such commands and the several *variants* within each$/;"	p
 of the	emacs/elpaca/sources/magit/docs/magit.org	/^sections than it is to act on the current section *instead* of the$/;"	p
 offline_icon_default	tmux/plugins/tmux-online-status/scripts/online_status_icon.sh	/^offline_icon_default() {$/;"	f
+offset	other/a.py	/^    offset = data.find(b'\\x5d\\x00\\x00', offset)$/;"	v
+offset	other/a.py	/^offset = 0$/;"	v
 oil.nvim	nvim-pack/nvim-pack-lock.json	/^    "oil.nvim": {$/;"	o	object:plugins
 on_attach	nvim-pack/lsp/clangd.lua	/^  on_attach = function(client, bufnr)$/;"	f
 on_attach	nvim-pack/lua/pLAyME/setup-pack/dotnet.lua	/^    on_attach = function()$/;"	f
@@ -24863,6 +24873,7 @@ popup	emacs/elpaca/sources/evil-collection/modes/popup/README.org	/^* popup$/;"	
 popup-menu-keymap	emacs/elpaca/builds/evil-collection/modes/popup/README.org	/^*** popup-menu-keymap$/;"	s
 popup-menu-keymap	emacs/elpaca/sources/evil-collection/modes/popup/README.org	/^*** popup-menu-keymap$/;"	s
 port	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            port = function()$/;"	f
+pos	other/a.py	/^    pos = data.find(target)$/;"	v
 posframe	emacs/elpaca/builds/posframe/posframe.el	/^(defgroup posframe nil$/;"	G
 posframe	emacs/elpaca/sources/posframe/posframe.el	/^(defgroup posframe nil$/;"	G
 posframe--accept-focus	emacs/elpaca/builds/posframe/posframe.el	/^(defvar-local posframe--accept-focus nil$/;"	v
@@ -26473,6 +26484,7 @@ tailwindcss-colorizer-cmp.nvim	lazy-nvim/lazy-lock.json	/^  "tailwindcss-coloriz
 tailwindcss-colorizer-cmp.nvim	nvim-pack/nvim-pack-lock.json	/^    "tailwindcss-colorizer-cmp.nvim": {$/;"	o	object:plugins
 tar-mode	emacs/elpaca/builds/evil-collection/modes/tar-mode/README.org	/^* tar-mode$/;"	p
 tar-mode	emacs/elpaca/sources/evil-collection/modes/tar-mode/README.org	/^* tar-mode$/;"	p
+targets	other/a.py	/^targets = [b'PCIR\\xde\\x10\\x20\\x1c', b'GP106', b'NVIDIA']$/;"	v
 teardown_helper	tmux/plugins/tmux-resurrect/lib/tmux-test/tests/helpers/helpers.sh	/^teardown_helper() {$/;"	f
 teardown_helper	tmux/plugins/tmux-resurrect/tests/helpers/helpers.sh	/^teardown_helper() {$/;"	f
 telega-chatbuf-fastnav-map	emacs/elpaca/builds/evil-collection/modes/telega/evil-collection-telega.el	/^(defvar telega-chatbuf-fastnav-map)$/;"	v
