@@ -140,9 +140,6 @@ cmp.setup({
                 fallback()
             end
         end, { "i", "s" }),
-        ["<CR>"] = cmp.mapping(function(fallback) fallback() end, { "i", "s" }),
-        ["<S-Tab>"] = cmp.mapping(function(fallback) fallback() end, { "i", "s" }),
-        ["<Tab>"] = cmp.mapping(function(fallback) fallback() end, { "i", "s" }),
     }),
     formatting = {
         format = function(entry, vim_item)
@@ -166,6 +163,9 @@ cmp.setup({
 -- Search mode completion (/ and ?)
 cmp.setup.cmdline({ "/", "?" }, {
     mapping = cmp.mapping.preset.cmdline({
+        ["<S-Tab>"] = cmp.config.disable,
+        ["<Tab>"] = cmp.config.disable,
+        ["<C-z>"] = cmp.config.disable,
         ["<C-j>"] = { c = select_next_item },
         ["<C-k>"] = { c = select_prev_item },
     }),
@@ -187,7 +187,7 @@ cmp.setup.cmdline({ "/", "?" }, {
 --     }),
 --     matching = { disallow_symbol_nonprefix_matching = false },
 -- })
---
+
 cmp.setup.filetype({ "sql", "mysql", "plsql" }, {
     sources = cmp.config.sources({
         { name = "vim-dadbod-completion" },

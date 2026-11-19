@@ -2199,6 +2199,7 @@ vim.schedule(function()
     vim.keymap.set("n", "<leader>dM", open_live_memview_prompt, { desc = "DAP: Open live DapMemView" })
     vim.keymap.set("n", "<leader>dR", lldb_virtual_memory_menu, { desc = "DAP: Virtual memory region / search" })
     vim.keymap.set("n", "<leader>ds", show_interleaved_source_asm, { desc = "DAP: Interleaved Source + ASM" })
+    vim.keymap.set("n", "<leader>ds", show_interleaved_source_asm, { desc = "DAP: Interleaved Source + ASM" })
 
     if ok_dapui then
         vim.keymap.set({ "n", "v" }, "Q", function()

@@ -13,6 +13,9 @@ vim.keymap.set("i", "jk", "<Esc>")
 vim.keymap.set("t", "jk", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 vim.keymap.set("n", "J", "mzJ`z")
 
+vim.keymap.set('n', '[d', function() vim.diagnostic.goto_prev() end, opts)
+vim.keymap.set('n', ']d', function() vim.diagnostic.goto_next() end, opts)
+
 local tmux_dirs = {
     h = "L",
     j = "D",
@@ -482,12 +485,31 @@ local function rank_tag(tag, cur_file, cur_ext)
     return score
 end
 
+local man_fallback_filetypes = {
+    c      = true,
+    cpp    = true,
+    objc   = true,
+    objcpp = true,
+    sh     = true,
+    bash   = true,
+    zsh    = true,
+    man    = true,
+    vim    = true,
+    help   = true,
+    lua    = true,
+    make   = true,
+    awk    = true,
+    sed    = true,
+}
+
 local function show_hover_or_tag()
-    -- 1. Try active LSP hover
-    local clients = vim.lsp.get_clients({ bufnr = 0 })
+    local bufnr = vim.api.nvim_get_current_buf()
+
+    -- 1. Try active LSP hover (supports static + dynamic capabilities)
+    local clients = vim.lsp.get_clients({ bufnr = bufnr })
     local has_hover = false
     for _, client in ipairs(clients) do
-        if client.server_capabilities.hoverProvider then
+        if client:supports_method("textDocument/hover", bufnr) then
             has_hover = true
             break
         end
@@ -504,16 +526,22 @@ local function show_hover_or_tag()
         return
     end
 
+    local cur_ft = vim.bo[bufnr].filetype
+    local function fallback_keywordprg()
+        if man_fallback_filetypes[cur_ft] then
+            pcall(vim.cmd, "normal! K")
+        end
+    end
+
     local escaped_cword = vim.fn.escape(cword, "\\/.*$^~[]")
     local raw_tags = vim.fn.taglist("^" .. escaped_cword .. "$")
     if #raw_tags == 0 then
-        pcall(vim.cmd, "normal! K")
+        fallback_keywordprg()
         return
     end
 
-    local cur_file = vim.fs.normalize(vim.api.nvim_buf_get_name(0))
+    local cur_file = vim.fs.normalize(vim.api.nvim_buf_get_name(bufnr))
     local cur_ext = vim.fn.expand("%:e")
-    local cur_ft = vim.bo.filetype
     if cur_ft == "" then
         cur_ft = "text"
     end
@@ -567,7 +595,7 @@ local function show_hover_or_tag()
     end
 
     if #lines == 0 then
-        pcall(vim.cmd, "normal! K")
+        fallback_keywordprg()
         return
     end
 

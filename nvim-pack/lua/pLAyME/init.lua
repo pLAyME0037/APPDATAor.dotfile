@@ -33,10 +33,14 @@ local ctags_timer = nil
 local home_dir = vim.fs.normalize(vim.fn.expand("~"))
 
 local ctags_excludes = {
+    "--links=no",
+    "--exclude=.wine",
     "--exclude=.git",
     "--exclude=.cache",
     "--exclude=.cargo",
     "--exclude=.local",
+    "--exclude=*.h.tt",
+    "--exclude=*.html",
     "--exclude=resource",
     "--exclude=asset",
     "--exclude=node_modules",
@@ -113,6 +117,32 @@ vim.api.nvim_create_user_command("TagsGenerate", function()
     })
 end, { desc = "Generate ctags file safely" })
 
+-- Walk up from buffer dir: update tags only where tags file already exists.
+-- Stop at .git boundary, $HOME, or / — never auto-create tags.
+local function find_tags_dir(start_dir)
+    local dir = vim.fs.normalize(start_dir)
+    while true do
+        if dir == home_dir or dir == "/" then
+            return nil
+        end
+
+        if vim.fn.filereadable(dir .. "/tags") == 1 then
+            return dir
+        end
+
+        -- .git can be dir (normal) or file (worktree/submodule)
+        if vim.fn.isdirectory(dir .. "/.git") == 1 or vim.fn.filereadable(dir .. "/.git") == 1 then
+            return nil
+        end
+
+        local parent = vim.fs.dirname(dir)
+        if parent == dir then
+            return nil
+        end
+        dir = parent
+    end
+end
+
 vim.api.nvim_create_autocmd("BufWritePost", {
     group = vim.api.nvim_create_augroup("AutoCtags", { clear = true }),
     pattern = "*",
@@ -125,12 +155,18 @@ vim.api.nvim_create_autocmd("BufWritePost", {
         end
 
         local buf_name = vim.api.nvim_buf_get_name(args.buf)
+        if buf_name == "" then
+            return
+        end
         if buf_name:match("/%.git/") or buf_name:match("^%.git") then
             return
         end
 
-        local root = vim.fs.root(args.buf, { ".git" })
-        if not root or root == "" then
+        local raw_dir = vim.fs.dirname(buf_name)
+        local start_dir = uv.fs_realpath(raw_dir) or raw_dir
+
+        local tags_dir = find_tags_dir(start_dir)
+        if not tags_dir then
             return
         end
 
@@ -142,7 +178,7 @@ vim.api.nvim_create_autocmd("BufWritePost", {
 
         if ctags_timer ~= nil then
             ctags_timer:start(1500, 0, vim.schedule_wrap(function()
-                run_ctags(root)
+                run_ctags(tags_dir)
             end))
         end
     end,
