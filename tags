@@ -2033,6 +2033,7 @@ Advanced configuration	emacs/elpaca/sources/haskell-mode/README.md	/^## Advanced
 Advanced way	emacs/elpaca/sources/posframe/README.org	/^*** Advanced way$/;"	s
 Affected keymaps	emacs/elpaca/builds/evil-collection/modes/minibuffer/README.org	/^** Affected keymaps$/;"	c
 Affected keymaps	emacs/elpaca/sources/evil-collection/modes/minibuffer/README.org	/^** Affected keymaps$/;"	c
+After everything work correctly, Here some note	other/singular_nvidia_passthough_no_igpu.md	/^# After everything work correctly, Here some note$/;"	c
 Alacritty	README.md	/^## Alacritty $/;"	s	chapter:My Project
 Alias	emacs/elpaca/sources/php-mode/tests/issue-178.php	/^use Test as Alias;$/;"	a	typeref:unknown:Test
 All Contributors	emacs/elpaca/builds/magit/AUTHORS.md	/^All Contributors$/;"	s
@@ -2149,6 +2150,7 @@ CUSTOMIZATION	emacs/elpaca/sources/lua-mode/README.md	/^## CUSTOMIZATION$/;"	s	c
 CYGPATH	emacs/elpaca/sources/magit/default.mk	/^  CYGPATH := $(shell cygpath --version 2>\/dev\/null)$/;"	m
 Calling Git	emacs/elpaca/sources/magit/docs/magit.org	/^** Calling Git$/;"	c
 Calling Git for Effect	emacs/elpaca/sources/magit/docs/magit.org	/^*** Calling Git for Effect$/;"	s
+Can Windows guest execute .exe binaries stored on host?	other/singular_nvidia_passthough_no_igpu.md	/^## Can Windows guest execute .exe binaries stored on host? $/;"	s	chapter:After everything work correctly, Here some note
 Carbon	emacs/elpaca/sources/php-mode/tests/issue-333.php	/^use Carbon\\Carbon;$/;"	a	namespace:SlowNamespace\\More\\Levels	typeref:unknown:Carbon\\Carbon
 Change log	emacs/elpaca/sources/dash/NEWS.md	/^## Change log$/;"	s	chapter:Dash NEWS -- history of user-visible changes
 Change log	emacs/elpaca/sources/dash/README.md	/^## Change log$/;"	s	chapter:<img align="right" src="rainbow-dash.png"> dash.el
@@ -2813,6 +2815,7 @@ IRC	emacs/elpaca/sources/evil/README.md	/^# IRC$/;"	c
 IcoMoonType	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^  "IcoMoonType": "selection",$/;"	s
 Icons	emacs/elpaca/sources/company-box/README.md	/^### Icons$/;"	S	chapter:company-box
 Icons/Colors	tmux/plugins/tmux-battery/README.md	/^#### Icons\/Colors$/;"	t	subsection:Tmux battery status""Usage""Defaults
+If Needed for Bare-Matal Windows to read Btrfs	other/singular_nvidia_passthough_no_igpu.md	/^## If Needed for Bare-Matal Windows to read Btrfs$/;"	s	chapter:After everything work correctly, Here some note
 If you have [[https://github.com/minad/marginalia][Marginalia]] annotators activated, type =M-x ^consult= to see	emacs/elpaca/sources/consult/README.org	/^*TIP:* If you have [[https:\/\/github.com\/minad\/marginalia][Marginalia]] annotators activated,/;"	p
 If you have [[https://github.com/minad/marginalia][Marginalia]] installed, type =M-x customize-variable RET	emacs/elpaca/sources/consult/README.org	/^*TIP:* If you have [[https:\/\/github.com\/minad\/marginalia][Marginalia]] installed, type =M-x /;"	p
 Ignoring Certain File Extensions	emacs/elpaca/sources/peep-dired/README.md	/^## Ignoring Certain File Extensions$/;"	s	chapter:Peep Dired
@@ -3745,6 +3748,7 @@ Settings	emacs/elpaca/sources/general/README.org	/^** Settings$/;"	c
 Setup	tmux/plugins/tmux-resurrect/lib/tmux-test/README.md	/^### Setup$/;"	S	chapter:tmux-test
 Setup (en)	emacs/elpaca/sources/php-mode/CONTRIBUTING.md	/^### Setup (en)$/;"	S	section:How to Contribute""English
 Setup (ja)	emacs/elpaca/sources/php-mode/CONTRIBUTING.md	/^### Setup (ja)$/;"	S	section:How to Contribute""Japanese
+Setup multiple directory share:	other/singular_nvidia_passthough_no_igpu.md	/^### Setup multiple directory share:$/;"	S	section:After everything work correctly, Here some note""share filesystem
 Should I disable VC?	emacs/elpaca/sources/magit/docs/magit.org	/^*** Should I disable VC?$/;"	s
 Should ~gj~ / ~gk~ rather be synonyms for ~C-j~ / ~C-k~?  They cannot	emacs/elpaca/sources/evil-collection/README.org	/^  *Question:* Should ~gj~ \/ ~gk~ rather be synonyms for ~C-j~ \/ ~C-k~?  They cannot$/;"	p
 Show-Help	other/Microsoft.PowerShell_profile.ps1	/^function Show-Help {$/;"	f
@@ -3769,6 +3773,7 @@ Stack operations	emacs/elpaca/sources/dired-hacks/README.md	/^### Stack operatio
 Staging and Unstaging	emacs/elpaca/sources/magit/docs/magit.org	/^** Staging and Unstaging$/;"	c
 Staging from File-Visiting Buffers	emacs/elpaca/sources/magit/docs/magit.org	/^*** Staging from File-Visiting Buffers$/;"	s
 Start Preparation	other/singular_nvidia_passthough_no_igpu.md	/^## Start Preparation$/;"	s
+Start quest	other/singular_nvidia_passthough_no_igpu.md	/^## Start quest$/;"	s	chapter:After everything work correctly, Here some note
 Stashing	emacs/elpaca/sources/magit/docs/magit.org	/^** Stashing$/;"	c
 States	emacs/elpaca/sources/evil/doc/source/extension.rst	/^States$/;"	c	title:Extension
 Stats	emacs/elpaca/sources/f/README.org	/^** Stats$/;"	c
@@ -26080,6 +26085,7 @@ setup_colors	tmux/plugins/tmux/tests/harness.sh	/^setup_colors() {$/;"	f
 sh-script	emacs/elpaca/builds/evil-collection/modes/sh-script/README.org	/^* sh-script$/;"	p
 sh-script	emacs/elpaca/sources/evil-collection/modes/sh-script/README.org	/^* sh-script$/;"	p
 sha1	bashrc/bashrc.sh	/^alias sha1='openssl sha1'$/;"	a
+share filesystem	other/singular_nvidia_passthough_no_igpu.md	/^## share filesystem$/;"	s	chapter:After everything work correctly, Here some note
 sharedir	emacs/elpaca/sources/magit/default.mk	/^sharedir ?= $(PREFIX)\/share$/;"	m
 shell-command	emacs/elpaca/builds/with-editor/with-editor.el	/^(define-advice shell-command$/;"	Y	definer:define-advice
 shell-command	emacs/elpaca/sources/with-editor/lisp/with-editor.el	/^(define-advice shell-command$/;"	Y	definer:define-advice

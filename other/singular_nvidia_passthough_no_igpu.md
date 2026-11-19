@@ -799,3 +799,129 @@ sudo virsh start win10
 * Shut down Windows cleanly inside the guest to trigger revert.sh and return to
   LightDM.
 
+# After everything work correctly, Here some note
+
+## Start quest
+* Use NVIDIA software brightness/gamma inside Windows (most reliable) if troble
+  can't find brightness control.
+* Directly from a terminal on your laptop:
+```sh
+virsh --connect qemu:///system start win10
+```
+
+* **From virt-manager (GUI):** Open Virtual Machine Manager (virt-manager) on
+  your Linux desktop, click win10, and hit the Play (Run) button. LightDM will
+  close and Windows will boot right onto your screen.
+* **From a Linux TTY (Ctrl+Alt+F2):** If you prefer not to log into the desktop
+  first, switch to a TTY, log in, and run `virsh --connect qemu:///system start win10`.
+* **Auto-start on Linux boot (optional):** If you ever want the laptop to boot
+  into Arch and immediately launch the Windows VM automatically, run:
+```sh
+sudo virsh autostart win10
+```
+
+> You can undo that anytime with `sudo virsh autostart --disable win10`. Most people
+> prefer the desktop shortcut or terminal command so they can choose Linux vs. VM.)
+
+## share filesystem
+
+* **Share 2+ drives over shared memory (virtiofs)** Use virtiofs with memfd
+  shared memory and virtiofsd. Host win10.xml needs <memoryBacking> plus one
+  <filesystem> block per share. Windows VirtioFsSvc supports only one share, so
+  2+ shares must use WinFsp.Launcher (fsreg.bat and launchctl-x64.exe).
+* **Critical safety rules before editing win10.xml:** Never share /mnt/disk2 root
+  or /mnt/disk2/virtm via virtiofs. Sharing the directory that holds active
+  win10.qcow2 risks guest locking or image corruption. Share dedicated subfolders
+  such as /mnt/disk2/share and /mnt/disk3/share.
+
+> Never mount disk3 as fuseblk (ntfs-3g) under virtiofsd. ntfs-3g causes heavy
+> FUSE-over-FUSE overhead and file-locking corruption. Mount disk3 with kernel
+> ntfs3 (findmnt -n -o FSTYPE /mnt/disk3 must say ntfs3), and keep bare-metal
+> Windows Fast Startup disabled so NTFS stays clean.
+
+### Setup multiple directory share:
+1. Verify virtiofsd and disk3 mount type:
+```sh
+pacman -Q virtiofsd
+findmnt -n -o FSTYPE /mnt/disk3
+```
+
+2. Add <memoryBacking> under <domain> and two <filesystem> blocks inside
+   <devices> in win10.xml (via sudo virsh edit win10)
+
+```sh
+<memoryBacking>
+  <source type='memfd'/>
+  <access mode='shared'/>
+</memoryBacking>
+```
+
+```sh
+<filesystem type='mount' accessmode='passthrough'>
+  <driver type='virtiofs' queue='1024'/>
+  <binary path='/usr/lib/virtiofsd'/>
+  <source dir='/mnt/disk2/mythings'/>
+  <target dir='mythings_disk2'/>
+</filesystem>
+<filesystem type='mount' accessmode='passthrough'>
+  <driver type='virtiofs' queue='1024'/>
+  <binary path='/usr/lib/virtiofsd'/>
+  <source dir='/mnt/disk3'/>
+  <target dir='share_disk3'/>
+</filesystem>
+```
+
+> (virtiofsd sits at /usr/lib/virtiofsd on Arch. Do not force xattr='on' on NTFS
+> unless needed, because NTFS xattr limits vary.)
+
+***Windows guest steps (Admin Command Prompt, not PowerShell):***
+1. Install WinFsp (default Core) and virtio-win-guest-tools.exe (keep Viofs enabled)
+2. Stop default single-share service, register WinFsp.Launcher, and mount both tags
+```sh
+sc stop VirtioFsSvc
+sc config VirtioFsSvc start=demand
+"C:\Program Files (x86)\WinFsp\bin\fsreg.bat" virtiofs "C:\Program Files\Virtio-Win\VioFS\virtiofs.exe" "-t %1 -m %2 -F NTFS -i"
+"C:\Program Files (x86)\WinFsp\bin\launchctl-x64.exe" start virtiofs viofsY mythings_disk2 Y:
+"C:\Program Files (x86)\WinFsp\bin\launchctl-x64.exe" start virtiofs viofsZ share_disk3 Z:
+```
+
+* Run the two launchctl-x64.exe lines via Windows Task Scheduler (at logon,
+  highest privileges) so Y: and Z: persist after reboot
+
+> Simpler alternative: bind-mount /mnt/disk2/share and /mnt/disk3/share into
+> /srv/vmshare/{disk2,disk3} on host, export /srv/vmshare as one virtiofs share,
+> and keep standard VirtioFsSvc. Windows then sees one drive Z: showing
+> /srv/vmshare capacity instead of separate drive free space.
+
+## Can Windows guest execute .exe binaries stored on host? 
+Yes. Windows guest can execute .exe files over virtiofs, with four caveats:
+1. **Run as Administrator / UAC:** Windows requires the drive filesystem name to
+   report NTFS to elevate .exe binaries. Add -F NTFS (shown in fsreg.bat above)
+2. **Case sensitivity (ext4):** Linux ext4 is case-sensitive, so apps looking up
+   Data.dll when disk has data.dll fail. Add -i in fsreg.bat for case-insensitive
+   fallback, though it adds directory-scan overhead
+3. **Host permissions:** virtiofsd passes host POSIX permissions. Host files must
+   allow read/execute for the UID running virtiofsd.
+4. **Compatibility limits:** Portable apps and most tools run fine. Heavy games,
+   kernel anti-cheat, UWP/Store apps, and installers needing full NTFS reparse
+   points or strict oplocks still fail over WinFsp; put those inside win10.qcow2
+   or a VirtIO block disk
+
+## If Needed for Bare-Matal Windows to read Btrfs
+
+* WSL2 wsl --mount (real Linux kernel inside Hyper-V):
+  * Safest ext4 read/write from Windows, exposed at \\wsl$. Requires WSL
+    installed from Microsoft Store on Windows 10 (or Windows 11).
+  * Limits: Attaches a whole separate physical disk, never partitions sharing the
+    Windows C: disk. Does not support USB/SD drives out of the box.
+    Runs over 9P network share, so too slow for launching apps or games.
+* Alternative filesystem: Btrfs + WinBtrfs (maharmstone/btrfs, LGPL):
+  * Much better maintained than Ext4Fsd (v1.10 released 2026). Native on Linux,
+    mounts as a Windows drive letter with ACLs and Alternate Data Streams.
+  * Warning: WinBtrfs still carries a developer warning against using it without
+    full backups, and Secure Boot may block loading without turning Secure Boot
+    off or changing Code Integrity policy
+
+```sh
+
+```
