@@ -849,14 +849,14 @@ findmnt -n -o FSTYPE /mnt/disk3
 2. Add <memoryBacking> under <domain> and two <filesystem> blocks inside
    <devices> in win10.xml (via sudo virsh edit win10)
 
-```sh
+```xml
 <memoryBacking>
   <source type='memfd'/>
   <access mode='shared'/>
 </memoryBacking>
 ```
 
-```sh
+```xml
 <filesystem type='mount' accessmode='passthrough'>
   <driver type='virtiofs' queue='1024'/>
   <binary path='/usr/lib/virtiofsd'/>
@@ -877,7 +877,7 @@ findmnt -n -o FSTYPE /mnt/disk3
 ***Windows guest steps (Admin Command Prompt, not PowerShell):***
 1. Install WinFsp (default Core) and virtio-win-guest-tools.exe (keep Viofs enabled)
 2. Stop default single-share service, register WinFsp.Launcher, and mount both tags
-```sh
+```cmd
 sc stop VirtioFsSvc
 sc config VirtioFsSvc start=demand
 "C:\Program Files (x86)\WinFsp\bin\fsreg.bat" virtiofs "C:\Program Files\Virtio-Win\VioFS\virtiofs.exe" "-t %1 -m %2 -F NTFS -i"
@@ -908,7 +908,6 @@ Yes. Windows guest can execute .exe files over virtiofs, with four caveats:
    or a VirtIO block disk
 
 ## If Needed for Bare-Matal Windows to read Btrfs
-
 * WSL2 wsl --mount (real Linux kernel inside Hyper-V):
   * Safest ext4 read/write from Windows, exposed at \\wsl$. Requires WSL
     installed from Microsoft Store on Windows 10 (or Windows 11).
@@ -922,6 +921,128 @@ Yes. Windows guest can execute .exe files over virtiofs, with four caveats:
     full backups, and Secure Boot may block loading without turning Secure Boot
     off or changing Code Integrity policy
 
-```sh
+## Termial for ssh back to linux
 
+1. **wezterm:**
+```pwsh
+wezterm ssh YOUR_USER@192.168.122.1 -- tmux a -d
+```
+
+ * *Adds Arch to WezTerm's launcher menu:*
+   (Ctrl+Shift+P -> Switch to workspace / launcher, or wezterm connect arch-host)
+   without installing wezterm on Arch
+
+   run: `%USERPROFILE%\.wezterm.lua`
+
+    ```lua
+    local wezterm = require 'wezterm'
+    local config = wezterm.config_builder()
+
+    config.default_prog = { 'pwsh.exe', '-NoLogo' }
+    config.ssh_backend = 'LibSsh'
+    config.term = 'xterm-256color'
+
+    config.ssh_domains = {
+      {
+        name = 'arch-host',
+        remote_address = '192.168.122.1',
+        username = 'YOUR_USER',
+        multiplexing = 'None',
+        assume_shell = 'Posix',
+      },
+    }
+
+    return config
+    ```
+
+## Create win10-normal from existing setup
+* **The Solution: Two VM profiles sharing the same disk**
+  Instead of removing and re-adding the GPU on win10, create a second VM
+  definition (e.g., win10-normal) in virt-manager that points to the exact same
+  /mnt/disk2/virtm/win10.qcow2 disk.
+
+  * win10 XML stays 100% intact with all vBIOS, SSDT1.dat, evdev, and
+    `<qemu:override>` settings untouched.
+  * Because the second VM is named win10-normal,
+    /etc/libvirt/hooks/qemu.d/win10/... will not trigger, so LightDM and your
+    Linux desktop stay running.
+  * Launch win10-normal anytime inside a normal virt-manager window
+    (SPICE + QXL), and launch win10 whenever you want full GPU passthrough.
+  * **Important rule if sharing one .qcow2 between two VMs:**
+    > * Never run win10 and win10-normal at the same time (that will corrupt the disk).
+    > * Always perform a full shutdown in Windows before switching between them
+      (disable Windows Fast Startup / never hibernate).
+    > * Keep both VMs on q35, OVMF_CODE.4m.fd, and virtio disk/network.
+
+### To create win10-normal from your existing setup
+Make sure win10 is shut down, then create a normal profile XML pointing to the
+same disk:
+```sh
+cat > /tmp/win10-normal.xml <<'EOF'
+<domain type='kvm'>
+  <name>win10-normal</name>
+  <memory unit='MiB'>8192</memory>
+  <currentMemory unit='MiB'>8192</currentMemory>
+  <vcpu placement='static'>4</vcpu>
+  <os>
+    <type arch='x86_64' machine='q35'>hvm</type>
+    <loader readonly='yes' type='pflash'>/usr/share/edk2/x64/OVMF_CODE.4m.fd</loader>
+    <nvram template='/usr/share/edk2/x64/OVMF_VARS.4m.fd'>/var/lib/libvirt/qemu/nvram/win10-normal_VARS.fd</nvram>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <hyperv mode='custom'>
+      <relaxed state='on'/>
+      <vapic state='on'/>
+      <spinlocks state='on' retries='8191'/>
+      <vpindex state='on'/>
+      <synic state='on'/>
+      <stimer state='on'/>
+      <frequencies state='on'/>
+    </hyperv>
+    <vmport state='off'/>
+  </features>
+  <cpu mode='host-passthrough' check='none' migratable='on'>
+    <topology sockets='1' cores='2' threads='2'/>
+  </cpu>
+  <clock offset='localtime'>
+    <timer name='rtc' tickpolicy='catchup'/>
+    <timer name='pit' tickpolicy='delay'/>
+    <timer name='hpet' present='no'/>
+    <timer name='hypervclock' present='yes'/>
+  </clock>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <emulator>/usr/bin/qemu-system-x86_64</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' cache='none' io='native' discard='unmap'/>
+      <source file='/mnt/disk2/virtm/win10.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+      <boot order='1'/>
+    </disk>
+    <controller type='usb' index='0' model='qemu-xhci' ports='8'/>
+    <controller type='sata' index='0'/>
+    <interface type='network'>
+      <source network='default'/>
+      <model type='virtio'/>
+    </interface>
+    <input type='tablet' bus='usb'/>
+    <input type='mouse' bus='ps2'/>
+    <input type='keyboard' bus='ps2'/>
+    <graphics type='spice' autoport='yes'>
+      <listen type='address'/>
+    </graphics>
+    <audio id='1' type='spice'/>
+    <video>
+      <model type='qxl' ram='65536' vram='65536' vgamem='16384' heads='1' primary='yes'/>
+    </video>
+    <memballoon model='virtio'/>
+  </devices>
+</domain>
+EOF
+
+sudo virsh define /tmp/win10-normal.xml
 ```
