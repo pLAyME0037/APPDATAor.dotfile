@@ -888,10 +888,66 @@ sc config VirtioFsSvc start=demand
 * Run the two launchctl-x64.exe lines via Windows Task Scheduler (at logon,
   highest privileges) so Y: and Z: persist after reboot
 
-> Simpler alternative: bind-mount /mnt/disk2/share and /mnt/disk3/share into
-> /srv/vmshare/{disk2,disk3} on host, export /srv/vmshare as one virtiofs share,
-> and keep standard VirtioFsSvc. Windows then sees one drive Z: showing
-> /srv/vmshare capacity instead of separate drive free space.
+> Simpler alternative: bind-mount /mnt/disk2/mythings and /mnt/disk3 into
+> /srv/vmshare/{disk2/mythings,disk3} on host, export /srv/vmshare as one
+> virtiofs share, and keep standard VirtioFsSvc. Windows then sees one drive Z:
+> showing /srv/vmshare capacity instead of separate drive free space.
+
+* *Commands (for single-share method)*
+First verify disk3 is ntfs3 (never fuseblk) and folders exist:
+```sh
+findmnt -n -o FSTYPE /mnt/disk2
+findmnt -n -o FSTYPE /mnt/disk3
+ls -ld /mnt/disk2/mythings /mnt/disk2/github /mnt/disk3
+```
+
+Create target mountpoints:
+```sh
+sudo mkdir -p /srv/vmshare/disk2/mythings /srv/vmshare/disk2/github /srv/vmshare/disk3
+sudo mount --bind /mnt/disk2/mythings /srv/vmshare/disk2/mythings
+sudo mount --bind /mnt/disk2/github /srv/vmshare/disk2/github
+sudo mount --bind /mnt/disk3 /srv/vmshare/disk3
+findmnt /srv/vmshare/disk2/mythings /srv/vmshare/disk3 /srv/vmshare/disk2/github
+```
+
+*Optional make persisten in /etc/fstab*
+```sh
+/mnt/disk2/mythings  /srv/vmshare/disk2/mythings  none  bind,x-systemd.requires-mounts-for=/mnt/disk2        0  0
+/mnt/disk2/github    /srv/vmshare/disk2/github    none  bind,x-systemd.requires-mounts-for=/mnt/disk2        0  0
+/mnt/disk3           /srv/vmshare/disk3           none  bind,nofail,x-systemd.requires-mounts-for=/mnt/disk3  0  0
+```
+
+*Apply and verify without rebooting:*
+```sh
+sudo systemctl daemon-reload
+sudo mount -a
+findmnt /srv/vmshare/disk2/mythings /srv/vmshare/disk3 /srv/vmshare/disk2/github
+ls -la /srv/vmshare/disk2/mythings /srv/vmshare/disk3 /srv/vmshare/disk2/github
+```
+
+```xml
+<filesystem type='mount' accessmode='passthrough'>
+  <driver type='virtiofs' queue='1024'/>
+  <binary path='/usr/lib/virtiofsd'/>
+  <source dir='/srv/vmshare'/>
+  <target dir='vmshare'/>
+</filesystem>
+```
+
+*Start **VirtioFsSvc** Service*
+```cmd
+sc start VirtioFsSvc
+```
+
+*To run .exe installers/admin tools from Z: or avoid case-sensitivity issues on
+disk2 (ext4), VirtioFsSvc reads those flags from the registry*
+```cmd
+reg add HKLM\Software\virtiofs /v FileSystemName /t REG_SZ /d NTFS /f
+reg add HKLM\Software\virtiofs /v CaseInsensitive /t REG_DWORD /d 1 /f
+sc config VirtioFsSvc start=auto
+sc stop VirtioFsSvc
+sc start VirtioFsSvc
+```
 
 ## Can Windows guest execute .exe binaries stored on host? 
 Yes. Windows guest can execute .exe files over virtiofs, with four caveats:
@@ -971,7 +1027,7 @@ wezterm ssh YOUR_USER@192.168.122.1 -- tmux a -d
   * **Important rule if sharing one .qcow2 between two VMs:**
     > * Never run win10 and win10-normal at the same time (that will corrupt the disk).
     > * Always perform a full shutdown in Windows before switching between them
-      (disable Windows Fast Startup / never hibernate).
+    >   (disable Windows Fast Startup / never hibernate).
     > * Keep both VMs on q35, OVMF_CODE.4m.fd, and virtio disk/network.
 
 ### To create win10-normal from your existing setup

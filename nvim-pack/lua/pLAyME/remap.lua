@@ -85,6 +85,7 @@ vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 vim.keymap.set("n", "<leader>lt", function()
     vim.cmd([[ PlenaryBustedFile % ]])
 end)
+vim.keymap.set("n", "<leader>tn", "<cmd>set number!<cr>", { desc = "Toggle line numbers" })
 
 vim.keymap.set("n", "<leader>a", "mzggVG")
 
@@ -113,7 +114,7 @@ vim.keymap.set("n", "<leader>j", "<cmd>lprevious<CR>zz", { desc = "Location list
 
 vim.keymap.set("n", "<leader>ls", "<cmd>!pwd && ls -laFh --group-directories-first<CR>", { silent = true })
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
-vim.keymap.set("n", "<leader>nl", "082lF i<CR><Esc>")
+vim.keymap.set("n", "<leader>nl", "081lF i<CR><Esc>")
 
 vim.keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically." })
 vim.keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally." })
@@ -130,10 +131,11 @@ vim.keymap.set("n", "<leader>u", function()
     require("undotree").open()
 end, { desc = "Toggle builtin undo tree." })
 
-vim.keymap.set("n", "<leader>ee", "oif err != nil {<CR>}<Esc>Oreturn err<Esc>")
-vim.keymap.set("n", "<leader>ea", 'oassert.NoError(err, "")<Esc>F";a')
-vim.keymap.set("n", "<leader>ef", 'oif err != nil {<CR>}<Esc>Olog.Fatalf("error: %s\\n", err.Error())<Esc>jj')
-vim.keymap.set("n", "<leader>el", 'oif err != nil {<CR>}<Esc>O.logger.Error("error", "error", err)<Esc>F.;i')
+vim.keymap.set("n", "<leader>jee", "oif err != nil {<CR>}<Esc>Oreturn err<Esc>")
+vim.keymap.set("n", "<leader>jea", 'oassert.NoError(err, "")<Esc>F";a')
+vim.keymap.set("n", "<leader>jef", 'oif err != nil {<CR>}<Esc>Olog.Fatalf("error: %s\\n", err.Error())<Esc>jj')
+vim.keymap.set("n", "<leader>jel", 'oif err != nil {<CR>}<Esc>O.logger.Error("error", "error", err)<Esc>F.;i')
+vim.keymap.set("n", "<leader>cmf", "o#if 0<CR><Esc>O#else<Esc><CR>O#endif")
 
 -- ============================================================================
 -- Yank keep column on Paste 
@@ -305,8 +307,8 @@ end
 
 vim.keymap.set("n", "<leader>s]", function() resize_split(vim.v.count, "inc_h") end, { desc = "Increase split height." })
 vim.keymap.set("n", "<leader>s[", function() resize_split(vim.v.count, "dec_h") end, { desc = "Decrease split height." })
-vim.keymap.set("n", "<leader>>", function() resize_split(vim.v.count, "inc_w") end, { desc = "Increase split width." })
-vim.keymap.set("n", "<leader><", function() resize_split(vim.v.count, "dec_w") end, { desc = "Decrease split width." })
+vim.keymap.set("n", "<leader><", function() resize_split(vim.v.count, "inc_w") end, { desc = "Increase split width." })
+vim.keymap.set("n", "<leader>>", function() resize_split(vim.v.count, "dec_w") end, { desc = "Decrease split width." })
 vim.keymap.set("n", "<leader>sx", "<cmd>close<CR>", { desc = "Close current split." })
 
 -- ============================================================================
