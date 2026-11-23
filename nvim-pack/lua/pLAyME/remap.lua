@@ -6,15 +6,164 @@ vim.g.maplocalleader = " "
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 
-vim.api.nvim_set_keymap("n", "<leader>tf", "<Plug>PlenaryTestFile",
-                        { noremap = false, silent = false })
-
 vim.keymap.set("i", "jk", "<Esc>")
-vim.keymap.set("t", "jk", "<C-\\><C-n>", { desc = "Exit terminal mode" })
 vim.keymap.set("n", "J", "mzJ`z")
 
 vim.keymap.set('n', '[d', function() vim.diagnostic.goto_prev() end, opts)
 vim.keymap.set('n', ']d', function() vim.diagnostic.goto_next() end, opts)
+
+vim.keymap.set("n", "<C-d>", "<C-d>zz")
+vim.keymap.set("n", "<C-u>", "<C-u>zz")
+vim.keymap.set("n", "<C-c>", ":nohl<CR>", { desc = "Clear search hl", silent = true })
+vim.keymap.set("n", "<C-s>", ":wa<CR>")
+
+vim.keymap.set("n", "n", "nzzzv")
+vim.keymap.set("n", "N", "Nzzzv")
+
+vim.keymap.set("v", "<", "<gv", opts)
+vim.keymap.set("v", ">", ">gv", opts)
+
+vim.keymap.set("n", "=ap", "ma=ap'a")
+
+vim.keymap.set("n", "gd", "<C-]>", { desc = "Tags: Jump to Definition" })
+vim.keymap.set("n", "gD", "g<C-]>", { desc = "Tags: Select Definition" })
+
+vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
+vim.keymap.set("n", "<leader>lt", function()
+    vim.cmd([[ PlenaryBustedFile % ]])
+end)
+vim.api.nvim_set_keymap("n", "<leader>tf", "<Plug>PlenaryTestFile",
+                        { noremap = false, silent = false })
+
+vim.keymap.set("n", "<leader>tn", "<cmd>set number!<cr>", { desc = "Toggle line numbers" })
+
+vim.keymap.set("n", "<leader>a", "mzggVG")
+
+vim.keymap.set("n", "tuc", "gUw")
+vim.keymap.set("n", "tlc", "guw")
+
+-- vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
+-- vim.keymap.set("n", "<leader>Y", [["+Y]])
+-- vim.keymap.set("x", "<leader>p", [["_dP]])
+-- vim.keymap.set("v", "p", '"_dP', opts)
+
+vim.keymap.set({ "n", "v" }, "<leader>D", '"_d', { desc = "Delete to blackhole register" })
+
+vim.keymap.set("n", "Q", "<nop>")
+
+vim.keymap.set("n", "<M-w>", "<C-w>w", { desc = "Cycle Split Windows" })
+
+vim.keymap.set("n", "<leader>pb", "<C-^>", { desc = "Switch to Previous Buffer" })
+
+vim.keymap.set("n", "<leader>k", "<cmd>lnext<CR>zz", { desc = "Location list next" })
+vim.keymap.set("n", "<leader>j", "<cmd>lprevious<CR>zz", { desc = "Location list prev" })
+
+vim.keymap.set("n", "<leader>ls", "<cmd>!pwd && ls -laFh --group-directories-first<CR>", { silent = true })
+vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
+vim.keymap.set("n", "<leader>nl", "081lF i<CR><Esc>")
+
+vim.keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically." })
+vim.keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally." })
+vim.keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make split equal size." })
+
+vim.keymap.set("n", "<leader>fp", function()
+    local filePath = vim.fn.expand("%:~")
+    vim.fn.setreg("+", filePath)
+    print("File path copied to clipboard: " .. filePath)
+end, { desc = "Copy file path to clipboard." })
+
+vim.keymap.set("n", "<leader>u", function()
+    vim.cmd.packadd("nvim.undotree")
+    require("undotree").open()
+end, { desc = "Toggle builtin undo tree." })
+
+vim.keymap.set("n", "<leader>jee", "oif err != nil {<CR>}<Esc>Oreturn err<Esc>")
+vim.keymap.set("n", "<leader>jea", 'oassert.NoError(err, "")<Esc>F";a')
+vim.keymap.set("n", "<leader>jef", 'oif err != nil {<CR>}<Esc>Olog.Fatalf("error: %s\\n", err.Error())<Esc>jj')
+vim.keymap.set("n", "<leader>jel", 'oif err != nil {<CR>}<Esc>O.logger.Error("error", "error", err)<Esc>F.;i')
+vim.keymap.set("n", "<leader>cmf", "o#if 0<CR><Esc>O#else<Esc><CR>O#endif")
+
+-- ============================================================================
+-- Scope jk to normal mode
+-- ============================================================================
+local term_jk_group = vim.api.nvim_create_augroup("ScopedTermExit", { clear = true })
+local skip_term_filetypes = {
+    ["snacks_terminal"] = true,
+    ["dap-view-term"]   = true,
+    ["dap-repl"]        = true,
+}
+local skip_term_cmds = {
+    ["lazygit"]    = true,
+    ["lazydocker"] = true,
+    ["gitui"]      = true,
+    ["tig"]        = true,
+    ["fzf"]        = true,
+    ["btop"]       = true,
+    ["htop"]       = true,
+    ["top"]        = true,
+    ["nvim"]       = true,
+    ["vim"]        = true,
+    ["vi"]         = true,
+    ["nano"]       = true,
+    ["less"]       = true,
+    ["more"]       = true,
+    ["man"]        = true,
+    ["yazi"]       = true,
+    ["ranger"]     = true,
+    ["mc"]         = true,
+    ["ncdu"]       = true,
+    ["nmtui"]      = true,
+    ["alsamixer"]  = true,
+}
+
+vim.api.nvim_create_autocmd("TermOpen", {
+    group = term_jk_group,
+    pattern = "*",
+    callback = function(args)
+        local buf = args.buf
+        if not vim.api.nvim_buf_is_valid(buf) then
+            return
+        end
+        if skip_term_filetypes[vim.bo[buf].filetype] then
+            return
+        end
+
+        local buf_name = vim.api.nvim_buf_get_name(buf)
+        local cmd_part = buf_name:match("^term://.-//%d+:(.+)$")
+        if cmd_part ~= nil then
+            local first_tok = cmd_part:match("^%S+")
+            if first_tok ~= nil then
+                local prog = vim.fs.basename(first_tok):lower()
+                if skip_term_cmds[prog] then
+                    return
+                end
+            end
+        end
+
+        vim.keymap.set("t", "jk", "<C-\\><C-n>", {
+            buffer  = buf,
+            noremap = true,
+            silent  = true,
+            desc    = "Exit terminal mode",
+        })
+
+        vim.schedule(function()
+            if not vim.api.nvim_buf_is_valid(buf) then
+                return
+            end
+            if skip_term_filetypes[vim.bo[buf].filetype] then
+                pcall(vim.keymap.del, "t", "jk", { buffer = buf })
+            end
+        end)
+    end,
+})
+
+-- ============================================================================
+-- tmux 
+-- ============================================================================
+vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
+vim.keymap.set("n", "<M-h>", "<cmd>silent !tmux-sessionizer -s 0 --vsplit<CR>")
+vim.keymap.set("n", "<M-H>", "<cmd>silent !tmux neww tmux-sessionizer -s 0<CR>")
 
 local tmux_dirs = {
     h = "L",
@@ -64,78 +213,6 @@ vim.keymap.set("n", "<C-h>", function() try_tmux("h") end, { desc = "Window left
 vim.keymap.set("n", "<C-l>", function() try_tmux("l") end, { desc = "Window right / Tmux right" })
 vim.keymap.set("n", "<C-j>", function() try_quickfix_or_tmux("j") end, { desc = "QF prev / Window down / Tmux down" })
 vim.keymap.set("n", "<C-k>", function() try_quickfix_or_tmux("k") end, { desc = "QF next / Window up / Tmux up" })
-
-vim.keymap.set("n", "<C-d>", "<C-d>zz")
-vim.keymap.set("n", "<C-u>", "<C-u>zz")
-vim.keymap.set("n", "<C-c>", ":nohl<CR>", { desc = "Clear search hl", silent = true })
-vim.keymap.set("n", "<C-s>", ":wa<CR>")
-
-vim.keymap.set("n", "n", "nzzzv")
-vim.keymap.set("n", "N", "Nzzzv")
-
-vim.keymap.set("v", "<", "<gv", opts)
-vim.keymap.set("v", ">", ">gv", opts)
-
-vim.keymap.set("n", "=ap", "ma=ap'a")
-
-vim.keymap.set("n", "gd", "<C-]>", { desc = "Tags: Jump to Definition" })
-vim.keymap.set("n", "gD", "g<C-]>", { desc = "Tags: Select Definition" })
-
-vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
-vim.keymap.set("n", "<leader>lt", function()
-    vim.cmd([[ PlenaryBustedFile % ]])
-end)
-vim.keymap.set("n", "<leader>tn", "<cmd>set number!<cr>", { desc = "Toggle line numbers" })
-
-vim.keymap.set("n", "<leader>a", "mzggVG")
-
-vim.keymap.set("n", "tuc", "gUw")
-vim.keymap.set("n", "tlc", "guw")
-
--- vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
--- vim.keymap.set("n", "<leader>Y", [["+Y]])
--- vim.keymap.set("x", "<leader>p", [["_dP]])
--- vim.keymap.set("v", "p", '"_dP', opts)
-
-vim.keymap.set({ "n", "v" }, "<leader>D", '"_d', { desc = "Delete to blackhole register" })
-
-vim.keymap.set("n", "Q", "<nop>")
-
-vim.keymap.set("n", "<M-w>", "<C-w>w", { desc = "Cycle Split Windows" })
-
-vim.keymap.set("n", "<leader>pb", "<C-^>", { desc = "Switch to Previous Buffer" })
-
-vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
-vim.keymap.set("n", "<M-h>", "<cmd>silent !tmux-sessionizer -s 0 --vsplit<CR>")
-vim.keymap.set("n", "<M-H>", "<cmd>silent !tmux neww tmux-sessionizer -s 0<CR>")
-
-vim.keymap.set("n", "<leader>k", "<cmd>lnext<CR>zz", { desc = "Location list next" })
-vim.keymap.set("n", "<leader>j", "<cmd>lprevious<CR>zz", { desc = "Location list prev" })
-
-vim.keymap.set("n", "<leader>ls", "<cmd>!pwd && ls -laFh --group-directories-first<CR>", { silent = true })
-vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
-vim.keymap.set("n", "<leader>nl", "081lF i<CR><Esc>")
-
-vim.keymap.set("n", "<leader>sv", "<C-w>v", { desc = "Split window vertically." })
-vim.keymap.set("n", "<leader>sh", "<C-w>s", { desc = "Split window horizontally." })
-vim.keymap.set("n", "<leader>se", "<C-w>=", { desc = "Make split equal size." })
-
-vim.keymap.set("n", "<leader>fp", function()
-    local filePath = vim.fn.expand("%:~")
-    vim.fn.setreg("+", filePath)
-    print("File path copied to clipboard: " .. filePath)
-end, { desc = "Copy file path to clipboard." })
-
-vim.keymap.set("n", "<leader>u", function()
-    vim.cmd.packadd("nvim.undotree")
-    require("undotree").open()
-end, { desc = "Toggle builtin undo tree." })
-
-vim.keymap.set("n", "<leader>jee", "oif err != nil {<CR>}<Esc>Oreturn err<Esc>")
-vim.keymap.set("n", "<leader>jea", 'oassert.NoError(err, "")<Esc>F";a')
-vim.keymap.set("n", "<leader>jef", 'oif err != nil {<CR>}<Esc>Olog.Fatalf("error: %s\\n", err.Error())<Esc>jj')
-vim.keymap.set("n", "<leader>jel", 'oif err != nil {<CR>}<Esc>O.logger.Error("error", "error", err)<Esc>F.;i')
-vim.keymap.set("n", "<leader>cmf", "o#if 0<CR><Esc>O#else<Esc><CR>O#endif")
 
 -- ============================================================================
 -- Yank keep column on Paste 
