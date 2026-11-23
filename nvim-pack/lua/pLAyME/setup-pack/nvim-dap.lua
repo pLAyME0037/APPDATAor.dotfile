@@ -102,22 +102,34 @@ vim.schedule(function()
         return args, nil
     end
 
-    local function prompt_exec_path()
-        local sentinel  = "__DAP_ABORT__"
+    local remembered_bins = {}
+
+    local function prompt_exec_path(default_path)
+        local sentinel = "__DAP_ABORT__"
+        local start_default = default_path
+        if type(start_default) ~= "string" or start_default == "" then
+            start_default = vim.fn.getcwd() .. "/"
+        end
         local exec_path = vim.fn.input({
             prompt       = "Path to exec: ",
-            default      = vim.fn.getcwd() .. "/",
+            default      = start_default,
             completion   = "file",
             cancelreturn = sentinel,
         })
         if exec_path == sentinel or vim.trim(exec_path) == "" then
             return dap.ABORT
         end
-        local real_path = vim.uv.fs_realpath(exec_path)
+        local trimmed = vim.trim(exec_path)
+        local abs_path = vim.fn.fnamemodify(trimmed, ":p")
+        local real_path = vim.uv.fs_realpath(abs_path)
         if real_path ~= nil then
-            return real_path
+            abs_path = real_path
         end
-        return exec_path
+        if vim.fn.isdirectory(abs_path) == 1 or vim.fn.filereadable(abs_path) ~= 1 then
+            vim.notify("Executable not found: " .. abs_path, vim.log.levels.ERROR)
+            return dap.ABORT
+        end
+        return abs_path
     end
 
     local function prompt_cli_args()
@@ -139,47 +151,297 @@ vim.schedule(function()
         return parsed
     end
 
-    local function find_build_sh_root()
-        local raw_dir = vim.fn.expand("%:p:h")
-        if raw_dir == "" then
-            raw_dir = vim.fn.getcwd()
+    local build_markers = {
+        "Makefile",
+        "CMakeLists.txt",
+        "build.sh",
+        "nob.c",
+        "Cargo.toml",
+    }
+
+    local function find_project_root(start)
+        if type(start) ~= "string" or start == "" then
+            return nil, nil
         end
-        local dir = vim.uv.fs_realpath(raw_dir) or raw_dir
         local home_dir = vim.fs.normalize(vim.fn.expand("~"))
-        dir = vim.fs.normalize(dir)
+        local d = vim.fs.normalize(start)
 
         while true do
-            if vim.fn.filereadable(dir .. "/build.sh") == 1 then
-                return dir
-            end
-            if dir == home_dir or dir == "/" then
+            if d == home_dir or d == "/" then
                 break
             end
-            local parent = vim.fn.fnamemodify(dir, ":h")
-            if parent == dir then
+            for _, m in ipairs(build_markers) do
+                if vim.fn.filereadable(d .. "/" .. m) == 1 then
+                    return d, m
+                end
+            end
+            if vim.fn.glob(d .. "/*.csproj") ~= "" then
+                return d, "*.csproj"
+            end
+            local parent = vim.fn.fnamemodify(d, ":h")
+            if parent == d then
                 break
             end
-            dir = parent
+            d = parent
         end
-        return nil
+
+        return nil, nil
     end
 
-    local function pick_wine_exe_path(root)
-        local candidate = root .. "/build/handmade.exe"
-        if vim.fn.filereadable(candidate) == 1 then
-            local real = vim.uv.fs_realpath(candidate)
-            if real ~= nil then
-                return real
-            end
-            return candidate
+    local function read_file_magic(path, count)
+        local fd = vim.uv.fs_open(path, "r", 438)
+        if fd == nil then
+            return ""
         end
-        local found = vim.fn.glob(root .. "/build/*.exe", false, true)
-        if #found > 0 then
-            local real = vim.uv.fs_realpath(found[1])
-            if real ~= nil then
-                return real
+        local data = vim.uv.fs_read(fd, count, 0)
+        vim.uv.fs_close(fd)
+        if type(data) ~= "string" then
+            return ""
+        end
+        return data
+    end
+
+    local function matches_platform_bin(path, platform_kind, marker, root)
+        if vim.fn.isdirectory(path) == 1 or vim.fn.filereadable(path) ~= 1 then
+            return false
+        end
+        if marker == "nob.c" and root ~= nil and path == (root .. "/nob") then
+            return false
+        end
+        local lower = path:lower()
+        if platform_kind == "windows" then
+            if not lower:match("%.exe$") then
+                return false
             end
-            return found[1]
+            return read_file_magic(path, 2) == "MZ"
+        end
+        if platform_kind == "dotnet" then
+            if not (lower:match("%.dll$") or lower:match("%.exe$")) then
+                return false
+            end
+            if lower:match("%.resources%.dll$") then
+                return false
+            end
+            return true
+        end
+        if lower:match("%.exe$") or lower:match("%.dll$") or lower:match("%.so$")
+            or lower:match("%.so%.") or lower:match("%.o$") or lower:match("%.a$") then
+            return false
+        end
+        return read_file_magic(path, 4) == "\127ELF"
+    end
+
+    local skip_scan_dirs = {
+        [".git"]        = true,
+        [".wine"]       = true,
+        ["CMakeFiles"]  = true,
+        ["deps"]        = true,
+        ["incremental"] = true,
+        ["build-deps"]  = true,
+        ["ref"]         = true,
+        ["runtimes"]    = true,
+        ["obj"]         = true,
+    }
+
+    local function collect_bins_in_dir(dir, max_depth, platform_kind, marker, root, out, seen)
+        if vim.fn.isdirectory(dir) ~= 1 or max_depth < 0 then
+            return
+        end
+        for name, ftype in vim.fs.dir(dir) do
+            local full = dir .. "/" .. name
+            if ftype == "directory" then
+                if not skip_scan_dirs[name] and max_depth > 0 then
+                    collect_bins_in_dir(full, max_depth - 1, platform_kind, marker, root, out, seen)
+                end
+            elseif ftype == "file" or ftype == "link" then
+                local real = vim.uv.fs_realpath(full) or full
+                if not seen[real] and matches_platform_bin(real, platform_kind, marker, root) then
+                    seen[real] = true
+                    table.insert(out, real)
+                end
+            end
+        end
+    end
+
+    local function get_dap_context(platform_kind)
+        local raw_file = vim.api.nvim_buf_get_name(0)
+        local ft = vim.bo.filetype
+        local file_dir = vim.uv.fs_realpath(vim.fn.getcwd()) or vim.fn.getcwd()
+        local exec_name = ""
+        if raw_file ~= "" and vim.bo.buftype == "" then
+            local raw_dir = vim.fn.fnamemodify(raw_file, ":p:h")
+            file_dir = vim.uv.fs_realpath(raw_dir) or raw_dir
+            exec_name = vim.fn.fnamemodify(raw_file, ":t:r")
+        end
+        file_dir = vim.fs.normalize(file_dir)
+
+        local root, marker = find_project_root(file_dir)
+        local dir_root = file_dir
+        if root ~= nil then
+            dir_root = root
+        end
+
+        local cache_key
+        if root ~= nil then
+            cache_key = root .. "|" .. platform_kind
+        elseif raw_file ~= "" and vim.bo.buftype == "" then
+            cache_key = (vim.uv.fs_realpath(raw_file) or raw_file) .. "|" .. platform_kind
+        else
+            cache_key = file_dir .. "|" .. platform_kind
+        end
+
+        return {
+            ft        = ft,
+            file_dir  = file_dir,
+            exec_name = exec_name,
+            root      = root,
+            marker    = marker,
+            dir_root  = dir_root,
+            cache_key = cache_key,
+        }
+    end
+
+    local function find_candidate_binary(ctx, platform_kind)
+        local suffixes = { "" }
+        if platform_kind == "windows" then
+            suffixes = { ".exe" }
+        elseif platform_kind == "dotnet" then
+            suffixes = { ".dll", ".exe" }
+        end
+
+        if ctx.exec_name ~= "" then
+            local direct_candidates = {}
+            for _, sfx in ipairs(suffixes) do
+                table.insert(direct_candidates, ctx.file_dir .. "/bin/" .. ctx.exec_name .. sfx)
+                if ctx.dir_root ~= ctx.file_dir then
+                    table.insert(direct_candidates, ctx.dir_root .. "/bin/" .. ctx.exec_name .. sfx)
+                end
+                if ctx.ft == "haskell" or ctx.ft == "cabal.haskell" then
+                    table.insert(direct_candidates, ctx.file_dir .. "/bin/" .. ctx.exec_name .. "/" .. ctx.exec_name .. sfx)
+                end
+                table.insert(direct_candidates, ctx.file_dir .. "/" .. ctx.exec_name .. sfx)
+            end
+
+            for _, cand in ipairs(direct_candidates) do
+                local real = vim.uv.fs_realpath(cand) or cand
+                if matches_platform_bin(real, platform_kind, ctx.marker, ctx.root) then
+                    return real
+                end
+            end
+        end
+
+        local scan_dirs = {}
+        if ctx.root ~= nil and ctx.marker ~= nil then
+            if ctx.marker == "CMakeLists.txt" then
+                scan_dirs = { ctx.root .. "/build", ctx.root .. "/bin" }
+            elseif ctx.marker == "Cargo.toml" then
+                scan_dirs = { ctx.root .. "/target/debug", ctx.root .. "/target/release" }
+            elseif ctx.marker == "build.sh" then
+                scan_dirs = { ctx.root .. "/build", ctx.root .. "/bin", ctx.root }
+            elseif ctx.marker == "Makefile" or ctx.marker == "nob.c" then
+                scan_dirs = { ctx.root .. "/bin", ctx.root .. "/build", ctx.root }
+            elseif ctx.marker == "*.csproj" then
+                scan_dirs = { ctx.root .. "/bin/Debug", ctx.root .. "/bin/Release" }
+            end
+        else
+            scan_dirs = { ctx.file_dir .. "/bin" }
+        end
+
+        local found = {}
+        local seen = {}
+        for _, sdir in ipairs(scan_dirs) do
+            collect_bins_in_dir(sdir, 3, platform_kind, ctx.marker, ctx.root, found, seen)
+        end
+
+        if #found == 0 then
+            return nil
+        end
+
+        local root_name = vim.fs.basename(ctx.dir_root)
+        local best_path = nil
+        local best_score = -1
+        local best_mtime = -1
+
+        for _, p in ipairs(found) do
+            local stem = vim.fn.fnamemodify(p, ":t:r")
+            local score = 0
+            if ctx.exec_name ~= "" and stem == ctx.exec_name then
+                score = score + 100
+            elseif root_name ~= "" and stem == root_name then
+                score = score + 80
+            end
+            if p:find("/bin/", 1, true) or p:find("/build/", 1, true) or p:find("/target/debug/", 1, true) then
+                score = score + 20
+            end
+            local stat = vim.uv.fs_stat(p)
+            local mtime = 0
+            if type(stat) == "table" and type(stat.mtime) == "table" and type(stat.mtime.sec) == "number" then
+                mtime = stat.mtime.sec
+            end
+            if score > best_score or (score == best_score and mtime > best_mtime) then
+                best_score = score
+                best_mtime = mtime
+                best_path = p
+            end
+        end
+
+        return best_path
+    end
+
+    local function resolve_dap_binary(platform_kind)
+        local ctx = get_dap_context(platform_kind)
+        local saved = remembered_bins[ctx.cache_key]
+
+        if type(saved) == "string" and saved ~= "" then
+            if vim.fn.filereadable(saved) == 1 and vim.fn.isdirectory(saved) ~= 1 then
+                return saved
+            end
+            remembered_bins[ctx.cache_key] = nil
+            local fallback_dir = vim.fn.fnamemodify(saved, ":h")
+            local manual_default = ctx.dir_root .. "/"
+            if vim.fn.isdirectory(fallback_dir) == 1 then
+                manual_default = fallback_dir .. "/"
+            end
+            local chosen = prompt_exec_path(manual_default)
+            if chosen ~= dap.ABORT then
+                remembered_bins[ctx.cache_key] = chosen
+            end
+            return chosen
+        end
+
+        local candidate = find_candidate_binary(ctx, platform_kind)
+        local prompt_default = ctx.dir_root .. "/"
+        if type(candidate) == "string" and candidate ~= "" then
+            prompt_default = candidate
+        end
+        local chosen = prompt_exec_path(prompt_default)
+        if chosen ~= dap.ABORT then
+            remembered_bins[ctx.cache_key] = chosen
+        end
+        return chosen
+    end
+
+    local function resolve_wine_prefix(exe_path, root)
+        if type(root) == "string" and vim.fn.isdirectory(root .. "/.wine/drive_c") == 1 then
+            return root .. "/.wine"
+        end
+        local home_dir = vim.fs.normalize(vim.fn.expand("~"))
+        local d = vim.fs.normalize(vim.fn.fnamemodify(exe_path, ":h"))
+        while true do
+            if d == home_dir or d == "/" then
+                break
+            end
+            if vim.fn.isdirectory(d .. "/.wine/drive_c") == 1 then
+                return d .. "/.wine"
+            end
+            local parent = vim.fn.fnamemodify(d, ":h")
+            if parent == d then
+                break
+            end
+            d = parent
+        end
+        if type(vim.env.WINEPREFIX) == "string" and vim.env.WINEPREFIX ~= "" then
+            return vim.env.WINEPREFIX
         end
         return nil
     end
@@ -323,38 +585,11 @@ vim.schedule(function()
         return nil
     end
 
-    local function build_and_start_wine_server()
+    local function launch_wine_gdb_server()
         cleanup_wine_session()
 
-        local root = find_build_sh_root()
-        if root == nil then
-            vim.notify("No build.sh found in parent directories", vim.log.levels.ERROR)
-            return dap.ABORT
-        end
-
-        ensure_wine_output_window()
-        append_wine_output_lines({ "[build] Running " .. root .. "/build.sh build-debug ..." })
-
-        local build_res = vim.system({ "bash", root .. "/build.sh", "build-debug" }, {
-            cwd = root,
-            text = true,
-        }):wait()
-
-        if type(build_res.stdout) == "string" and build_res.stdout ~= "" then
-            append_wine_output_lines(vim.split(build_res.stdout, "\n", { plain = true }))
-        end
-        if type(build_res.stderr) == "string" and build_res.stderr ~= "" then
-            append_wine_output_lines(vim.split(build_res.stderr, "\n", { plain = true }))
-        end
-
-        if build_res.code ~= 0 then
-            vim.notify("build.sh build-debug failed (see Wine Debug Output)", vim.log.levels.ERROR)
-            return dap.ABORT
-        end
-
-        local exe_path = pick_wine_exe_path(root)
-        if exe_path == nil then
-            vim.notify("No compiled .exe found in " .. root .. "/build", vim.log.levels.ERROR)
+        local exe_path = resolve_dap_binary("windows")
+        if exe_path == dap.ABORT then
             return dap.ABORT
         end
 
@@ -364,8 +599,19 @@ vim.schedule(function()
             return dap.ABORT
         end
 
-        local wineprefix = root .. "/.wine"
-        local winedebug = "fixme-all,warn+debugstr,warn+seh"
+        local exe_dir = vim.fn.fnamemodify(exe_path, ":h")
+        local root, _ = find_project_root(exe_dir)
+        local work_dir = exe_dir
+        if root ~= nil then
+            work_dir = root
+        end
+
+        local wineprefix = resolve_wine_prefix(exe_path, root)
+        local winedebug = vim.env.WINEDEBUG
+        if type(winedebug) ~= "string" or winedebug == "" then
+            winedebug = "fixme-all,warn+debugstr,warn+seh"
+        end
+
         local server_cmd
         if vim.env.WINE_USE_GDBSERVER == "1" and vim.fn.executable("gdbserver.exe") == 1 then
             server_cmd = { "wine", "gdbserver.exe", "127.0.0.1:" .. tostring(port), exe_path }
@@ -373,10 +619,17 @@ vim.schedule(function()
             server_cmd = { "winedbg", "--gdb", "--no-start", "--port", tostring(port), exe_path }
         end
 
-        append_wine_output_lines({
-            "[wine] WINEPREFIX=" .. wineprefix .. " WINEDEBUG=" .. winedebug,
-            "[wine] " .. table.concat(server_cmd, " "),
-        })
+        ensure_wine_output_window()
+        local env_map = {
+            WINEDEBUG = winedebug,
+        }
+        if wineprefix ~= nil then
+            env_map.WINEPREFIX = wineprefix
+            append_wine_output_lines({ "[wine] WINEPREFIX=" .. wineprefix .. " WINEDEBUG=" .. winedebug })
+        else
+            append_wine_output_lines({ "[wine] WINEDEBUG=" .. winedebug })
+        end
+        append_wine_output_lines({ "[wine] " .. table.concat(server_cmd, " ") })
 
         local ready = false
         local exited = false
@@ -397,11 +650,8 @@ vim.schedule(function()
         end
 
         local job_id = vim.fn.jobstart(server_cmd, {
-            cwd = root,
-            env = {
-                WINEPREFIX = wineprefix,
-                WINEDEBUG = winedebug,
-            },
+            cwd = work_dir,
+            env = env_map,
             on_stdout = handle_stream,
             on_stderr = handle_stream,
             on_exit = function(_, code)
@@ -440,15 +690,8 @@ vim.schedule(function()
         return exe_path
     end
 
-    local function prompt_wine_attach_exe()
-        local root = find_build_sh_root()
-        if root ~= nil then
-            local found = pick_wine_exe_path(root)
-            if found ~= nil then
-                return found
-            end
-        end
-        return prompt_exec_path()
+    local function resolve_wine_attach_exe()
+        return resolve_dap_binary("windows")
     end
 
     local function prompt_remote_target()
@@ -703,7 +946,8 @@ vim.schedule(function()
             port = function()
                 local val = 54231
                 return val
-            end
+            end,
+            terminal = "integrated",
         }
     }
 
@@ -713,7 +957,10 @@ vim.schedule(function()
             name = "LAUNCH directly from nvim",
             request = "launch",
             runInTerminal = true,
-            program = prompt_exec_path,
+            program = function ()
+                return resolve_dap_binary("dotnet")
+            end,
+            terminal = "integrated",
         },
     }
 
@@ -722,16 +969,22 @@ vim.schedule(function()
             name = "Linux: Launch Executable (gdb)",
             type = "gdb",
             request = "launch",
-            program = prompt_exec_path,
+            program = function ()
+                return resolve_dap_binary("linux")
+            end,
             cwd = "${workspaceFolder}",
+            terminal = "integrated",
             stopAtBeginningOfMainSubprogram = false,
         }, {
             name = "Linux: Launch Executable (gdb, with args)",
             type = "gdb",
             request = "launch",
-            program = prompt_exec_path,
+            program = function ()
+                return resolve_dap_binary("linux")
+            end,
             args = prompt_cli_args,
             cwd = "${workspaceFolder}",
+            terminal = "integrated",
             stopAtBeginningOfMainSubprogram = false,
         }, {
             name = "Wine: Build & Debug (winedbg + live output)",
@@ -739,21 +992,25 @@ vim.schedule(function()
             request = "attach",
             wine_launch = true,
             _wine_attach = true,
-            program = build_and_start_wine_server,
+            program = launch_wine_gdb_server,
             cwd = "${workspaceFolder}",
+            terminal = "integrated",
         }, {
             name = "Wine: Attach to running winedbg (127.0.0.1:31337)",
             type = "gdb",
             request = "attach",
             _wine_attach = true,
-            program = prompt_wine_attach_exe,
+            program = resolve_wine_attach_exe,
             target = prompt_remote_target,
             cwd = "${workspaceFolder}",
+            terminal = "integrated",
         }, {
             name = "Linux: Launch Executable (codelldb)",
             type = "codelldb",
             request = "launch",
-            program = prompt_exec_path,
+            program = function ()
+                return resolve_dap_binary("linux")
+            end,
             cwd = "${workspaceFolder}",
             terminal = "integrated",
             stopOnEntry = false,
@@ -761,7 +1018,9 @@ vim.schedule(function()
             name = "Linux: Launch Executable (codelldb, with args)",
             type = "codelldb",
             request = "launch",
-            program = prompt_exec_path,
+            program = function ()
+                return resolve_dap_binary("linux")
+            end,
             args = prompt_cli_args,
             cwd = "${workspaceFolder}",
             terminal = "integrated",
