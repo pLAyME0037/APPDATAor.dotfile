@@ -54,7 +54,7 @@ def _eval_int_or_expr(expr):
     if re.fullmatch(r"-?\d+", s):
         return int(s, 10)
     val = _eval_expr_value(s)
-    if val.type.code == gdb.TYPE_CODE_ARRAY:
+    if val.type.strip_typedefs().code == gdb.TYPE_CODE_ARRAY:
         if val.address is not None:
             return int(val.address)
     return int(val)
@@ -150,14 +150,10 @@ def _collect_proc_mappings():
             label = " ".join(parts[5:])
         if "r" not in perms.lower():
             continue
-        kind = "wine-rw"
+        kind = "app"
         lower_lbl = label.lower()
         if "/usr/lib/" in lower_lbl or "/lib/" in lower_lbl:
             kind = "sys-dll"
-        elif "[stack]" in lower_lbl:
-            kind = "stack"
-        elif "w" not in perms.lower():
-            kind = "wine-ro"
         regions.append({
             "start": start,
             "end": end,
@@ -171,19 +167,20 @@ def _collect_proc_mappings():
 def _classify_winedbg_mem(tail):
     upper = tail.upper()
     if "IMAGE" in upper:
-        return "r-ximg", "wine-image"
+        return "r-ximg", "wine-mem"
     if "PRIVATE" in upper and "W" in upper:
-        return "rw-priv", "wine-rw"
+        return "rw-priv", "wine-mem"
     if "MAPPED" in upper and "W" in upper:
-        return "rw-map", "wine-rw"
-    return "ro-mem", "wine-ro"
+        return "rw-map", "wine-mem"
+    return "ro-mem", "wine-mem"
 
 
 def _parse_winedbg_mem_line(line):
     upper = line.upper()
-    if "FREE" in upper or "RESERVE" in upper or "NOACCESS" in upper or "GUARD" in upper:
+    upper_tokens = set(upper.split())
+    if upper_tokens & {"FREE", "RESERVE", "NOACCESS", "GUARD", "PAGE_NOACCESS", "PAGE_GUARD"}:
         return None
-    if "---" in line:
+    if re.search(r"(?:^|\s)---(?:\s|$)", line):
         return None
 
     dash_match = re.search(
@@ -195,6 +192,8 @@ def _parse_winedbg_mem_line(line):
         end = int(dash_match.group(2), 16)
         rest = dash_match.group(3).strip()
         if end > start:
+            if (end & 0xFFF) == 0xFFF:
+                end = end + 1
             perms, kind = _classify_winedbg_mem(rest)
             return {
                 "start": start,
@@ -223,17 +222,22 @@ def _parse_winedbg_mem_line(line):
                 }
 
         if second > first and (second - first) <= 0x20000000:
-            if second >= 0x10000 and (first & 0xFFF) == 0 and (second & 0xFFF) == 0:
-                if "COMMIT" in upper or "RW" in upper or "RX" in upper or "RO" in upper:
+            if second >= 0x10000 and (first & 0xFFF) == 0:
+                end_addr = None
+                if (second & 0xFFF) == 0xFFF:
+                    end_addr = second + 1
+                elif (second & 0xFFF) == 0:
+                    end_addr = second
+                if end_addr is not None and (upper_tokens & {"COMMIT", "RW", "RX", "RO", "IMAGE", "MAPPED", "PRIVATE"}):
                     perms, kind = _classify_winedbg_mem(tail)
                     return {
                         "start": first,
-                        "end": first + second,
+                        "end": end_addr,
                         "perms": perms,
                         "kind": kind,
                         "label": tail,
                     }
-        if second > 0 and second < first:
+        if 0 < second < first:
             perms, kind = _classify_winedbg_mem(tail)
             return {
                 "start": first,
@@ -318,13 +322,15 @@ def resolve_addr_info(expr):
 
     target_addr = None
     code = val.type.strip_typedefs().code
-    if code == gdb.TYPE_CODE_PTR or code == gdb.TYPE_CODE_REF or code == gdb.TYPE_CODE_ARRAY:
+    if code == gdb.TYPE_CODE_PTR or code == gdb.TYPE_CODE_REF:
         try:
             ptr_int = int(val)
             if ptr_int >= 0:
                 target_addr = "0x{:x}".format(ptr_int)
         except gdb.error:
             pass
+    elif code == gdb.TYPE_CODE_ARRAY:
+        target_addr = lvalue_addr
 
     val_str = str(val)
     inspect_addr = lvalue_addr
@@ -389,25 +395,14 @@ def _match_needles_in_buffer(inferior, buf, base_addr, region, needles, max_hits
             pos = idx + 1
 
 
-def _subtract_intervals(start, end, covered):
-    pieces = [(start, end)]
-    for c_start, c_end in covered:
-        next_pieces = []
-        for p_start, p_end in pieces:
-            if c_end <= p_start or c_start >= p_end:
-                next_pieces.append((p_start, p_end))
-            else:
-                if p_start < c_start:
-                    next_pieces.append((p_start, c_start))
-                if c_end < p_end:
-                    next_pieces.append((c_end, p_end))
-        pieces = next_pieces
-        if not pieces:
-            break
-    return pieces
+def _scan_region(inferior, region, needles, scope, max_hits, hits, seen_addrs):
+    start = region["start"]
+    end = region["end"]
+    if scope in ("fast", "app", "heap"):
+        max_region_bytes = 16 * 1024 * 1024
+        if (end - start) > max_region_bytes:
+            end = start + max_region_bytes
 
-
-def _scan_interval(inferior, start, end, region, needles, max_hits, hits, seen_addrs):
     max_needle_len = 1
     for item in needles:
         if len(item["bytes"]) > max_needle_len:
@@ -425,7 +420,6 @@ def _scan_interval(inferior, start, end, region, needles, max_hits, hits, seen_a
         if not ok:
             sub_cur = cur
             sub_end = cur + req
-            tail = b""
             while sub_cur < sub_end and len(hits) < max_hits:
                 sub_req = min(page_size, sub_end - sub_cur)
                 page_data, page_ok = _safe_read_chunk(inferior, sub_cur, sub_req)
@@ -441,7 +435,6 @@ def _scan_interval(inferior, start, end, region, needles, max_hits, hits, seen_a
                     tail = b""
                 sub_cur += sub_req
             cur += req
-            tail = b""
             continue
 
         buf = tail + data
@@ -471,13 +464,17 @@ def _build_needles(kind, query):
         needles.append({"tag": "u32", "bytes": struct.pack("<I", val)})
     elif k == "i32":
         val = _eval_int_or_expr(q)
-        needles.append({"tag": "i32", "bytes": struct.pack("<i", val)})
+        if val < -0x80000000 or val > 0xFFFFFFFF:
+            raise gdb.error("i32 query out of 32-bit range")
+        needles.append({"tag": "i32", "bytes": struct.pack("<I", val & 0xFFFFFFFF)})
     elif k == "u64":
         val = _eval_int_or_expr(q) & 0xFFFFFFFFFFFFFFFF
         needles.append({"tag": "u64", "bytes": struct.pack("<Q", val)})
     elif k == "i64":
         val = _eval_int_or_expr(q)
-        needles.append({"tag": "i64", "bytes": struct.pack("<q", val)})
+        if val < -0x8000000000000000 or val > 0xFFFFFFFFFFFFFFFF:
+            raise gdb.error("i64 query out of 64-bit range")
+        needles.append({"tag": "i64", "bytes": struct.pack("<Q", val & 0xFFFFFFFFFFFFFFFF)})
     elif k in ("ascii", "utf8", "str"):
         raw = q.encode("utf-8")
         if not raw:
@@ -500,20 +497,7 @@ def _build_needles(kind, query):
     return needles
 
 
-def _priority_for_kind(kind):
-    order = {
-        "stack": 0,
-        "exe": 1,
-        "wine-rw": 2,
-        "wine-ro": 3,
-        "wine-image": 4,
-        "sys-dll": 5,
-        "unix-so": 6,
-    }
-    return order.get(kind, 9)
-
-
-def search_virtual_memory(kind, query, scope="app", start_hex="", end_hex="", max_hits=64):
+def search_virtual_memory(kind, query, scope="fast", start_hex="", end_hex="", max_hits=64):
     inferior = gdb.selected_inferior()
     if inferior is None or not inferior.is_valid():
         raise gdb.error("No active inferior")
@@ -522,8 +506,6 @@ def search_virtual_memory(kind, query, scope="app", start_hex="", end_hex="", ma
     regions = []
     map_source = "custom-range"
     norm_scope = scope.strip().lower()
-    if norm_scope == "fast":
-        norm_scope = "app"
 
     if start_hex and end_hex:
         s_addr = _eval_int_or_expr(start_hex)
@@ -542,43 +524,24 @@ def search_virtual_memory(kind, query, scope="app", start_hex="", end_hex="", ma
         map_source = vm["source"]
         if norm_scope == "app":
             for r in vm["regions"]:
-                if r["kind"] in ("stack", "exe"):
+                if r["kind"] in ("stack", "exe", "app"):
                     regions.append(r)
-        elif norm_scope == "heap":
+        elif norm_scope in ("fast", "heap"):
             for r in vm["regions"]:
-                if r["kind"] in ("stack", "exe", "wine-rw"):
+                if r["kind"] in ("stack", "exe", "wine-mem", "app"):
                     regions.append(r)
         else:
-            regions = list(vm["regions"])
+            regions = vm["regions"]
 
     if not regions:
         raise gdb.error("No readable memory regions found")
 
-    regions.sort(key=lambda r: (_priority_for_kind(r["kind"]), r["start"]))
-
     hits = []
     seen_addrs = set()
-    covered = []
-    scanned_count = 0
-
     for region in regions:
         if len(hits) >= max_hits:
             break
-        r_start = region["start"]
-        r_end = region["end"]
-        if norm_scope == "heap" and region["kind"] == "wine-rw":
-            max_rw = 8 * 1024 * 1024
-            if (r_end - r_start) > max_rw:
-                r_end = r_start + max_rw
-        sub_pieces = _subtract_intervals(r_start, r_end, covered)
-        if not sub_pieces:
-            continue
-        scanned_count += 1
-        for p_start, p_end in sub_pieces:
-            if len(hits) >= max_hits:
-                break
-            _scan_interval(inferior, p_start, p_end, region, needles, max_hits, hits, seen_addrs)
-            covered.append((p_start, p_end))
+        _scan_region(inferior, region, needles, norm_scope, max_hits, hits, seen_addrs)
 
     return {
         "ok": True,
@@ -586,7 +549,7 @@ def search_virtual_memory(kind, query, scope="app", start_hex="", end_hex="", ma
         "query": query,
         "scope": norm_scope,
         "map_source": map_source,
-        "region_count": scanned_count,
+        "region_count": len(regions),
         "hits": hits,
     }
 
@@ -627,21 +590,60 @@ def disassemble_around(addr_expr="$pc", before_count=12, after_count=28):
     pc_int = int(frame.pc())
     center_int = _eval_int_or_expr(addr_expr)
 
-    probe_start = max(0, center_int - max(before_count * 16, 64))
-    probe_end = center_int + max(after_count * 16, 128)
-    raw_insns = arch.disassemble(probe_start, probe_end)
+    forward_insns = []
+    for req_count in (after_count + 1, 16, 8, 4, 1):
+        try:
+            forward_insns = arch.disassemble(center_int, count=req_count)
+            break
+        except gdb.MemoryError:
+            continue
 
-    closest_idx = 0
-    best_dist = None
-    for idx, insn in enumerate(raw_insns):
-        dist = abs(insn["addr"] - center_int)
-        if best_dist is None or dist < best_dist:
-            best_dist = dist
-            closest_idx = idx
+    before_insns = []
+    if before_count > 0 and center_int > 0:
+        func_start = None
+        try:
+            blk = gdb.block_for_pc(center_int)
+            while blk is not None:
+                if blk.function is not None:
+                    if blk.start < center_int and (center_int - blk.start) <= 8192:
+                        func_start = int(blk.start)
+                    break
+                blk = blk.superblock
+        except RuntimeError:
+            pass
 
-    lo = max(0, closest_idx - before_count)
-    hi = min(len(raw_insns), closest_idx + after_count + 1)
-    selected = raw_insns[lo:hi]
+        if func_start is not None:
+            try:
+                raw_prev = arch.disassemble(func_start, center_int - 1)
+                filtered = [i for i in raw_prev if i["addr"] < center_int]
+                before_insns = filtered[-before_count:]
+            except gdb.MemoryError:
+                pass
+
+        if not before_insns:
+            offsets = [before_count * 16, before_count * 8, 64, 32, 16]
+            fallback_prev = []
+            for off in offsets:
+                cand_start = max(0, center_int - off)
+                if cand_start >= center_int:
+                    continue
+                try:
+                    cand = arch.disassemble(cand_start, center_int - 1)
+                except gdb.MemoryError:
+                    continue
+                filtered = [i for i in cand if i["addr"] < center_int]
+                if not filtered:
+                    continue
+                if not fallback_prev:
+                    fallback_prev = filtered[-before_count:]
+                last_insn = filtered[-1]
+                if (last_insn["addr"] + last_insn["length"]) == center_int:
+                    before_insns = filtered[-before_count:]
+                    break
+            if not before_insns and fallback_prev:
+                before_insns = fallback_prev
+
+    selected = before_insns + forward_insns
 
     items = []
     for insn in selected:
@@ -717,7 +719,7 @@ def _handle_rpc_payload(req):
         return search_virtual_memory(
             kind=req.get("kind", "ptr"),
             query=req.get("query", ""),
-            scope=req.get("scope", "app"),
+            scope=req.get("scope", "fast"),
             start_hex=req.get("start", ""),
             end_hex=req.get("end", ""),
             max_hits=int(req.get("max_hits", 64)),
@@ -794,11 +796,11 @@ class WineSearchCommand(gdb.Command):
     def invoke(self, arg, from_tty):
         argv = gdb.string_to_argv(arg)
         if len(argv) < 2:
-            gdb.write("Usage: wine-search <ptr|u32|i32|u64|i64|ascii|utf16|hex> <query> [app|heap|all]\n", gdb.STDERR)
+            gdb.write("Usage: wine-search <ptr|u32|i32|u64|i64|ascii|utf16|hex> <query> [fast|all]\n", gdb.STDERR)
             return
         kind = argv[0]
         query = argv[1]
-        scope = "app"
+        scope = "fast"
         if len(argv) >= 3:
             scope = argv[2]
         res = search_virtual_memory(kind, query, scope=scope)

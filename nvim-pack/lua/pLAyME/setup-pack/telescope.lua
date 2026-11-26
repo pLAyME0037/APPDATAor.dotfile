@@ -256,15 +256,17 @@ local reserve_words = {
 
 local reject_start = {
     ["return"]=true,  ["if"]=true,     ["while"]=true,
-    ["for"]   =true,     ["switch"]=true, ["else"]=true,
+    ["for"]=true,     ["switch"]=true, ["else"]=true,
     ["typedef"]=true, ["using"]=true,  ["throw"]=true,
     ["new"]=true,     ["delete"]=true
 }
 
 local function strip_line_comments(line, style, state)
-    local out = {}
-    local idx = 1
-    local len = #line
+    local out      = {}
+    local idx      = 1
+    local len      = #line
+    local in_quote = nil
+    local escaped  = false
 
     while idx <= len do
         if state.in_block then
@@ -283,54 +285,45 @@ local function strip_line_comments(line, style, state)
             else
                 return table.concat(out)
             end
+        elseif in_quote ~= nil then
+            local ch = line:sub(idx, idx)
+            table.insert(out, ch)
+            if escaped then
+                escaped = false
+            elseif ch == "\\" then
+                escaped = true
+            elseif ch == in_quote then
+                in_quote = nil
+            end
+            idx = idx + 1
         else
-            local b_idx = nil
-            if style.block_start then
-                b_idx = line:find(style.block_start, idx, true)
-            end
-            local ba_idx = nil
-            if style.block_start_alt then
-                ba_idx = line:find(style.block_start_alt, idx, true)
-            end
-            local s_idx = nil
-            if style.single then
-                s_idx = line:find(style.single, idx, true)
-            end
-
-            -- Treat block comment start as higher priority when at same index (e.g. "--[[" vs "--")
-            local earliest = nil
-            local kind = nil
-
-            if b_idx then
-                earliest = b_idx
-                kind = "block"
-            end
-            if ba_idx and (earliest == nil or ba_idx < earliest) then
-                earliest = ba_idx
-                kind = "block_alt"
-            end
-            if s_idx and (earliest == nil or s_idx < earliest) then
-                earliest = s_idx
-                kind = "single"
-            end
-
-            if earliest == nil then
-                table.insert(out, line:sub(idx))
-                break
-            end
-
-            if earliest > idx then
-                table.insert(out, line:sub(idx, earliest - 1))
-            end
-
-            if kind == "single" then
-                break
-            elseif kind == "block" then
-                state.in_block = true
-                idx = earliest + #style.block_start
+            local ch = line:sub(idx, idx)
+            if ch == '"' or ch == "'" then
+                in_quote = ch
+                table.insert(out, ch)
+                idx = idx + 1
             else
-                state.in_block_alt = true
-                idx = earliest + #style.block_start_alt
+                local matched = nil
+                if style.block_start and line:sub(idx, idx + #style.block_start - 1) == style.block_start then
+                    matched = "block"
+                elseif style.block_start_alt and line:sub(idx, idx + #style.block_start_alt - 1) == style.block_start_alt then
+                    matched = "block_alt"
+                elseif style.single and line:sub(idx, idx + #style.single - 1) == style.single then
+                    matched = "single"
+                end
+
+                if matched == "single" then
+                    break
+                elseif matched == "block" then
+                    state.in_block = true
+                    idx = idx + #style.block_start
+                elseif matched == "block_alt" then
+                    state.in_block_alt = true
+                    idx = idx + #style.block_start_alt
+                else
+                    table.insert(out, ch)
+                    idx = idx + 1
+                end
             end
         end
     end
@@ -478,15 +471,32 @@ local function list_functions()
         finder = require("telescope.finders").new_table({
             results = results,
             entry_maker = function(entry)
-                local sig = entry.text
-                local start = sig:find(entry.raw_name, 1, true)
-                if start then
-                    sig = entry.name .. sig:sub(start + #entry.raw_name):gsub("^%s*=%s*", ""):gsub("%s+$", "")
+                local sig      = entry.text
+                local safe_raw = entry.raw_name:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%1")
+                local search_from = 1
+                while true do
+                    local s_pos, e_pos = sig:find(safe_raw, search_from)
+                    if not s_pos then
+                        break
+                    end
+                    local before_ch = ""
+                    if s_pos > 1 then
+                        before_ch = sig:sub(s_pos - 1, s_pos - 1)
+                    end
+                    local after_ch = ""
+                    if e_pos < #sig then
+                        after_ch = sig:sub(e_pos + 1, e_pos + 1)
+                    end
+                    if not before_ch:match("[%w_]") and not after_ch:match("[%w_]") then
+                        sig = entry.name .. sig:sub(e_pos + 1):gsub("^%s*=%s*", ""):gsub("%s+$", "")
+                        break
+                    end
+                    search_from = e_pos + 1
                 end
                 local left = "fn(" .. entry.call_count .. ")"
-                local pad = string.rep(" ", math.max(0, 6 - #left))
+                local pad  = string.rep(" ", math.max(0, 6 - #left))
                 return {
-                    value = entry,
+                    value   = entry,
                     display = left .. pad .. " | " .. sig,
                     ordinal = entry.name .. " " .. entry.text,
                 }
@@ -598,7 +608,12 @@ vim.keymap.set('n', '<leader>pWs', function()
     builtin.grep_string({ search = word })
 end)
 vim.keymap.set('n', '<leader>ps', function()
-    builtin.grep_string({ search = vim.fn.input("Grep > ") })
+    local sentinel = "__GREP_CANCEL__"
+    local query = vim.fn.input({ prompt = "Grep > ", cancelreturn = sentinel })
+    if query == sentinel or vim.trim(query) == "" then
+        return
+    end
+    builtin.grep_string({ search = query })
 end)
 vim.keymap.set('n', '<leader>vh', builtin.help_tags, {})
 vim.keymap.set("n", "<leader>ths", "<cmd>Telescope themes<CR>", { noremap = true, silent = true, desc = "Theme Switcher" })

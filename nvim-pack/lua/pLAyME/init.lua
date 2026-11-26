@@ -325,10 +325,10 @@ local function resolve_rel_path(base_dir, p)
     return vim.fs.normalize(base_dir .. "/" .. p)
 end
 
-local function parse_compiler_args(args, base_dir, default_compiler)
+local function parse_compiler_args(args, base_dir, default_compiler, expect_compiler)
     local compiler = default_compiler
     local idx = 1
-    if #args >= 1 and args[1]:sub(1, 1) ~= "-" then
+    if expect_compiler and #args >= 1 and args[1]:sub(1, 1) ~= "-" then
         local base = vim.fs.basename(args[1])
         if (base == "ccache" or base == "sccache" or base == "distcc") and #args >= 2 and args[2]:sub(1, 1) ~= "-" then
             compiler = args[2]
@@ -342,6 +342,7 @@ local function parse_compiler_args(args, base_dir, default_compiler)
     local probe_flags       = {}
     local dep_flags         = {}
     local next_is_path_flag = nil
+    local next_is_dep_path  = nil
     local next_is_val_flag  = nil
 
     for i = idx, #args do
@@ -353,6 +354,11 @@ local function parse_compiler_args(args, base_dir, default_compiler)
             table.insert(dep_flags, next_is_path_flag)
             table.insert(dep_flags, resolved)
             next_is_path_flag = nil
+        elseif next_is_dep_path ~= nil then
+            local resolved = resolve_rel_path(base_dir, a)
+            table.insert(dep_flags, next_is_dep_path)
+            table.insert(dep_flags, resolved)
+            next_is_dep_path = nil
         elseif next_is_val_flag ~= nil then
             if next_is_val_flag == "-target" or next_is_val_flag == "--target" then
                 table.insert(probe_flags, next_is_val_flag)
@@ -361,9 +367,11 @@ local function parse_compiler_args(args, base_dir, default_compiler)
             table.insert(dep_flags, next_is_val_flag)
             table.insert(dep_flags, a)
             next_is_val_flag = nil
-        elseif a == "-I" or a == "-isystem" or a == "-iquote" or a == "-idirafter" or a == "-isysroot" or a == "--sysroot" then
+        elseif a == "-I" or a == "-isystem" or a == "-iquote" or a == "-idirafter" or a == "-isysroot" or a == "--sysroot" or a == "-F" then
             next_is_path_flag = a
-        elseif a == "-D" or a == "-U" or a == "-target" or a == "--target" or a == "-include" then
+        elseif a == "-include" or a == "-imacros" then
+            next_is_dep_path = a
+        elseif a == "-D" or a == "-U" or a == "-target" or a == "--target" then
             next_is_val_flag = a
         elseif a == "-nostdinc" or a == "-nostdinc++" or vim.startswith(a, "-stdlib=") or vim.startswith(a, "--target=") then
             table.insert(probe_flags, a)
@@ -382,6 +390,10 @@ local function parse_compiler_args(args, base_dir, default_compiler)
             table.insert(dep_flags, val)
         elseif vim.startswith(a, "-iquote") and #a > 7 then
             local val = "-iquote" .. resolve_rel_path(base_dir, a:sub(8))
+            table.insert(probe_flags, val)
+            table.insert(dep_flags, val)
+        elseif vim.startswith(a, "-F") and #a > 2 then
+            local val = "-F" .. resolve_rel_path(base_dir, a:sub(3))
             table.insert(probe_flags, val)
             table.insert(dep_flags, val)
         elseif vim.startswith(a, "-D") or vim.startswith(a, "-U") or vim.startswith(a, "-std=") or vim.startswith(a, "--std=") then
@@ -442,56 +454,59 @@ local function resolve_c_compile_env(bufnr)
 
     local cc_json = vim.fs.find("compile_commands.json", { path = start_dir, upward = true, stop = home_dir })[1]
     if cc_json ~= nil then
-        local raw = table.concat(vim.fn.readfile(cc_json), "\n")
-        local ok_dec, entries = pcall(vim.json.decode, raw)
-        if ok_dec and type(entries) == "table" and #entries > 0 then
-            local cc_dir  = vim.fs.dirname(cc_json)
-            local chosen  = entries[1]
-            local tu_list = {}
-            for _, entry in ipairs(entries) do
-                if type(entry) == "table" and type(entry.file) == "string" then
-                    local edir = cc_dir
-                    if type(entry.directory) == "string" and entry.directory ~= "" then
-                        edir = entry.directory
-                    end
-                    local fpath    = resolve_rel_path(edir, entry.file)
-                    local freal    = uv.fs_realpath(fpath) or fpath
-                    local raw_args = entry.arguments
-                    if type(raw_args) ~= "table" and type(entry.command) == "string" then
-                        raw_args = split_shell_args(entry.command)
-                    end
-                    if type(raw_args) == "table" then
-                        local parsed = parse_compiler_args(raw_args, edir, def_cc)
-                        table.insert(tu_list, {
-                            file      = freal,
-                            compiler  = parsed.compiler,
-                            dep_flags = parsed.dep_flags,
-                        })
-                        if freal == buf_real then
-                            chosen = entry
+        local raw = vim.secure.read(cc_json)
+        if type(raw) == "string" then
+            local ok_dec, entries = pcall(vim.json.decode, raw)
+            if ok_dec and type(entries) == "table" and #entries > 0 then
+                local cc_dir  = vim.fs.dirname(cc_json)
+                local chosen  = entries[1]
+                local tu_list = {}
+                for _, entry in ipairs(entries) do
+                    if type(entry) == "table" and type(entry.file) == "string" then
+                        local edir = cc_dir
+                        if type(entry.directory) == "string" and entry.directory ~= "" then
+                            edir = entry.directory
+                        end
+                        local fpath    = resolve_rel_path(edir, entry.file)
+                        local freal    = uv.fs_realpath(fpath) or fpath
+                        local raw_args = entry.arguments
+                        if type(raw_args) ~= "table" and type(entry.command) == "string" then
+                            raw_args = split_shell_args(entry.command)
+                        end
+                        if type(raw_args) == "table" then
+                            local parsed = parse_compiler_args(raw_args, edir, def_cc, true)
+                            table.insert(tu_list, {
+                                file      = freal,
+                                directory = edir,
+                                compiler  = parsed.compiler,
+                                dep_flags = parsed.dep_flags,
+                            })
+                            if freal == buf_real then
+                                chosen = entry
+                            end
                         end
                     end
                 end
-            end
 
-            local chosen_dir = cc_dir
-            if type(chosen.directory) == "string" and chosen.directory ~= "" then
-                chosen_dir = chosen.directory
-            end
-            local chosen_args = chosen.arguments
-            if type(chosen_args) ~= "table" and type(chosen.command) == "string" then
-                chosen_args = split_shell_args(chosen.command)
-            end
-            if type(chosen_args) == "table" then
-                local parsed = parse_compiler_args(chosen_args, chosen_dir, def_cc)
-                return {
-                    root        = cc_dir,
-                    lang        = lang,
-                    compiler    = parsed.compiler,
-                    probe_flags = parsed.probe_flags,
-                    dep_flags   = parsed.dep_flags,
-                    tu_list     = tu_list,
-                }
+                local chosen_dir = cc_dir
+                if type(chosen.directory) == "string" and chosen.directory ~= "" then
+                    chosen_dir = chosen.directory
+                end
+                local chosen_args = chosen.arguments
+                if type(chosen_args) ~= "table" and type(chosen.command) == "string" then
+                    chosen_args = split_shell_args(chosen.command)
+                end
+                if type(chosen_args) == "table" then
+                    local parsed = parse_compiler_args(chosen_args, chosen_dir, def_cc, true)
+                    return {
+                        root        = cc_dir,
+                        lang        = lang,
+                        compiler    = parsed.compiler,
+                        probe_flags = parsed.probe_flags,
+                        dep_flags   = parsed.dep_flags,
+                        tu_list     = tu_list,
+                    }
+                end
             end
         end
     end
@@ -502,23 +517,26 @@ local function resolve_c_compile_env(bufnr)
         stop   = home_dir
     })[1]
     if cf_txt ~= nil then
-        local cf_dir    = vim.fs.dirname(cf_txt)
-        local flag_args = {}
-        for _, line in ipairs(vim.fn.readfile(cf_txt)) do
-            local trimmed = vim.trim(line)
-            if trimmed ~= "" and trimmed:sub(1, 1) ~= "#" then
-                table.insert(flag_args, trimmed)
+        local cf_raw = vim.secure.read(cf_txt)
+        if type(cf_raw) == "string" then
+            local cf_dir    = vim.fs.dirname(cf_txt)
+            local flag_args = {}
+            for _, line in ipairs(vim.split(cf_raw, "\n", { plain = true })) do
+                local trimmed = vim.trim(line)
+                if trimmed ~= "" and trimmed:sub(1, 1) ~= "#" then
+                    table.insert(flag_args, trimmed)
+                end
             end
+            local parsed = parse_compiler_args(flag_args, cf_dir, def_cc, false)
+            return {
+                root        = cf_dir,
+                lang        = lang,
+                compiler    = parsed.compiler,
+                probe_flags = parsed.probe_flags,
+                dep_flags   = parsed.dep_flags,
+                tu_list     = {},
+            }
         end
-        local parsed = parse_compiler_args(flag_args, cf_dir, def_cc)
-        return {
-            root        = cf_dir,
-            lang        = lang,
-            compiler    = parsed.compiler,
-            probe_flags = parsed.probe_flags,
-            dep_flags   = parsed.dep_flags,
-            tu_list     = {},
-        }
     end
 
     local root = vim.fs.root(bufnr, { ".git" })
@@ -774,7 +792,12 @@ vim.api.nvim_create_user_command("TagsHeaders", function()
             vim.list_extend(cmd, tu.dep_flags)
             vim.list_extend(cmd, { "-E", "-M", "-MG", "-MT", "_TARGET_", "-MF", tmp_dep, tu.file })
 
-            vim.system(cmd, { text = true }, function(_)
+            local tu_cwd = nil
+            if type(tu.directory) == "string" and vim.fn.isdirectory(tu.directory) == 1 then
+                tu_cwd = tu.directory
+            end
+
+            vim.system(cmd, { cwd = tu_cwd, text = true }, function(_)
                 vim.schedule(function()
                     for _, h in ipairs(parse_dep_headers(tmp_dep, tu.file)) do
                         if not seen[h] then
@@ -800,13 +823,15 @@ autocmd("FileType", {
     callback = function(args)
         local root = vim.fn.getcwd():gsub("\\", "/")
         vim.opt_local.path:append(root .. "/resources/views")
-        vim.opt_local.suffixesadd:append(".blade.php")
-        vim.opt_local.includeexpr = [[tr(v:fname, '.', '/')]]
+        if vim.bo[args.buf].filetype == "blade" then
+            vim.opt_local.suffixesadd:append(".blade.php")
+            vim.opt_local.includeexpr = [[tr(v:fname, '.', '/')]]
+        end
 
         vim.keymap.set("n", "gf", function()
             local line     = vim.fn.expand("<cfile>")
             local file     = line:gsub("%.", "/")
-            local filepath = "resources/views/" .. file .. ".blade.php"
+            local filepath = root .. "/resources/views/" .. file .. ".blade.php"
             if vim.fn.filereadable(filepath) == 1 then
                 vim.cmd("edit " .. vim.fn.fnameescape(filepath))
             else

@@ -41,8 +41,8 @@ vim.api.nvim_create_autocmd("FileType", {
             lang = ft
         end
 
-        local has_lang = pcall(vim.treesitter.language.add, lang)
-        if has_lang then
+        local ok_add, has_lang = pcall(vim.treesitter.language.add, lang)
+        if ok_add and has_lang then
             pcall(vim.treesitter.start, args.buf, lang)
         end
     end,

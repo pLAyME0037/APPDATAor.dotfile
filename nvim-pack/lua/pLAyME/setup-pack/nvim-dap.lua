@@ -33,9 +33,11 @@ vim.schedule(function()
         job_id         = nil,
         out_buf        = nil,
         out_win        = nil,
-        rpc_dir        = nil,
         pending_target = nil,
+        line_buf       = "",
+        close_on_ui    = false,
     }
+    local active_rpc_dirs = {}
 
     local function remove_dir_recursive(dir_path)
         if type(dir_path) ~= "string" or dir_path == "" then
@@ -44,15 +46,57 @@ vim.schedule(function()
         pcall(vim.fn.delete, dir_path, "rf")
     end
 
-    local function cleanup_wine_session()
+    local function close_wine_output_window()
+        local win = wine_sessions.out_win
+        wine_sessions.out_win = nil
+        if win == nil then
+            return
+        end
+        vim.schedule(function()
+            if vim.api.nvim_win_is_valid(win) then
+                local tab = vim.api.nvim_win_get_tabpage(win)
+                if #vim.api.nvim_tabpage_list_wins(tab) > 1 then
+                    pcall(vim.api.nvim_win_close, win, true)
+                end
+            end
+        end)
+    end
+
+    local function cleanup_wine_session(close_ui)
         if wine_sessions.job_id ~= nil then
             pcall(vim.fn.jobstop, wine_sessions.job_id)
             wine_sessions.job_id = nil
         end
         wine_sessions.pending_target = nil
-        if wine_sessions.rpc_dir ~= nil then
-            remove_dir_recursive(wine_sessions.rpc_dir)
-            wine_sessions.rpc_dir = nil
+        wine_sessions.line_buf = ""
+        wine_sessions.close_on_ui = false
+
+        if close_ui == true and wine_sessions.out_win ~= nil then
+            close_wine_output_window()
+            local win = wine_sessions.out_win
+            wine_sessions.out_win = nil
+            vim.schedule(function()
+                if vim.api.nvim_win_is_valid(win) then
+                    local tab = vim.api.nvim_win_get_tabpage(win)
+                    if #vim.api.nvim_tabpage_list_wins(tab) > 1 then
+                        pcall(vim.api.nvim_win_close, win, true)
+                    end
+                end
+            end)
+        end
+    end
+
+    local function cleanup_session_rpc_dir(session)
+        if session ~= nil then
+            local sdir = active_rpc_dirs[session]
+            if sdir ~= nil then
+                remove_dir_recursive(sdir)
+                active_rpc_dirs[session] = nil
+            end
+            if type(session.config) == "table" and type(session.config._rpc_dir) == "string" then
+                remove_dir_recursive(session.config._rpc_dir)
+                session.config._rpc_dir = nil
+            end
         end
     end
 
@@ -452,10 +496,18 @@ vim.schedule(function()
             return
         end
         local lines = {}
-        for _, chunk in ipairs(chunks) do
-            if type(chunk) == "string" and chunk ~= "" then
+        for idx, chunk in ipairs(chunks) do
+            if type(chunk) == "string" then
                 local clean = chunk:gsub("\r", "")
-                table.insert(lines, clean)
+                if idx == 1 then
+                    clean = wine_sessions.line_buf .. clean
+                    wine_sessions.line_buf = ""
+                end
+                if idx < #chunks then
+                    table.insert(lines, clean)
+                else
+                    wine_sessions.line_buf = clean
+                end
             end
         end
         if #lines == 0 then
@@ -516,9 +568,9 @@ vim.schedule(function()
 
         if wine_sessions.out_buf == nil or not vim.api.nvim_buf_is_valid(wine_sessions.out_buf) then
             local buf = vim.api.nvim_create_buf(false, true)
-            vim.bo[buf].bufhidden = "hide"
-            vim.bo[buf].buftype = "nofile"
-            vim.bo[buf].swapfile = false
+            vim.bo[buf].bufhidden  = "hide"
+            vim.bo[buf].buftype    = "nofile"
+            vim.bo[buf].swapfile   = false
             vim.bo[buf].modifiable = false
             pcall(vim.api.nvim_buf_set_name, buf, "Wine Debug Output")
             vim.keymap.set("n", "q", function()
@@ -586,12 +638,12 @@ vim.schedule(function()
     end
 
     local function launch_wine_gdb_server()
-        cleanup_wine_session()
-
         local exe_path = resolve_dap_binary("windows")
         if exe_path == dap.ABORT then
             return dap.ABORT
         end
+
+        cleanup_wine_session(false)
 
         local port = alloc_free_localhost_port()
         if port == nil then
@@ -620,19 +672,20 @@ vim.schedule(function()
         end
 
         ensure_wine_output_window()
+        wine_sessions.close_on_ui = true
         local env_map = {
             WINEDEBUG = winedebug,
         }
         if wineprefix ~= nil then
             env_map.WINEPREFIX = wineprefix
-            append_wine_output_lines({ "[wine] WINEPREFIX=" .. wineprefix .. " WINEDEBUG=" .. winedebug })
+            append_wine_output_lines({ "[wine] WINEPREFIX=" .. wineprefix .. " WINEDEBUG=" .. winedebug, "" })
         else
-            append_wine_output_lines({ "[wine] WINEDEBUG=" .. winedebug })
+            append_wine_output_lines({ "[wine] WINEDEBUG=" .. winedebug, "" })
         end
-        append_wine_output_lines({ "[wine] " .. table.concat(server_cmd, " ") })
+        append_wine_output_lines({ "[wine] " .. table.concat(server_cmd, " "), "" })
 
-        local ready = false
-        local exited = false
+        local ready     = false
+        local exited    = false
         local exit_code = nil
 
         local function handle_stream(_, data)
@@ -657,7 +710,10 @@ vim.schedule(function()
             on_exit = function(_, code)
                 exited = true
                 exit_code = code
-                append_wine_output_lines({ "[wine] Process exited with code " .. tostring(code) })
+                if wine_sessions.line_buf ~= "" then
+                    append_wine_output_lines({ "", "" })
+                end
+                append_wine_output_lines({ "[wine] Process exited with code " .. tostring(code), "" })
                 if wine_sessions.job_id == job_id then
                     wine_sessions.job_id = nil
                 end
@@ -678,12 +734,12 @@ vim.schedule(function()
 
         if exited then
             vim.notify("winedbg exited early with code " .. tostring(exit_code), vim.log.levels.ERROR)
-            cleanup_wine_session()
+            cleanup_wine_session(false)
             return dap.ABORT
         end
         if not wait_ok then
             vim.notify("Timed out waiting for winedbg GDB port", vim.log.levels.ERROR)
-            cleanup_wine_session()
+            cleanup_wine_session(false)
             return dap.ABORT
         end
 
@@ -725,18 +781,17 @@ vim.schedule(function()
 
     local gdb_tools_path = vim.fs.normalize(vim.fn.stdpath("config") .. "/scripts/gdb_wine_tools.py")
 
-    dap.adapters.gdb = function(callback, config)
-        if wine_sessions.rpc_dir ~= nil then
-            remove_dir_recursive(wine_sessions.rpc_dir)
-            wine_sessions.rpc_dir = nil
-        end
+    local function py_quote(str)
+        local escaped = str:gsub("\\", "\\\\"):gsub("'", "\\'")
+        return "'" .. escaped .. "'"
+    end
 
+    dap.adapters.gdb = function(callback, config)
         local rpc_dir = vim.fn.tempname() .. "_gdb_rpc"
         local mk_ok = vim.uv.fs_mkdir(rpc_dir, 448)
         if not mk_ok then
             rpc_dir = nil
         end
-        wine_sessions.rpc_dir = rpc_dir
 
         local gdb_args = {
             "-nx",
@@ -749,17 +804,17 @@ vim.schedule(function()
             "-iex", "set print elements 0",
             "-iex", "set print repeats 0",
         }
+        if rpc_dir ~= nil then
+            table.insert(gdb_args, "-iex")
+            table.insert(gdb_args, "python import os; os.environ['NVIM_GDB_RPC_DIR'] = " .. py_quote(rpc_dir))
+        end
+        if type(config.program) == "string" and config.program ~= "" then
+            table.insert(gdb_args, "-iex")
+            table.insert(gdb_args, "python import os; os.environ['NVIM_GDB_PROGRAM'] = " .. py_quote(config.program))
+        end
         if vim.fn.filereadable(gdb_tools_path) == 1 then
             table.insert(gdb_args, "-iex")
             table.insert(gdb_args, "source " .. gdb_tools_path)
-        end
-
-        local env_map = {}
-        if rpc_dir ~= nil then
-            env_map.NVIM_GDB_RPC_DIR = rpc_dir
-        end
-        if type(config.program) == "string" and config.program ~= "" then
-            env_map.NVIM_GDB_PROGRAM = config.program
         end
 
         callback({
@@ -767,7 +822,6 @@ vim.schedule(function()
             command = "gdb",
             args = gdb_args,
             options = {
-                env = env_map,
                 initialize_timeout_sec = 20,
             },
             enrich_config = function(cfg, on_config)
@@ -787,6 +841,19 @@ vim.schedule(function()
         })
     end
 
+    if dap.defaults ~= nil then
+        if dap.defaults.fallback == nil then
+            dap.defaults.fallback = {}
+        end
+        dap.defaults.fallback.switchbuf = "useopen,uselast"
+    end
+
+    dap.listeners.after.event_initialized["gdb_rpc_track"] = function(session)
+        if session ~= nil and type(session.config) == "table" and type(session.config._rpc_dir) == "string" then
+            active_rpc_dirs[session] = session.config._rpc_dir
+        end
+    end
+
     local function has_any_user_breakpoints()
         local ok_bp, breakpoints = pcall(require, "dap.breakpoints")
         if not ok_bp or type(breakpoints) ~= "table" then
@@ -802,13 +869,6 @@ vim.schedule(function()
             end
         end
         return false
-    end
-
-    if dap.defaults ~= nil then
-        if dap.defaults.fallback == nil then
-            dap.defaults.fallback = {}
-        end
-        dap.defaults.fallback.switchbuf = "useopen,uselast"
     end
 
     local function close_duplicate_source_windows(source_path, stopped_line)
@@ -898,6 +958,7 @@ vim.schedule(function()
                     session:request("setFunctionBreakpoints", {
                         breakpoints = {
                             { name = "WinMain" },
+                            { name = "wWinMain" },
                             { name = "main" },
                         },
                     }, function()
@@ -919,14 +980,17 @@ vim.schedule(function()
         end)
     end
 
-    dap.listeners.after.event_terminated["wine_gdb_cleanup"] = function()
-        cleanup_wine_session()
+    dap.listeners.after.event_terminated["wine_gdb_cleanup"] = function(session)
+        cleanup_wine_session(true)
+        cleanup_session_rpc_dir(session)
     end
-    dap.listeners.after.event_exited["wine_gdb_cleanup"] = function()
-        cleanup_wine_session()
+    dap.listeners.after.event_exited["wine_gdb_cleanup"] = function(session)
+        cleanup_wine_session(true)
+        cleanup_session_rpc_dir(session)
     end
-    dap.listeners.after.disconnect["wine_gdb_cleanup"] = function()
-        cleanup_wine_session()
+    dap.listeners.after.disconnect["wine_gdb_cleanup"] = function(session)
+        cleanup_wine_session(true)
+        cleanup_session_rpc_dir(session)
     end
 
     local ok_dap_go, dap_go = pcall(require, "dap-go")
@@ -987,7 +1051,7 @@ vim.schedule(function()
             terminal = "integrated",
             stopAtBeginningOfMainSubprogram = false,
         }, {
-            name = "Wine: Build & Debug (winedbg + live output)",
+            name = "Wine: Debug (winedbg + live output)",
             type = "gdb",
             request = "attach",
             wine_launch = true,
@@ -1014,18 +1078,7 @@ vim.schedule(function()
             cwd = "${workspaceFolder}",
             terminal = "integrated",
             stopOnEntry = false,
-        }, {
-            name = "Linux: Launch Executable (codelldb, with args)",
-            type = "codelldb",
-            request = "launch",
-            program = function ()
-                return resolve_dap_binary("linux")
-            end,
-            args = prompt_cli_args,
-            cwd = "${workspaceFolder}",
-            terminal = "integrated",
-            stopOnEntry = false,
-        },
+        }
     }
     dap.configurations.c = dap.configurations.cpp
     dap.configurations.rust = dap.configurations.cpp
@@ -1215,6 +1268,34 @@ vim.schedule(function()
         return nil
     end
 
+    local wine_ui_augroup = vim.api.nvim_create_augroup("WineDapOutputAutoClose", { clear = true })
+    vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
+        group = wine_ui_augroup,
+        callback = function(args)
+            if not wine_sessions.close_on_ui then
+                return
+            end
+            if not vim.api.nvim_buf_is_valid(args.buf) then
+                return
+            end
+            if is_dap_filetype(vim.bo[args.buf].filetype) then
+                wine_sessions.close_on_ui = false
+                close_wine_output_window()
+            end
+        end,
+    })
+
+    dap.listeners.after.event_initialized["wine_auto_close_ui"] = function()
+        if not wine_sessions.close_on_ui then
+            return
+        end
+        vim.schedule(function()
+            if wine_sessions.close_on_ui and find_dap_win(false) ~= nil then
+                wine_sessions.close_on_ui = false
+                close_wine_output_window()
+            end
+        end)
+    end
     local function sync_tab_index(target_id)
         for idx, tab in ipairs(view_tabs) do
             if tab.id == target_id then
@@ -1692,16 +1773,31 @@ vim.schedule(function()
     -- 4b. RAD MEMORY, ADDRESS, VIRTUAL-SEARCH & ASM TOOLS
     -- ----------------------------------------------------
     local function get_gdb_rpc_dir(session)
-        if session and type(session.config) == "table" and type(session.config._rpc_dir) == "string" then
+        if session ~= nil and type(session.config) == "table" and type(session.config._rpc_dir) == "string" then
             return session.config._rpc_dir
         end
-        return wine_sessions.rpc_dir
+        return nil
     end
 
-    local function gdb_rpc_call(session, payload, callback)
+    local function run_next_gdb_rpc(session)
+        if session._rpc_busy then
+            return
+        end
+        if type(session._rpc_queue) ~= "table" or #session._rpc_queue == 0 then
+            return
+        end
+        local item = table.remove(session._rpc_queue, 1)
+        session._rpc_busy = true
+
+        local function finish(data, err_msg)
+            session._rpc_busy = false
+            item.callback(data, err_msg)
+            run_next_gdb_rpc(session)
+        end
+
         local rpc_dir = get_gdb_rpc_dir(session)
         if type(rpc_dir) ~= "string" or rpc_dir == "" then
-            callback(nil, "GDB RPC directory is not active")
+            finish(nil, "GDB RPC directory is not active")
             return
         end
 
@@ -1709,15 +1805,15 @@ vim.schedule(function()
         local resp_path = rpc_dir .. "/resp.json"
         pcall(vim.fn.delete, resp_path)
 
-        local ok_enc, encoded = pcall(vim.json.encode, payload)
+        local ok_enc, encoded = pcall(vim.json.encode, item.payload)
         if not ok_enc then
-            callback(nil, "Failed to encode RPC request")
+            finish(nil, "Failed to encode RPC request")
             return
         end
 
         local wrote = vim.fn.writefile({ encoded }, req_path)
         if wrote ~= 0 then
-            callback(nil, "Failed to write RPC request")
+            finish(nil, "Failed to write RPC request")
             return
         end
 
@@ -1736,25 +1832,40 @@ vim.schedule(function()
                 if type(err.message) == "string" then
                     msg = err.message
                 end
-                callback(nil, msg)
+                finish(nil, msg)
                 return
             end
             local ok_read, lines = pcall(vim.fn.readfile, resp_path)
             if not ok_read or #lines == 0 then
-                callback(nil, "GDB RPC produced no response file")
+                finish(nil, "GDB RPC produced no response file")
                 return
             end
             local ok_dec, data = pcall(vim.json.decode, table.concat(lines, "\n"))
             if not ok_dec or type(data) ~= "table" then
-                callback(nil, "Failed to parse GDB RPC response JSON")
+                finish(nil, "Failed to parse GDB RPC response JSON")
                 return
             end
             if data.ok ~= true then
-                callback(nil, tostring(data.error or "Unknown GDB RPC error"))
+                finish(nil, tostring(data.error or "Unknown GDB RPC error"))
                 return
             end
-            callback(data, nil)
+            finish(data, nil)
         end)
+    end
+
+    local function gdb_rpc_call(session, payload, callback)
+        if session == nil then
+            callback(nil, "No active GDB DAP session")
+            return
+        end
+        if type(session._rpc_queue) ~= "table" then
+            session._rpc_queue = {}
+        end
+        table.insert(session._rpc_queue, {
+            payload = payload,
+            callback = callback,
+        })
+        run_next_gdb_rpc(session)
     end
 
     local function expr_under_cursor()
@@ -2254,7 +2365,7 @@ vim.schedule(function()
             addr_tag = "[Addr: DEC]"
         end
 
-        local dump_title = "Raw Memory Dump (8 bytes/row)"
+        local dump_title = "Raw Memory Dump (16 bytes/row)"
         local dump_tags  = byte_tag .. " " .. addr_tag
         local dump_hints = "  [x] Bytes  [a] Addr  [ [|] ] Page  [s] SearchAddr  [m] MemView  [r] Refresh  [q] Close"
         local dump_hdr = dump_title .. dump_tags .. dump_hints
@@ -2369,21 +2480,19 @@ vim.schedule(function()
 
             vim.keymap.set("n", "r", function()
                 if type(refresh_mem_inspector) == "function" then
-                    refresh_mem_inspector(true, false)
+                    refresh_mem_inspector(true, false, mem_insp_state.offset)
                 end
             end, { buffer = buf, nowait = true, silent = true })
 
             vim.keymap.set("n", "]", function()
-                mem_insp_state.offset = mem_insp_state.offset + mem_insp_state.count
                 if type(refresh_mem_inspector) == "function" then
-                    refresh_mem_inspector(true, false)
+                    refresh_mem_inspector(true, false, mem_insp_state.offset + mem_insp_state.count)
                 end
             end, { buffer = buf, nowait = true, silent = true })
 
             vim.keymap.set("n", "[", function()
-                mem_insp_state.offset = mem_insp_state.offset - mem_insp_state.count
                 if type(refresh_mem_inspector) == "function" then
-                    refresh_mem_inspector(true, false)
+                    refresh_mem_inspector(true, false, mem_insp_state.offset - mem_insp_state.count)
                 end
             end, { buffer = buf, nowait = true, silent = true })
 
@@ -2438,7 +2547,7 @@ vim.schedule(function()
         end
     end
 
-    refresh_mem_inspector = function(re_read, sync_global_hex)
+    refresh_mem_inspector = function(re_read, sync_global_hex, target_offset)
         if mem_insp_state.win == nil or not vim.api.nvim_win_is_valid(mem_insp_state.win) then
             return
         end
@@ -2449,7 +2558,11 @@ vim.schedule(function()
                 mem_insp_state.interp_mode = "dec"
             end
         end
-        if not re_read and type(mem_insp_state.raw_bytes) == "string" then
+        local req_offset = mem_insp_state.offset
+        if type(target_offset) == "number" then
+            req_offset = target_offset
+        end
+        if not re_read and req_offset == mem_insp_state.offset and type(mem_insp_state.raw_bytes) == "string" then
             render_mem_inspector_window()
             return
         end
@@ -2459,7 +2572,7 @@ vim.schedule(function()
         end
         session:request("readMemory", {
             memoryReference = mem_insp_state.mem_ref,
-            offset          = mem_insp_state.offset,
+            offset          = req_offset,
             count           = mem_insp_state.count,
         }, function(mem_err, mem_resp)
             if mem_err or type(mem_resp) ~= "table" or type(mem_resp.data) ~= "string" then
@@ -2475,18 +2588,26 @@ vim.schedule(function()
             if not ok_dec or type(decoded) ~= "string" or #decoded == 0 then
                 return
             end
+            mem_insp_state.offset = req_offset
             mem_insp_state.raw_bytes = decoded
-            if type(mem_resp.address) == "string" and mem_resp.address ~= "" and mem_insp_state.offset == 0 then
+            if type(mem_resp.address) == "string" and mem_resp.address ~= "" and req_offset == 0 then
                 mem_insp_state.base_addr = mem_resp.address
             end
             vim.schedule(render_mem_inspector_window)
         end)
     end
 
-    dap.listeners.after.event_stopped["mem_inspector_refresh"] = function()
-        if mem_insp_state.win ~= nil and vim.api.nvim_win_is_valid(mem_insp_state.win) then
-            refresh_mem_inspector(true, false)
-        end
+    if dap.listeners.after.event_stopped ~= nil then
+        dap.listeners.after.event_stopped["mem_inspector_refresh"] = nil
+        dap.listeners.after.event_stopped["asm_viewer_refresh"] = nil
+    end
+
+    dap.listeners.after.stackTrace["mem_inspector_refresh"] = function(session)
+        vim.schedule(function()
+            if dap.session() == session and mem_insp_state.win ~= nil and vim.api.nvim_win_is_valid(mem_insp_state.win) then
+                refresh_mem_inspector(true, false, mem_insp_state.offset)
+            end
+        end)
     end
 
     local function resolve_addr_expr(session, input_expr, callback)
@@ -2658,31 +2779,6 @@ vim.schedule(function()
         end)
     end
 
-    local function open_live_memview_prompt()
-        if not ok_memview then
-            vim.notify("nvim-dap-memview is not loaded", vim.log.levels.WARN)
-            return
-        end
-        if not dap.session() then
-            vim.notify("Start a debug session and hit a breakpoint first", vim.log.levels.WARN)
-            return
-        end
-
-        local def = default_mem_expr()
-        if def ~= "" and not def:match("^0[xX]%x+$") and def:sub(1, 1) ~= "&" then
-            def = "&" .. def
-        end
-
-        vim.ui.input({
-            prompt = "DapMemView expr/addr: ",
-            default = def,
-        }, function(input)
-            if input and vim.trim(input) ~= "" then
-                vim.cmd("DapMemView " .. vim.trim(input))
-            end
-        end)
-    end
-
     local function display_gdb_search_results(session, res)
         local out_lines = {
             string.format("Query: [%s] %s  |  Scope: %s", tostring(res.kind), tostring(res.query), tostring(res.scope)),
@@ -2709,7 +2805,7 @@ vim.schedule(function()
         open_scratch_float("Virtual Memory Search Results", out_lines, "", 5, function(buf, _, close_win)
             local function line_addr()
                 local cur = vim.api.nvim_get_current_line()
-                return cur:match("0[xX]%x+")
+                return cur:match("^0[xX]%x+")
             end
 
             vim.keymap.set("n", "y", function()
@@ -3529,10 +3625,12 @@ vim.schedule(function()
         fetch_and_show_asm(false)
     end
 
-    dap.listeners.after.event_stopped["asm_viewer_refresh"] = function()
-        if asm_view_state.win ~= nil and vim.api.nvim_win_is_valid(asm_view_state.win) then
-            refresh_asm_viewer(true, false)
-        end
+    dap.listeners.after.stackTrace["asm_viewer_refresh"] = function(session)
+        vim.schedule(function()
+            if dap.session() == session and asm_view_state.win ~= nil and vim.api.nvim_win_is_valid(asm_view_state.win) then
+                refresh_asm_viewer(true, false)
+            end
+        end)
     end
 
     local function show_interleaved_source_asm()
@@ -3572,7 +3670,6 @@ vim.schedule(function()
     vim.keymap.set("n", "<leader>da", toggle_assembly_mode, { desc = "DAP: Toggle Assembly Mode" })
     vim.keymap.set("n", "<leader>dh", toggle_hex_mode, { desc = "DAP: Toggle Hex / Decimal Mode" })
     vim.keymap.set("n", "<leader>dm", inspect_memory_prompt, { desc = "DAP: Inspect memory (Hex/Dec/Bin LE)" })
-    vim.keymap.set("n", "<leader>dM", open_live_memview_prompt, { desc = "DAP: Open live DapMemView" })
     vim.keymap.set("n", "<leader>dp", print_expr_address_prompt, { desc = "DAP: Print &var / field address + value" })
     vim.keymap.set("n", "<leader>dR", virtual_memory_menu, { desc = "DAP: Virtual memory region / search" })
     vim.keymap.set("n", "<leader>ds", show_interleaved_source_asm, { desc = "DAP: Interleaved Source + ASM (Dec/Hex/Bin)" })
@@ -3582,8 +3679,20 @@ vim.schedule(function()
         vim.keymap.set({ "n", "v" }, "Q", function()
             dapui.eval()
         end, { desc = "DAP Peek" })
+    end
+
+    if ok_dap_view or ok_dapui then
         vim.keymap.set({ "n", "v" }, "<leader>dw", function()
-            dapui.eval(nil, { enter = true })
-        end, { desc = "DAP Add word under cursor to Watches" })
+            local expr = expr_under_cursor()
+            if expr == "" then
+                return
+            end
+            if ok_dap_view then
+                pcall(vim.cmd, "DapViewWatch " .. expr)
+            end
+            if ok_dapui and type(dapui.elements) == "table" and type(dapui.elements.watches) == "table" then
+                pcall(dapui.elements.watches.add, expr)
+            end
+        end, { desc = "DAP Add expression under cursor to Watches" })
     end
 end)

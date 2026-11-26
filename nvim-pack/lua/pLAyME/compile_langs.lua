@@ -1,33 +1,39 @@
 local function compile()
     _G.compile_timings = {}
 
+    if vim.bo.buftype ~= "" then
+        vim.notify("Cannot compile non-file buffer", vim.log.levels.WARN)
+        return
+    end
+
+    local raw_buf_name = vim.api.nvim_buf_get_name(0)
+    if raw_buf_name == "" then
+        vim.notify("Save buffer before compiling/running", vim.log.levels.WARN)
+        return
+    end
     vim.cmd("wall")
 
-    local ft = vim.bo.filetype
-    local filename = vim.fn.expand("%:t")
-    local exec_name = vim.fn.expand("%:t:r")
-    -- Resolve symlinks before compiling: nvim-dap sends nvim_buf_get_name()
-    -- (which is the REAL path, e.g. /mnt/disk2/mythings/...) to the debug
-    -- adapter, but gcc records DW_AT_comp_dir from this compile cwd. If the
-    -- buffer was opened via the ~/mythings symlink, codelldb can't match the
-    -- breakpoint source and answers "Resolved locations: 0"
-    -- (= DapBreakpointRejected on every breakpoint).
-    local raw_dir = vim.fn.expand("%:p:h")
-    local dir = vim.uv.fs_realpath(raw_dir) or raw_dir
-    local file = dir .. "/" .. filename
-    local target = dir .. "/" .. exec_name
+    local ft            = vim.bo.filetype
+    local filename      = vim.fn.expand("%:t")
+    local exec_name     = vim.fn.expand("%:t:r")
+    local raw_dir       = vim.fn.expand("%:p:h")
+    local dir           = vim.uv.fs_realpath(raw_dir) or raw_dir
+    local file          = dir .. "/" .. filename
+    local target        = dir .. "/" .. exec_name
 
-    local s_file = vim.fn.shellescape(file)
-    local s_filename = vim.fn.shellescape(filename)
-    local s_target = vim.fn.shellescape(target)
-    local s_dir = vim.fn.shellescape(dir)
-    local s_class = vim.fn.shellescape(exec_name)
+    local s_file        = vim.fn.shellescape(file)
+    local s_filename    = vim.fn.shellescape(filename)
+    local s_target      = vim.fn.shellescape(target)
+    local s_dir         = vim.fn.shellescape(dir)
+    local s_class       = vim.fn.shellescape(exec_name)
 
-    local perf_base = vim.fn.tempname()
-    local perf_script = perf_base .. ".sh"
-    local perf_out = perf_base .. ".perf"
+    local perf_base     = vim.fn.tempname()
+    local perf_script   = perf_base .. ".sh"
+    local perf_out      = perf_base .. ".perf"
+    local javac_out     = perf_base .. ".javac"
     local s_perf_script = vim.fn.shellescape(perf_script)
-    local s_perf_out = vim.fn.shellescape(perf_out)
+    local s_perf_out    = vim.fn.shellescape(perf_out)
+    local s_javac_out   = vim.fn.shellescape(javac_out)
 
     local wrote_ok = vim.fn.writefile({
         "_perf() {",
@@ -104,8 +110,7 @@ local function compile()
             local nob_bin = vim.fn.shellescape(root .. "/nob")
             cmd = perf_fn .. string.format(
                 "cc -Wall -Wextra -o %s %s; _rc=$?; _perf 'compilation'; if [ $_rc -eq 0 ]; then %s; _rc=$?; _perf 'run'; fi; exit $_rc",
-                nob_bin, nob_src, nob_bin
-            )
+                nob_bin, nob_src, nob_bin)
         elseif marker == "Cargo.toml" then
             cmd = perf_fn .. "cargo build --color=always; _rc=$?; _perf 'compilation'; if [ $_rc -eq 0 ]; then cargo run --color=always; _rc=$?; _perf 'run'; fi; exit $_rc"
         elseif marker == "*.csproj" then
@@ -114,8 +119,7 @@ local function compile()
     elseif ft == "cs" then
         cmd = perf_fn .. string.format(
             "dotnet run --project %s; _rc=$?; if [ $_rc -ne 0 ]; then csc %s; _rc=$?; _perf 'compilation'; if [ $_rc -eq 0 ]; then mono %s; _rc=$?; _perf 'run'; fi; else _perf 'run'; fi; exit $_rc",
-            s_dir, s_file, vim.fn.shellescape(target .. ".exe")
-        )
+            s_dir, s_file, vim.fn.shellescape(target .. ".exe"))
     elseif ft == "python" then
         cmd = perf_fn .. string.format("python3 %s; _rc=$?; _perf 'run'; exit $_rc", s_file)
     elseif ft == "php" then
@@ -124,25 +128,23 @@ local function compile()
         local out_bin = vim.fn.shellescape("./bin/" .. exec_name)
         cmd = perf_fn .. string.format(
             "cd %s && mkdir -p ./bin && g++ -Wall -Wextra -ggdb -fdiagnostics-color=always -o %s %s; _rc=$?; _perf 'compilation'; if [ $_rc -eq 0 ]; then %s; _rc=$?; _perf 'run'; fi; exit $_rc",
-            s_dir, out_bin, s_filename, out_bin
-        )
+            s_dir, out_bin, s_filename, out_bin)
     elseif ft == "c" then
         local out_bin = vim.fn.shellescape("./bin/" .. exec_name)
         cmd = perf_fn .. string.format(
             "cd %s && mkdir -p ./bin && cc -Wall -Wextra -ggdb -fdiagnostics-color=always -o %s %s; _rc=$?; _perf 'compilation'; if [ $_rc -eq 0 ]; then %s; _rc=$?; _perf 'run'; fi; exit $_rc",
-            s_dir, out_bin, s_filename, out_bin
-        )
+            s_dir, out_bin, s_filename, out_bin)
     elseif ft == "lua" then
         cmd = perf_fn .. string.format("lua %s; _rc=$?; _perf 'run'; exit $_rc", s_filename)
     elseif ft == "java" then
         local awk_colors = [[awk '{
-            gsub(/[^ \t:]+\.java/, "\033[1;33m&\033[0m");
-            gsub(/errors|error:/,  "\033[1;31m&\033[0m");
-            gsub(/warning:/,       "\033[1;33mwarning:\033[0m");
-            gsub(/location/,       "\033[1;35mlocation\033[0m");
-            gsub(/symbol/,         "\033[1;34msymbol\033[0m");
-            gsub(/:/,              "\033[1;36m:\033[0m");
-            gsub(/\^/,             "\033[1;32m^\033[0m"); print
+            gsub(/:/, "\033[1;36m:\033[0m");
+            gsub(/[^ \t\033]+\.java/, "\033[1;33m&\033[0m");
+            gsub(/errors|error/, "\033[1;31m&\033[0m");
+            gsub(/warning/, "\033[1;33m&\033[0m");
+            gsub(/location/, "\033[1;35mlocation\033[0m");
+            gsub(/symbol/, "\033[1;34msymbol\033[0m");
+            gsub(/\^/, "\033[1;32m^\033[0m"); print
         }']]
         local pkg = nil
         for _, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, 50, false)) do
@@ -161,14 +163,12 @@ local function compile()
         local class_file = vim.fn.shellescape("./bin/" .. class_rel)
         local s_fqcn = vim.fn.shellescape(fqcn)
         cmd = perf_fn .. string.format(
-            "cd %s && rm -f %s && javac -d ./bin %s 2>&1 | %s; _perf 'compilation'; if [ -f %s ]; then java -cp ./bin %s; _rc=$?; _perf 'run'; exit $_rc; fi",
-            s_dir, class_file, s_filename, awk_colors, class_file, s_fqcn
-        )
+            "cd %s && rm -f %s && javac -d ./bin %s >%s 2>&1; _rc=$?; %s < %s; rm -f %s; _perf 'compilation'; if [ $_rc -eq 0 ] && [ -f %s ]; then java -cp ./bin %s; _rc=$?; _perf 'run'; fi; exit $_rc",
+            s_dir, class_file, s_filename, s_javac_out, awk_colors, s_javac_out, s_javac_out, class_file, s_fqcn)
     elseif ft == "rust" then
         cmd = perf_fn .. string.format(
             "rustc --color=always %s -o %s; _rc=$?; _perf 'compilation'; if [ $_rc -eq 0 ]; then %s; _rc=$?; _perf 'run'; fi; exit $_rc",
-            s_file, s_target, s_target
-        )
+            s_file, s_target, s_target)
     elseif ft == "cabal.haskell" then
         cmd = perf_fn .. "cabal build; _rc=$?; _perf 'compilation'; if [ $_rc -eq 0 ]; then cabal run; _rc=$?; _perf 'run'; fi; exit $_rc"
     elseif ft == "haskell" then
@@ -176,8 +176,7 @@ local function compile()
         local hs_bin = vim.fn.shellescape(dir .. "/bin/" .. exec_name .. "/" .. exec_name)
         cmd = perf_fn .. string.format(
             "mkdir -p %s && ghc -dynamic -outputdir %s -o %s %s; _rc=$?; _perf 'compilation'; if [ $_rc -eq 0 ]; then %s; _rc=$?; _perf 'run'; fi; exit $_rc",
-            hs_out_dir, hs_out_dir, hs_bin, s_filename, hs_bin
-        )
+            hs_out_dir, hs_out_dir, hs_bin, s_filename, hs_bin)
     elseif ft == "sh" then
         if vim.fn.executable(file) == 1 then
             cmd = perf_fn .. string.format("%s; _rc=$?; _perf 'run'; exit $_rc", vim.fn.shellescape("./" .. filename))
@@ -214,18 +213,20 @@ local function compile()
             _G.compile_timings = {}
             vim.fn.delete(perf_script)
             vim.fn.delete(perf_out)
+            vim.fn.delete(javac_out)
         end,
     })
 
     _G.compile_timings = {}
     vim.fn.delete(perf_out)
+    vim.fn.delete(javac_out)
 
     local job_id = vim.fn.jobstart(cmd, {
         cwd = cwd,
         term = true,
         env = {
-            FORCE_COLOR = "1",
-            CLICOLOR_FORCE = "1",
+            FORCE_COLOR      = "1",
+            CLICOLOR_FORCE   = "1",
             PYTHONUNBUFFERED = "1",
         },
         on_exit = function(_, _, _)
@@ -240,12 +241,15 @@ local function compile()
             end
             vim.fn.delete(perf_script)
             vim.fn.delete(perf_out)
+            vim.fn.delete(javac_out)
         end,
     })
 
     if job_id <= 0 then
         vim.fn.delete(perf_script)
         vim.fn.delete(perf_out)
+        vim.fn.delete(javac_out)
+        pcall(vim.api.nvim_buf_delete, new_buf, { force = true })
         vim.notify("Failed to start compile job", vim.log.levels.ERROR)
         return
     end

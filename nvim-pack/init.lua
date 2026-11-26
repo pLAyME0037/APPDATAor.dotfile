@@ -1,8 +1,3 @@
-local ok_cs = pcall(require, "colorscheme")
-if not ok_cs then
-    vim.cmd("colorscheme clear-as-night")
-end
-
 local ok_ui2, ui2 = pcall(require, "vim._core.ui2")
 if ok_ui2 and type(ui2) == "table" and type(ui2.enable) == "function" then
     ui2.enable({
@@ -38,10 +33,16 @@ if ok_ui2 and type(ui2) == "table" and type(ui2.enable) == "function" then
             },
             cmd    = { height = 0.5 },
             dialog = { height = 0.5 },
-            msg    = { height = 0.3, timeout = 4000 },
+            msg    = { height = 0.3, timeout = 3000 },
             pager  = { height = 0.5 },
         },
     })
 end
 
 require("pLAyME")
+
+local ok_cs = pcall(require, "colorscheme")
+if not ok_cs then
+    vim.cmd("colorscheme clear-as-night")
+end
+

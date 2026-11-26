@@ -24,6 +24,10 @@ vim.keymap.set("v", "<", "<gv", opts)
 vim.keymap.set("v", ">", ">gv", opts)
 
 vim.keymap.set("n", "=ap", "ma=ap'a")
+vim.keymap.set("n", "<leader>cgn", "*#cgn")
+vim.keymap.set("n", "tuc", "gUw")
+vim.keymap.set("n", "tlc", "guw")
+
 
 vim.keymap.set("n", "gd", "<C-]>", { desc = "Tags: Jump to Definition" })
 vim.keymap.set("n", "gD", "g<C-]>", { desc = "Tags: Select Definition" })
@@ -32,15 +36,11 @@ vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 vim.keymap.set("n", "<leader>lt", function()
     vim.cmd([[ PlenaryBustedFile % ]])
 end)
-vim.api.nvim_set_keymap("n", "<leader>tf", "<Plug>PlenaryTestFile",
-                        { noremap = false, silent = false })
+vim.api.nvim_set_keymap("n", "<leader>tf", "<Plug>PlenaryTestFile", { noremap = false, silent = false })
 
 vim.keymap.set("n", "<leader>tn", "<cmd>set number!<cr>", { desc = "Toggle line numbers" })
 
 vim.keymap.set("n", "<leader>a", "mzggVG")
-
-vim.keymap.set("n", "tuc", "gUw")
-vim.keymap.set("n", "tlc", "guw")
 
 -- vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
 -- vim.keymap.set("n", "<leader>Y", [["+Y]])
@@ -81,7 +81,8 @@ vim.keymap.set("n", "<leader>jee", "oif err != nil {<CR>}<Esc>Oreturn err<Esc>")
 vim.keymap.set("n", "<leader>jea", 'oassert.NoError(err, "")<Esc>F";a')
 vim.keymap.set("n", "<leader>jef", 'oif err != nil {<CR>}<Esc>Olog.Fatalf("error: %s\\n", err.Error())<Esc>jj')
 vim.keymap.set("n", "<leader>jel", 'oif err != nil {<CR>}<Esc>O.logger.Error("error", "error", err)<Esc>F.;i')
-vim.keymap.set("n", "<leader>cmf", "o#if 0<CR><Esc>O#else<Esc><CR>O#endif")
+vim.keymap.set("n", "<leader>hit", "o<html_tag><CR></html_tag><Esc>k$b*#cgn")
+vim.keymap.set("n", "<leader>cmf", "o#if 0<CR>#else<CR>#endif<Esc>")
 
 -- ============================================================================
 -- Scope jk to normal mode
@@ -263,23 +264,23 @@ local function paste_keep_col(cmd, is_visual)
     if reg == nil or reg == "" then
         reg = '"'
     end
+    local reg_info = vim.fn.getreginfo(reg)
+    if type(reg_info) ~= "table" or type(reg_info.regcontents) ~= "table" or #reg_info.regcontents == 0 then
+        return
+    end
     local count = vim.v.count1
     local tick_before = vim.api.nvim_buf_get_changedtick(0)
 
     if is_visual then
-        local mode = vim.fn.mode(1)
-        local was_visual_line = (mode == "V")
-        local old_line_count = vim.api.nvim_buf_line_count(0)
+        local saved_unnamed = vim.fn.getreginfo('"')
         local esc = vim.api.nvim_replace_termcodes("<Esc>", true, false, true)
         vim.api.nvim_feedkeys(esc, "nx", false)
 
-        local start_line = vim.api.nvim_buf_get_mark(0, "<")[1]
-        local end_line = vim.api.nvim_buf_get_mark(0, ">")[1]
-        local paste_cmd = "P"
-        if was_visual_line and end_line == old_line_count and start_line > 1 then
-            paste_cmd = "p"
+        pcall(vim.cmd, "normal! gv" .. count .. '"' .. reg .. "p")
+        vim.fn.setreg('"', saved_unnamed)
+        if reg ~= '"' then
+            vim.fn.setreg(reg, reg_info)
         end
-        pcall(vim.cmd, 'normal! gv"_d' .. count .. '"' .. reg .. paste_cmd)
     else
         pcall(vim.cmd, "normal! " .. count .. '"' .. reg .. cmd)
     end
@@ -290,19 +291,21 @@ local function paste_keep_col(cmd, is_visual)
         return
     end
 
-    local mark = vim.api.nvim_buf_get_mark(0, "[")
-    local target_line = mark[1]
-    if target_line == nil or target_line < 1 then
-        target_line = prev_pos[1]
-    end
-    local line_count = vim.api.nvim_buf_line_count(0)
-    if target_line > line_count then
-        target_line = line_count
-    end
+    if reg_info.regtype == "V" then
+        local mark = vim.api.nvim_buf_get_mark(0, "[")
+        local target_line = mark[1]
+        if target_line == nil or target_line < 1 then
+            target_line = prev_pos[1]
+        end
+        local line_count = vim.api.nvim_buf_line_count(0)
+        if target_line > line_count then
+            target_line = line_count
+        end
 
-    pcall(vim.api.nvim_win_set_cursor, win, { target_line, 0 })
-    if prev_virtcol > 1 then
-        pcall(vim.cmd, "normal! " .. prev_virtcol .. "|")
+        pcall(vim.api.nvim_win_set_cursor, win, { target_line, 0 })
+        if prev_virtcol > 1 then
+            pcall(vim.cmd, "normal! " .. prev_virtcol .. "|")
+        end
     end
 end
 
@@ -540,7 +543,8 @@ end
 
 local function rank_tag(tag, cur_file, cur_ext)
     local score = 0
-    local tag_norm = vim.fs.normalize(tag.filename)
+    local tag_abs = vim.fn.fnamemodify(tag.filename, ":p")
+    local tag_norm = vim.fs.normalize(vim.uv.fs_realpath(tag_abs) or tag_abs)
 
     -- Highest priority: defined in this very file
     if tag_norm == cur_file then
@@ -619,7 +623,8 @@ local function show_hover_or_tag()
         return
     end
 
-    local cur_file = vim.fs.normalize(vim.api.nvim_buf_get_name(bufnr))
+    local raw_cur_file = vim.api.nvim_buf_get_name(bufnr)
+    local cur_file = vim.fs.normalize(vim.uv.fs_realpath(raw_cur_file) or raw_cur_file)
     local cur_ext = vim.fn.expand("%:e")
     if cur_ft == "" then
         cur_ft = "text"
