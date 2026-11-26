@@ -144,12 +144,17 @@ def _collect_proc_mappings():
             continue
         perms = "---"
         label = ""
-        if len(parts) >= 5:
+        has_perms_col = len(parts) >= 5 and re.fullmatch(r"[r-][w-][x-][ps-]?", parts[4]) is not None
+        if has_perms_col:
             perms = parts[4]
-        if len(parts) >= 6:
-            label = " ".join(parts[5:])
-        if "r" not in perms.lower():
-            continue
+            if len(parts) >= 6:
+                label = " ".join(parts[5:])
+            if "r" not in perms.lower():
+                continue
+        else:
+            perms = "r??"
+            if len(parts) >= 5:
+                label = " ".join(parts[4:])
         kind = "app"
         lower_lbl = label.lower()
         if "/usr/lib/" in lower_lbl or "/lib/" in lower_lbl:
@@ -166,7 +171,12 @@ def _collect_proc_mappings():
 
 def _classify_winedbg_mem(tail):
     upper = tail.upper()
+    lower = tail.lower()
     if "IMAGE" in upper:
+        if ".dll" in lower or ".drv" in lower or "system32" in lower or "syswow64" in lower:
+            return "r-ximg", "sys-dll"
+        if ".exe" in lower:
+            return "r-ximg", "app"
         return "r-ximg", "wine-mem"
     if "PRIVATE" in upper and "W" in upper:
         return "rw-priv", "wine-mem"
@@ -524,7 +534,8 @@ def search_virtual_memory(kind, query, scope="fast", start_hex="", end_hex="", m
         map_source = vm["source"]
         if norm_scope == "app":
             for r in vm["regions"]:
-                if r["kind"] in ("stack", "exe", "app"):
+                is_wine_img = (r["kind"] == "wine-mem" and r["perms"] == "r-ximg")
+                if r["kind"] in ("stack", "exe", "app") or is_wine_img:
                     regions.append(r)
         elif norm_scope in ("fast", "heap"):
             for r in vm["regions"]:

@@ -4446,10 +4446,12 @@ anzu-cons-mode-line-p	emacs/elpaca/sources/doom-modeline/doom-modeline-segments.
 apacheconfig	bashrc/bashrc.sh	/^apacheconfig() {$/;"	f	language:Sh
 apachelog	bashrc/bashrc.sh	/^apachelog() {$/;"	f	language:Sh
 apm_battery_remaining_time	tmux/plugins/tmux-battery/scripts/battery_remain.sh	/^apm_battery_remaining_time() {$/;"	f	language:Sh
-append_wine_output_lines	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function append_wine_output_lines(chunks)$/;"	f	language:Lua
+append_wine_output_lines	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function append_wine_output_lines(chunks, stream_name)$/;"	f	language:Lua
 application.conf	tmux/plugins/tmux/status/application.conf	1;"	F	language:Iniconf	epoch:1794739408
 application_module.sh	tmux/plugins/tmux/tests/application_module.sh	1;"	F	language:Sh	epoch:1794739408
 apply_and_render	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^        local function apply_and_render(pc_str, insns)$/;"	f	language:Lua
+apply_comment_highlights	nvim-pack/lua/pLAyME/init.lua	/^local function apply_comment_highlights()$/;"	f	language:Lua
+apply_headline_highlights	nvim-pack/lua/pLAyME/setup-pack/render-markdown.lua	/^local function apply_headline_highlights()$/;"	f	language:Lua
 approx=	emacs/elpaca/sources/dash/dev/dash-defs.el	/^(defun approx= (u v)$/;"	f	language:EmacsLisp
 apropos	emacs/elpaca/sources/evil-collection/modes/apropos/README.org	/^* apropos$/;"	p	language:Org
 apt-get	bashrc/bashrc.sh	/^alias apt-get='sudo apt-get'$/;"	a	language:Sh
@@ -4953,7 +4955,7 @@ cleanup_session_rpc_dir	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local
 cleanup_wine_session	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function cleanup_wine_session(close_ui)$/;"	f	language:Lua
 clear-as-night	emacs/themes/clear-as-night-theme.el	/^(deftheme clear-as-night)$/;"	T	language:EmacsLisp
 clear-as-night-theme.el	emacs/themes/clear-as-night-theme.el	1;"	F	language:EmacsLisp	epoch:1793936995
-clear-as-night.lua	nvim-pack/colors/clear-as-night.lua	1;"	F	language:Lua	epoch:1794738055
+clear-as-night.lua	nvim-pack/colors/clear-as-night.lua	1;"	F	language:Lua	epoch:1795685024
 clear_screen_for_window	tmux/plugins/tmux-resurrect/tests/helpers/expect_helpers.exp	/^proc clear_screen_for_window {target} {$/;"	p	language:Tcl	signature:{target}
 clickpaste	bashrc/bashrc.sh	/^alias clickpaste='sleep 3; xdotool type "$(xclip -o -selection clipboard)"'$/;"	a	language:Sh
 clima.conf	tmux/plugins/tmux/status/clima.conf	1;"	F	language:Iniconf	epoch:1794739408
@@ -5082,7 +5084,7 @@ colors.css	matugen/templates/colors.css	1;"	F	language:CSS	epoch:1770540122
 colors.css	waybar/colors.css	1;"	F	language:CSS	epoch:1774591112
 colorscheme.lua	lazy-nvim/lua/colorscheme.lua	1;"	F	language:Lua	epoch:1778587222
 colorscheme.lua	lazy-nvim/lua/pLAyME/lazy/colorscheme.lua	1;"	F	language:Lua	epoch:1776427590
-colorscheme.lua	nvim-pack/lua/colorscheme.lua	1;"	F	language:Lua	epoch:1794738055
+colorscheme.lua	nvim-pack/lua/colorscheme.lua	1;"	F	language:Lua	epoch:1795685030
 colorscheme.lua	nvim-pack/lua/pLAyME/setup-pack/colorscheme.lua	1;"	F	language:Lua	epoch:1794738055
 column	lazy-nvim/lua/pLAyME/lazy/nvim-cmp.lua	/^		local column = function()$/;"	f	language:Lua
 columns	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^      "columns": 16,$/;"	n	language:JSON	object:preferences.imagePref
@@ -6070,7 +6072,7 @@ compile.yml	emacs/elpaca/sources/llama/.github/workflows/compile.yml	1;"	F	langu
 compile.yml	emacs/elpaca/sources/magit/.github/workflows/compile.yml	1;"	F	language:Yaml	epoch:1794739994
 compile.yml	emacs/elpaca/sources/with-editor/.github/workflows/compile.yml	1;"	F	language:Yaml	epoch:1794739999
 compile_langs.lua	lazy-nvim/lua/pLAyME/compile_langs.lua	1;"	F	language:Lua	epoch:1780308698
-compile_langs.lua	nvim-pack/lua/pLAyME/compile_langs.lua	1;"	F	language:Lua	epoch:1795674631
+compile_langs.lua	nvim-pack/lua/pLAyME/compile_langs.lua	1;"	F	language:Lua	epoch:1795697575
 compile_perf_component	nvim-pack/lua/pLAyME/compile_langs.lua	/^function _G.compile_perf_component()$/;"	f	language:Lua	unknown:_G
 completion-lazy-hilit	emacs/elpaca/sources/company-mode/company.el	/^(defvar completion-lazy-hilit)$/;"	v	language:EmacsLisp
 completion-lazy-hilit-fn	emacs/elpaca/sources/company-mode/company.el	/^(defvar completion-lazy-hilit-fn)$/;"	v	language:EmacsLisp
@@ -6649,7 +6651,6 @@ custom_commentstring	nvim-pack/lua/pLAyME/setup-pack/mini.lua	/^            cust
 custom_key_bindings.md	tmux/plugins/tmux-resurrect/docs/custom_key_bindings.md	1;"	F	language:Markdown	epoch:1794739408
 customize icons	emacs/elpaca/sources/nerd-icons/README.org	/^** customize icons$/;"	c	language:Org
 customize this option permanently.  If you have to do	emacs/elpaca/sources/with-editor/docs/with-editor.org	/^  You should *not* customize this option permanently.  If you have to do$/;"	p	language:Org
-cwd	nvim-pack/lua/pLAyME/init.lua	/^            vim.system(cmd, { cwd = tu_cwd, text = true }, function(_)$/;"	f	language:Lua
 cwd	nvim-pack/lua/pLAyME/pack.lua	/^            vim.system(build_cmd, { cwd = path }, function(obj)$/;"	f	language:Lua
 cycle_dap_tab	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function cycle_dap_tab()$/;"	f	language:Lua
 d	emacs/elpaca/sources/php-mode/tests/issue-439.php	/^$d = <<<"A_B_C"$/;"	v	language:PHP
@@ -10983,7 +10984,7 @@ gcom	other/Microsoft.PowerShell_profile.ps1	/^function gcom {$/;"	f	language:Pow
 gdb	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    dap.adapters.gdb = function(callback, config)$/;"	f	language:Lua	unknown:dap.adapters
 gdb.sh	tmux/plugins/tmux-resurrect/save_command_strategies/gdb.sh	1;"	F	language:Sh	epoch:1794739408
 gdb_rpc_call	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function gdb_rpc_call(session, payload, callback)$/;"	f	language:Lua
-gdb_wine_tools.py	nvim-pack/scripts/gdb_wine_tools.py	1;"	F	language:Python	epoch:1795674354
+gdb_wine_tools.py	nvim-pack/scripts/gdb_wine_tools.py	1;"	F	language:Python	epoch:1795698018
 geiser	emacs/elpaca/sources/evil-collection/modes/geiser/README.org	/^* geiser$/;"	p	language:Org
 geiser-debug-mode-map	emacs/elpaca/sources/evil-collection/modes/geiser/README.org	/^*** geiser-debug-mode-map$/;"	s	language:Org
 geiser-debug-mode-map	emacs/elpaca/sources/evil-collection/modes/geiser/evil-collection-geiser.el	/^(defvar geiser-debug-mode-map)$/;"	v	language:EmacsLisp
@@ -11543,7 +11544,7 @@ handle_output	tmux/plugins/tmux-sessionx/scripts/sessionx.sh	/^handle_output() {
 handle_session_0	tmux/plugins/tmux-resurrect/scripts/restore.sh	/^handle_session_0() {$/;"	f	language:Sh
 handle_signature	emacs/elpaca/sources/evil/doc/source/_ext/elisp.py	/^    def handle_signature(self, sig, signode):$/;"	m	language:Python	class:AbstractVariable	access:public	signature:(self, sig, signode)
 handle_signature	emacs/elpaca/sources/evil/doc/source/_ext/elisp.py	/^    def handle_signature(self, sig, signode):$/;"	m	language:Python	class:AutoFunction	access:public	signature:(self, sig, signode)
-handle_stream	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^        local function handle_stream(_, data)$/;"	f	language:Lua
+handle_stream	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^        local function handle_stream(_, data, stream_name)$/;"	f	language:Lua
 handle_tmux_automatic_start	tmux/plugins/tmux-continuum/continuum.tmux	/^handle_tmux_automatic_start() {$/;"	f	language:Sh
 handle_tmux_automatic_start.sh	tmux/plugins/tmux-continuum/scripts/handle_tmux_automatic_start.sh	1;"	F	language:Sh	epoch:1794739408
 harness.sh	tmux/plugins/tmux/tests/harness.sh	1;"	F	language:Sh	epoch:1794739408
@@ -14291,8 +14292,8 @@ init.el	emacs/init.el	1;"	F	language:EmacsLisp	epoch:1793936995
 init.lua	lazy-nvim/init.lua	1;"	F	language:Lua	epoch:1776427590
 init.lua	lazy-nvim/lua/pLAyME/init.lua	1;"	F	language:Lua	epoch:1778218301
 init.lua	lazy-nvim/lua/pLAyME/lazy/init.lua	1;"	F	language:Lua	epoch:1776427590
-init.lua	nvim-pack/init.lua	1;"	F	language:Lua	epoch:1795667511
-init.lua	nvim-pack/lua/pLAyME/init.lua	1;"	F	language:Lua	epoch:1795668032
+init.lua	nvim-pack/init.lua	1;"	F	language:Lua	epoch:1795698039
+init.lua	nvim-pack/lua/pLAyME/init.lua	1;"	F	language:Lua	epoch:1795699018
 init.lua	nvim-pack/lua/pLAyME/setup-pack/init.lua	1;"	F	language:Lua	epoch:1794738055
 initial_data	emacs/elpaca/sources/evil/doc/source/_ext/elisp.py	/^    initial_data = {$/;"	v	language:Python	class:Elisp	access:public
 inkscape	emacs/elpaca/sources/elpaca/images/elpaca.svg	/^   xmlns:svg="http:\/\/www.w3.org\/2000\/svg">$/;"	n	language:XML	uri:http://www.inkscape.org/namespaces/inkscape
@@ -17597,7 +17598,7 @@ nvim-dap-virtual-text.commit	lazy-nvim/lazy-lock.json	/^  "nvim-dap-virtual-text
 nvim-dap.branch	lazy-nvim/lazy-lock.json	/^  "nvim-dap": { "branch": "master", "commit": "45a69eba683a2c448dd9ecfc4de89511f0646b5f" },$/;"	s	language:JSON	object:nvim-dap
 nvim-dap.commit	lazy-nvim/lazy-lock.json	/^  "nvim-dap": { "branch": "master", "commit": "45a69eba683a2c448dd9ecfc4de89511f0646b5f" },$/;"	s	language:JSON	object:nvim-dap
 nvim-dap.lua	lazy-nvim/lua/pLAyME/lazy/nvim-dap.lua	1;"	F	language:Lua	epoch:1776427590
-nvim-dap.lua	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	1;"	F	language:Lua	epoch:1795681596
+nvim-dap.lua	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	1;"	F	language:Lua	epoch:1795698457
 nvim-emmet	lazy-nvim/lazy-lock.json	/^  "nvim-emmet": { "branch": "main", "commit": "cde4fb2968704aae5c18b7f8a9bc2508767bb78d" },$/;"	o	language:JSON
 nvim-emmet	nvim-pack/nvim-pack-lock.json	/^    "nvim-emmet": {$/;"	o	language:JSON	object:plugins
 nvim-emmet.branch	lazy-nvim/lazy-lock.json	/^  "nvim-emmet": { "branch": "main", "commit": "cde4fb2968704aae5c18b7f8a9bc2508767bb78d" },$/;"	s	language:JSON	object:nvim-emmet
@@ -17671,6 +17672,7 @@ offset	other/a.py	/^    offset = data.find(b'\\x5d\\x00\\x00', offset)$/;"	v	lan
 offset	other/a.py	/^offset = 0$/;"	v	language:Python	access:public
 oil.lua	nvim-pack/lua/pLAyME/setup-pack/oil.lua	1;"	F	language:Lua	epoch:1795419861
 oil.nvim	nvim-pack/nvim-pack-lock.json	/^    "oil.nvim": {$/;"	o	language:JSON	object:plugins
+ok_sys	nvim-pack/lua/pLAyME/init.lua	/^                local ok_sys = pcall(vim.system, cmd, { cwd = tu_cwd, text = true }, function(_)$/;"	f	language:Lua
 on_attach	nvim-pack/lsp/clangd.lua	/^  on_attach = function(client, bufnr)$/;"	f	language:Lua
 on_attach	nvim-pack/lua/pLAyME/setup-pack/dotnet.lua	/^    on_attach = function()$/;"	f	language:Lua
 on_colors	lazy-nvim/lua/pLAyME/lazy/colorscheme.lua	/^                on_colors = function(colors)$/;"	f	language:Lua
@@ -19076,6 +19078,7 @@ publish	emacs/elpaca/sources/magit/docs/Makefile	/^publish: redo-docs$/;"	t	lang
 publish	emacs/elpaca/sources/with-editor/Makefile	/^publish:$/;"	t	language:Make
 publish	emacs/elpaca/sources/with-editor/docs/Makefile	/^publish: redo-docs$/;"	t	language:Make
 pull_changes	tmux/plugins/tpm/scripts/update_plugin.sh	/^pull_changes() {$/;"	f	language:Sh
+pump_workers	nvim-pack/lua/pLAyME/init.lua	/^    local function pump_workers()$/;"	f	language:Lua
 pwdtail	bashrc/bashrc.sh	/^pwdtail() {$/;"	f	language:Sh
 py_quote	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function py_quote(str)$/;"	f	language:Lua
 python	emacs/elpaca/sources/evil-collection/modes/python/README.org	/^* python$/;"	p	language:Org
@@ -19253,13 +19256,13 @@ reload-profile	other/Microsoft.PowerShell_profile.ps1	/^function reload-profile 
 reload_sessions.sh	tmux/plugins/tmux-sessionx/scripts/reload_sessions.sh	1;"	F	language:Sh	epoch:1794739408
 reload_tmux_environment	tmux/plugins/tpm/scripts/helpers/tmux_utils.sh	/^reload_tmux_environment() {$/;"	f	language:Sh
 remap.lua	lazy-nvim/lua/pLAyME/remap.lua	1;"	F	language:Lua	epoch:1776683338
-remap.lua	nvim-pack/lua/pLAyME/remap.lua	1;"	F	language:Lua	epoch:1795674819
+remap.lua	nvim-pack/lua/pLAyME/remap.lua	1;"	F	language:Lua	epoch:1795697895
 remove_dir_recursive	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function remove_dir_recursive(dir_path)$/;"	f	language:Lua
 remove_first_char	tmux/plugins/tmux-resurrect/scripts/helpers.sh	/^remove_first_char() {$/;"	f	language:Sh
 remove_from_gitignore	tmux/plugins/tmux-resurrect/lib/tmux-test/setup	/^remove_from_gitignore() {$/;"	f	language:Sh
 remove_old_backups	tmux/plugins/tmux-resurrect/scripts/save.sh	/^remove_old_backups() {$/;"	f	language:Sh
 rename_current_session	tmux/plugins/tmux-resurrect/tests/helpers/expect_helpers.exp	/^proc rename_current_session {name} {$/;"	p	language:Tcl	signature:{name}
-render-markdown.lua	nvim-pack/lua/pLAyME/setup-pack/render-markdown.lua	1;"	F	language:Lua	epoch:1794738055
+render-markdown.lua	nvim-pack/lua/pLAyME/setup-pack/render-markdown.lua	1;"	F	language:Lua	epoch:1795695559
 render-markdown.nvim	lazy-nvim/lazy-lock.json	/^  "render-markdown.nvim": { "branch": "main", "commit": "0fd43fb4b1f073931c4b481f5f3b7cea3749e19/;"	o	language:JSON
 render-markdown.nvim	nvim-pack/nvim-pack-lock.json	/^    "render-markdown.nvim": {$/;"	o	language:JSON	object:plugins
 render-markdown.nvim.branch	lazy-nvim/lazy-lock.json	/^  "render-markdown.nvim": { "branch": "main", "commit": "0fd43fb4b1f073931c4b481f5f3b7cea3749e19/;"	s	language:JSON	object:render-markdown.nvim

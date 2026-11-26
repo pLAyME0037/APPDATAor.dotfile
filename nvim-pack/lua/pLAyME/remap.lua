@@ -9,8 +9,12 @@ vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 vim.keymap.set("i", "jk", "<Esc>")
 vim.keymap.set("n", "J", "mzJ`z")
 
-vim.keymap.set('n', '[d', function() vim.diagnostic.goto_prev() end, opts)
-vim.keymap.set('n', ']d', function() vim.diagnostic.goto_next() end, opts)
+vim.keymap.set("n", "[d", function()
+    vim.diagnostic.jump({ count = -vim.v.count1, float = true })
+end, opts)
+vim.keymap.set("n", "]d", function()
+    vim.diagnostic.jump({ count = vim.v.count1, float = true })
+end, opts)
 
 vim.keymap.set("n", "<C-d>", "<C-d>zz")
 vim.keymap.set("n", "<C-u>", "<C-u>zz")
@@ -271,18 +275,32 @@ local function paste_keep_col(cmd, is_visual)
     local count = vim.v.count1
     local tick_before = vim.api.nvim_buf_get_changedtick(0)
 
+    local prefix = ""
+    local paste_cmd = cmd
     if is_visual then
-        local saved_unnamed = vim.fn.getreginfo('"')
         local esc = vim.api.nvim_replace_termcodes("<Esc>", true, false, true)
         vim.api.nvim_feedkeys(esc, "nx", false)
+        prefix = "gv"
+        paste_cmd = "P"
+    end
 
-        pcall(vim.cmd, "normal! gv" .. count .. '"' .. reg .. "p")
-        vim.fn.setreg('"', saved_unnamed)
-        if reg ~= '"' then
-            vim.fn.setreg(reg, reg_info)
+    if reg == "=" then
+        local raw_expr = vim.fn.getreg("=", 1)
+        if type(raw_expr) ~= "string" or raw_expr == "" then
+            return
         end
+        local safe_expr = raw_expr:gsub("[\r\n]", " ")
+        pcall(vim.cmd, {
+            cmd = "normal",
+            bang = true,
+            args = { prefix .. count .. '"=' .. safe_expr .. "\r" .. paste_cmd },
+        })
     else
-        pcall(vim.cmd, "normal! " .. count .. '"' .. reg .. cmd)
+        pcall(vim.cmd, {
+            cmd = "normal",
+            bang = true,
+            args = { prefix .. count .. '"' .. reg .. paste_cmd },
+        })
     end
 
     local tick_after = vim.api.nvim_buf_get_changedtick(0)

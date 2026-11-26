@@ -20,14 +20,11 @@ local colors = {
     error                     = "#ed8796",
     warning                   = "#f5a97f",
     info                      = "#7287fd",
-    success                   = "#40a02b",
+    success                   = "#a6d189",
     git_added                 = "#a6da95",
     git_modified              = "#ca9ee6",
     git_deleted               = "#f7768e",
-
-    red                       = "#ed8796",
-    peach                     = "#f5a97f",
-    teal                      = "#8bd5ca",
+    field                     = "#c4e2d5",
 }
 
 local groups = {
@@ -122,12 +119,12 @@ local groups = {
 
     -- Tree-sitter: Identifiers & Variables
     ["@variable"]             = { fg = colors.variable },
-    ["@variable.builtin"]     = { fg = colors.red, italic = true },
-    ["@variable.parameter"]   = { fg = colors.peach },
-    ["@variable.parameter.builtin"] = { fg = colors.peach, italic = true },
-    ["@variable.member"]      = { fg = colors.teal },
-    ["@property"]             = { fg = colors.teal },
-    ["@field"]                = { fg = colors.teal },
+    ["@variable.builtin"]     = { fg = colors.error, italic = true },
+    ["@variable.parameter"]   = { fg = colors.warning },
+    ["@variable.parameter.builtin"] = { fg = colors.warning, italic = true },
+    ["@variable.member"]      = { fg = colors.field },
+    ["@property"]             = { fg = colors.field },
+    ["@field"]                = { fg = colors.field },
 
     -- Tree-sitter: Functions & Methods
     ["@function"]             = { fg = colors.func },
@@ -168,7 +165,7 @@ local groups = {
     ["@string"]               = { fg = colors.string },
     ["@string.documentation"] = { fg = colors.string, italic = true },
     ["@string.regex"]         = { fg = colors.template },
-    ["@string.escape"]        = { fg = colors.peach },
+    ["@string.escape"]        = { fg = colors.warning },
     ["@string.special"]       = { fg = colors.template },
     ["@string.special.symbol"]= { fg = colors.constant },
     ["@string.special.path"]  = { fg = colors.string },
@@ -186,7 +183,7 @@ local groups = {
     ["@operator"]             = { fg = colors.operator },
     ["@punctuation.delimiter"]= { fg = colors.foreground_muted },
     ["@punctuation.bracket"]  = { fg = colors.foreground_muted },
-    ["@punctuation.special"]  = { fg = colors.peach },
+    ["@punctuation.special"]  = { fg = colors.warning },
 
     -- Tree-sitter: Comments & Tags
     ["@comment"]              = { fg = colors.comment, italic = true },
@@ -199,8 +196,8 @@ local groups = {
     ["@tag.builtin"]          = { fg = colors.keyword, bold = true },
     ["@tag.attribute"]        = { fg = colors.type },
     ["@tag.delimiter"]        = { fg = colors.operator },
-    ["@attribute"]            = { fg = colors.peach },
-    ["@attribute.builtin"]    = { fg = colors.peach, bold = true },
+    ["@attribute"]            = { fg = colors.warning },
+    ["@attribute.builtin"]    = { fg = colors.warning, bold = true },
 
     -- Tree-sitter: Markup (Markdown / Docs)
     ["@markup.heading"]       = { fg = colors.func, bold = true },

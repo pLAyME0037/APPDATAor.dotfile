@@ -7,10 +7,19 @@ local headline_colors = {
     "#c0caf5",
 }
 
-for idx, fg in ipairs(headline_colors) do
-    vim.api.nvim_set_hl(0, "Headline" .. idx .. "Fg", { fg = fg, bg = "#1F2335", bold = true })
-    vim.api.nvim_set_hl(0, "Headline" .. idx .. "Bg", { bg = "#1F2335" })
+local function apply_headline_highlights()
+    for idx, fg in ipairs(headline_colors) do
+        vim.api.nvim_set_hl(0, "Headline" .. idx .. "Fg", { fg = fg, bg = "#1F2335", bold = true })
+        vim.api.nvim_set_hl(0, "Headline" .. idx .. "Bg", { bg = "#1F2335" })
+    end
 end
+
+apply_headline_highlights()
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+    group = vim.api.nvim_create_augroup("RenderMarkdownHeadlines", { clear = true }),
+    callback = apply_headline_highlights,
+})
 
 -- vim.cmd(string.format([[highlight Headline1Fg guibg=%s guifg=%s gui=bold]], "#1F2335", "#ff757f"))
 -- vim.cmd(string.format([[highlight Headline2Fg guibg=%s guifg=%s gui=bold]], "#1F2335", "#4fd6be"))

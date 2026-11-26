@@ -34,7 +34,8 @@ vim.schedule(function()
         out_buf        = nil,
         out_win        = nil,
         pending_target = nil,
-        line_buf       = "",
+        stdout_buf     = "",
+        stderr_buf     = "",
         close_on_ui    = false,
     }
     local active_rpc_dirs = {}
@@ -68,21 +69,12 @@ vim.schedule(function()
             wine_sessions.job_id = nil
         end
         wine_sessions.pending_target = nil
-        wine_sessions.line_buf = ""
+        wine_sessions.stdout_buf = ""
+        wine_sessions.stderr_buf = ""
         wine_sessions.close_on_ui = false
 
         if close_ui == true and wine_sessions.out_win ~= nil then
             close_wine_output_window()
-            local win = wine_sessions.out_win
-            wine_sessions.out_win = nil
-            vim.schedule(function()
-                if vim.api.nvim_win_is_valid(win) then
-                    local tab = vim.api.nvim_win_get_tabpage(win)
-                    if #vim.api.nvim_tabpage_list_wins(tab) > 1 then
-                        pcall(vim.api.nvim_win_close, win, true)
-                    end
-                end
-            end)
         end
     end
 
@@ -219,8 +211,12 @@ vim.schedule(function()
                     return d, m
                 end
             end
-            if vim.fn.glob(d .. "/*.csproj") ~= "" then
-                return d, "*.csproj"
+            for name, ftype in vim.fs.dir(d) do
+                if ftype == "file" or ftype == "link" then
+                    if vim.endswith(name, ".csproj") and vim.fn.filereadable(d .. "/" .. name) == 1 then
+                        return d, "*.csproj"
+                    end
+                end
             end
             local parent = vim.fn.fnamemodify(d, ":h")
             if parent == d then
@@ -490,28 +486,30 @@ vim.schedule(function()
         return nil
     end
 
-    local function append_wine_output_lines(chunks)
+    local function append_wine_output_lines(chunks, stream_name)
         local buf = wine_sessions.out_buf
-        if buf == nil or not vim.api.nvim_buf_is_valid(buf) then
-            return
+        local buf_key = "stderr_buf"
+        if stream_name == "stdout" then
+            buf_key = "stdout_buf"
         end
+        local skip_buf = (buf == nil or not vim.api.nvim_buf_is_valid(buf))
         local lines = {}
         for idx, chunk in ipairs(chunks) do
             if type(chunk) == "string" then
                 local clean = chunk:gsub("\r", "")
                 if idx == 1 then
-                    clean = wine_sessions.line_buf .. clean
-                    wine_sessions.line_buf = ""
+                    clean = wine_sessions[buf_key] .. clean
+                    wine_sessions[buf_key] = ""
                 end
                 if idx < #chunks then
                     table.insert(lines, clean)
                 else
-                    wine_sessions.line_buf = clean
+                    wine_sessions[buf_key] = clean
                 end
             end
         end
-        if #lines == 0 then
-            return
+        if skip_buf or #lines == 0 then
+            return lines
         end
         vim.schedule(function()
             if not vim.api.nvim_buf_is_valid(buf) then
@@ -532,6 +530,7 @@ vim.schedule(function()
                 pcall(vim.api.nvim_win_set_cursor, wine_sessions.out_win, { last, 0 })
             end
         end)
+        return lines
     end
 
     local function find_normal_source_win()
@@ -575,8 +574,13 @@ vim.schedule(function()
             pcall(vim.api.nvim_buf_set_name, buf, "Wine Debug Output")
             vim.keymap.set("n", "q", function()
                 if wine_sessions.out_win ~= nil and vim.api.nvim_win_is_valid(wine_sessions.out_win) then
-                    vim.api.nvim_win_close(wine_sessions.out_win, true)
-                    wine_sessions.out_win = nil
+                    local tab = vim.api.nvim_win_get_tabpage(wine_sessions.out_win)
+                    if #vim.api.nvim_tabpage_list_wins(tab) > 1 then
+                        pcall(vim.api.nvim_win_close, wine_sessions.out_win, true)
+                        wine_sessions.out_win = nil
+                    else
+                        vim.notify("Cannot close last window", vim.log.levels.WARN)
+                    end
                 end
             end, { buffer = buf, nowait = true, silent = true })
             wine_sessions.out_buf = buf
@@ -600,8 +604,13 @@ vim.schedule(function()
 
     local function toggle_wine_output_window()
         if wine_sessions.out_win ~= nil and vim.api.nvim_win_is_valid(wine_sessions.out_win) then
-            vim.api.nvim_win_close(wine_sessions.out_win, true)
-            wine_sessions.out_win = nil
+            local tab = vim.api.nvim_win_get_tabpage(wine_sessions.out_win)
+            if #vim.api.nvim_tabpage_list_wins(tab) > 1 then
+                pcall(vim.api.nvim_win_close, wine_sessions.out_win, true)
+                wine_sessions.out_win = nil
+            else
+                vim.notify("Cannot close last window", vim.log.levels.WARN)
+            end
             return
         end
         if wine_sessions.out_buf == nil or not vim.api.nvim_buf_is_valid(wine_sessions.out_buf) then
@@ -678,26 +687,35 @@ vim.schedule(function()
         }
         if wineprefix ~= nil then
             env_map.WINEPREFIX = wineprefix
-            append_wine_output_lines({ "[wine] WINEPREFIX=" .. wineprefix .. " WINEDEBUG=" .. winedebug, "" })
+            append_wine_output_lines({ "[wine] WINEPREFIX=" .. wineprefix .. " WINEDEBUG=" .. winedebug, "" }, "stdout")
         else
-            append_wine_output_lines({ "[wine] WINEDEBUG=" .. winedebug, "" })
+            append_wine_output_lines({ "[wine] WINEDEBUG=" .. winedebug, "" }, "stdout")
         end
-        append_wine_output_lines({ "[wine] " .. table.concat(server_cmd, " "), "" })
+        append_wine_output_lines({ "[wine] " .. table.concat(server_cmd, " "), "" }, "stdout")
 
         local ready     = false
         local exited    = false
         local exit_code = nil
 
-        local function handle_stream(_, data)
+        local function handle_stream(_, data, stream_name)
             if type(data) ~= "table" then
                 return
             end
-            append_wine_output_lines(data)
-            for _, line in ipairs(data) do
+            local completed = append_wine_output_lines(data, stream_name)
+            for _, line in ipairs(completed) do
                 if type(line) == "string" then
                     if line:find("target remote", 1, true) or line:find("Listening on port", 1, true) then
                         ready = true
                     end
+                end
+            end
+            if not ready then
+                local tail_buf = wine_sessions.stderr_buf
+                if stream_name == "stdout" then
+                    tail_buf = wine_sessions.stdout_buf
+                end
+                if tail_buf:find("target remote", 1, true) or tail_buf:find("Listening on port", 1, true) then
+                    ready = true
                 end
             end
         end
@@ -710,10 +728,13 @@ vim.schedule(function()
             on_exit = function(_, code)
                 exited = true
                 exit_code = code
-                if wine_sessions.line_buf ~= "" then
-                    append_wine_output_lines({ "", "" })
+                if wine_sessions.stdout_buf ~= "" then
+                    append_wine_output_lines({ "", "" }, "stdout")
                 end
-                append_wine_output_lines({ "[wine] Process exited with code " .. tostring(code), "" })
+                if wine_sessions.stderr_buf ~= "" then
+                    append_wine_output_lines({ "", "" }, "stderr")
+                end
+                append_wine_output_lines({ "[wine] Process exited with code " .. tostring(code), "" }, "stdout")
                 if wine_sessions.job_id == job_id then
                     wine_sessions.job_id = nil
                 end
@@ -782,7 +803,12 @@ vim.schedule(function()
     local gdb_tools_path = vim.fs.normalize(vim.fn.stdpath("config") .. "/scripts/gdb_wine_tools.py")
 
     local function py_quote(str)
-        local escaped = str:gsub("\\", "\\\\"):gsub("'", "\\'")
+        local escaped = str
+            :gsub("\\", "\\\\")
+            :gsub("'", "\\'")
+            :gsub("\n", "\\n")
+            :gsub("\r", "\\r")
+            :gsub("%z", "\\x00")
         return "'" .. escaped .. "'"
     end
 
@@ -813,8 +839,8 @@ vim.schedule(function()
             table.insert(gdb_args, "python import os; os.environ['NVIM_GDB_PROGRAM'] = " .. py_quote(config.program))
         end
         if vim.fn.filereadable(gdb_tools_path) == 1 then
-            table.insert(gdb_args, "-iex")
-            table.insert(gdb_args, "source " .. gdb_tools_path)
+            table.insert(gdb_args, "-ix")
+            table.insert(gdb_args, gdb_tools_path)
         end
 
         callback({
@@ -1840,7 +1866,9 @@ vim.schedule(function()
                 finish(nil, "GDB RPC produced no response file")
                 return
             end
-            local ok_dec, data = pcall(vim.json.decode, table.concat(lines, "\n"))
+            local ok_dec, data = pcall(vim.json.decode, table.concat(lines, "\n"), {
+                luanil = { object = true, array = true },
+            })
             if not ok_dec or type(data) ~= "table" then
                 finish(nil, "Failed to parse GDB RPC response JSON")
                 return

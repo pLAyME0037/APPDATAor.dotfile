@@ -1,3 +1,5 @@
+local active_compile_id = 0
+
 local function compile()
     _G.compile_timings = {}
 
@@ -80,8 +82,12 @@ local function compile()
                 end
             end
 
-            if vim.fn.glob(d .. "/*.csproj") ~= "" then
-                return d, "*.csproj"
+            for name, ftype in vim.fs.dir(d) do
+                if ftype == "file" or ftype == "link" then
+                    if vim.endswith(name, ".csproj") and vim.fn.filereadable(d .. "/" .. name) == 1 then
+                        return d, "*.csproj"
+                    end
+                end
             end
 
             local parent = vim.fn.fnamemodify(d, ":h")
@@ -196,10 +202,22 @@ local function compile()
         end
     end
 
+    active_compile_id = active_compile_id + 1
+    local my_compile_id = active_compile_id
+
+    local compile_dirs = { cwd }
+    if marker == "CMakeLists.txt" and root ~= nil then
+        compile_dirs = { root .. "/build", root }
+    end
+    if cwd ~= dir then
+        table.insert(compile_dirs, dir)
+    end
+
     vim.cmd("botright 10new")
     local new_buf = vim.api.nvim_get_current_buf()
     vim.b[new_buf].is_compile_output = true
-    vim.b[new_buf].compile_dir = dir
+    vim.b[new_buf].compile_dir = cwd
+    vim.b[new_buf].compile_dirs = compile_dirs
 
     for _, old_buf in ipairs(old_bufs) do
         if old_buf ~= new_buf and vim.api.nvim_buf_is_valid(old_buf) then
@@ -210,7 +228,9 @@ local function compile()
     vim.api.nvim_create_autocmd("BufWipeout", {
         buffer = new_buf,
         callback = function()
-            _G.compile_timings = {}
+            if active_compile_id == my_compile_id then
+                _G.compile_timings = {}
+            end
             vim.fn.delete(perf_script)
             vim.fn.delete(perf_out)
             vim.fn.delete(javac_out)
@@ -230,12 +250,14 @@ local function compile()
             PYTHONUNBUFFERED = "1",
         },
         on_exit = function(_, _, _)
-            local ok, lines = pcall(vim.fn.readfile, perf_out)
-            if ok then
-                for _, line in ipairs(lines) do
-                    local ms, label = line:match("%[(%d+)ms%]%s+(.+)")
-                    if ms and label then
-                        _G.compile_timings[label] = ms .. "ms"
+            if active_compile_id == my_compile_id then
+                local ok, lines = pcall(vim.fn.readfile, perf_out)
+                if ok then
+                    for _, line in ipairs(lines) do
+                        local ms, label = line:match("%[(%d+)ms%]%s+(.+)")
+                        if ms and label then
+                            _G.compile_timings[label] = ms .. "ms"
+                        end
                     end
                 end
             end
@@ -278,12 +300,20 @@ local function goto_error_line()
     local file, err_line = err:match("^%s*lua: ([^:]+):(%d+):")
 
     if not file then
-        -- C/GCC: hash_table.c:86:1: or hash_table.c:86:
-        file, err_line = err:match("^%s*([^:]+):(%d+):%d*:")
+        -- Rust: --> src/main.rs:12:5
+        file, err_line = err:match("^%s*%-%->%s+([^:]+):(%d+):")
     end
     if not file then
-        -- Java: iostream.java:41: error:
-        file, err_line = err:match("^%s*([^:]+):(%d+):%s+error:")
+        -- C# / MSBuild: Program.cs(12,5): error CS1002:
+        file, err_line = err:match("^%s*([^(]+)%((%d+),%d+%)%s*:")
+    end
+    if not file then
+        -- C/C++/Java/Go/GHC/ld: file:line:col: or file:line:
+        file, err_line = err:match("^%s*([^:]+):(%d+):")
+    end
+    if not file then
+        -- PHP: ... in /path/file.php on line 12
+        file, err_line = err:match("in (.-) on line (%d+)")
     end
     if not file then
         -- Python: File "/path/main.py", line 16
@@ -310,17 +340,29 @@ local function goto_error_line()
     end
 
     local buf = vim.api.nvim_get_current_buf()
-    local dir = vim.b[buf].compile_dir
+    local search_dirs = vim.b[buf].compile_dirs
+    if type(search_dirs) ~= "table" or #search_dirs == 0 then
+        local dir = vim.b[buf].compile_dir
+        if type(dir) == "string" and dir ~= "" then
+            search_dirs = { dir }
+        else
+            search_dirs = {}
+        end
+    end
 
     if file:sub(1, 1) ~= "/" then
-        if dir and dir ~= "" then
-            local rel_candidate = vim.fs.normalize(dir .. "/" .. file)
-            local stat = uv.fs_stat(rel_candidate)
-            if stat then
-                file = rel_candidate
-            else
-                file = vim.fs.normalize(file)
+        local resolved = nil
+        for _, base_dir in ipairs(search_dirs) do
+            if type(base_dir) == "string" and base_dir ~= "" then
+                local rel_candidate = vim.fs.normalize(base_dir .. "/" .. file)
+                if uv.fs_stat(rel_candidate) then
+                    resolved = rel_candidate
+                    break
+                end
             end
+        end
+        if resolved ~= nil then
+            file = resolved
         else
             file = vim.fs.normalize(file)
         end

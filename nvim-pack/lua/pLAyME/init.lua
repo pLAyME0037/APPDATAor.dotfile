@@ -20,6 +20,18 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end,
 })
 
+local function apply_comment_highlights()
+    vim.api.nvim_set_hl(0, "@comment.note", { link = "Todo" })
+    vim.api.nvim_set_hl(0, "@comment.error", { link = "ErrorMsg" })
+end
+
+apply_comment_highlights()
+
+autocmd("ColorScheme", {
+    group = augroup("CustomCommentHighlights", { clear = true }),
+    callback = apply_comment_highlights,
+})
+
 -- ==========================================================
 -- Auto-update tags safely on save (with HOME safety guards)
 -- ==========================================================
@@ -714,8 +726,18 @@ vim.api.nvim_create_user_command("TagsHeaders", function()
     local tags_dir, htags_path = header_tags_file_for_root(env.root)
     vim.fn.mkdir(tags_dir, "p")
 
-    local seen        = {}
-    local pending     = #targets
+    local seen      = {}
+    local next_idx  = 1
+    local active    = 0
+    local finished  = false
+    local cpu_count = 4
+    if type(uv.cpu_info) == "function" then
+        local cpus = uv.cpu_info()
+        if type(cpus) == "table" and #cpus > 0 then
+            cpu_count = #cpus
+        end
+    end
+    local max_workers = math.min(8, math.max(2, cpu_count))
 
     local function finish_deps()
         local header_list = vim.tbl_keys(seen)
@@ -780,39 +802,51 @@ vim.api.nvim_create_user_command("TagsHeaders", function()
         header_tags_job = this_job
     end
 
-    for _, tu in ipairs(targets) do
-        if vim.fn.executable(tu.compiler) ~= 1 then
-            pending = pending - 1
-            if pending == 0 then
-                finish_deps()
-            end
-        else
-            local tmp_dep = vim.fn.tempname() .. ".d"
-            local cmd = { tu.compiler }
-            vim.list_extend(cmd, tu.dep_flags)
-            vim.list_extend(cmd, { "-E", "-M", "-MG", "-MT", "_TARGET_", "-MF", tmp_dep, tu.file })
+    local function pump_workers()
+        if finished then
+            return
+        end
 
-            local tu_cwd = nil
-            if type(tu.directory) == "string" and vim.fn.isdirectory(tu.directory) == 1 then
-                tu_cwd = tu.directory
-            end
+        while active < max_workers and next_idx <= #targets do
+            local tu = targets[next_idx]
+            next_idx = next_idx + 1
 
-            vim.system(cmd, { cwd = tu_cwd, text = true }, function(_)
-                vim.schedule(function()
-                    for _, h in ipairs(parse_dep_headers(tmp_dep, tu.file)) do
-                        if not seen[h] then
-                            seen[h] = true
+            if vim.fn.executable(tu.compiler) == 1 then
+                active = active + 1
+                local tmp_dep = vim.fn.tempname() .. ".d"
+                local cmd = { tu.compiler }
+                vim.list_extend(cmd, tu.dep_flags)
+                vim.list_extend(cmd, { "-E", "-M", "-MG", "-MT", "_TARGET_", "-MF", tmp_dep, tu.file })
+
+                local tu_cwd = nil
+                if type(tu.directory) == "string" and vim.fn.isdirectory(tu.directory) == 1 then
+                    tu_cwd = tu.directory
+                end
+
+                local ok_sys = pcall(vim.system, cmd, { cwd = tu_cwd, text = true }, function(_)
+                    vim.schedule(function()
+                        for _, h in ipairs(parse_dep_headers(tmp_dep, tu.file)) do
+                            if not seen[h] then
+                                seen[h] = true
+                            end
                         end
-                    end
-                    pcall(uv.fs_unlink, tmp_dep)
-                    pending = pending - 1
-                    if pending == 0 then
-                        finish_deps()
-                    end
+                        pcall(uv.fs_unlink, tmp_dep)
+                        active = active - 1
+                        pump_workers()
+                    end)
                 end)
-            end)
+                if not ok_sys then
+                    pcall(uv.fs_unlink, tmp_dep)
+                    active = active - 1
+                end
+            end
+        end
+        if active == 0 and next_idx > #targets then
+            finished = true
+            finish_deps()
         end
     end
+    pump_workers()
 end, { desc = "Index compiler-resolved headers (-M) into tags" })
 
 -- ==========================================================
