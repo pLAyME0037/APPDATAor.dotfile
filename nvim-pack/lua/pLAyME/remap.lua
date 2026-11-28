@@ -227,10 +227,23 @@ local yank_keep_group = vim.api.nvim_create_augroup("KeepCursorOnYank", { clear 
 
 local function save_yank_cursor(keys)
     local win = vim.api.nvim_get_current_win()
+    local pos = vim.api.nvim_win_get_cursor(win)
+    local mode = vim.api.nvim_get_mode().mode
+    local mode_prefix = mode:sub(1, 1)
+    if mode_prefix == "v" or mode_prefix == "V" or mode_prefix == "\22" then
+        local anchor = vim.fn.getpos("v")
+        if type(anchor) == "table" and anchor[2] ~= nil and anchor[2] >= 1 then
+            local col = 0
+            if anchor[3] ~= nil and anchor[3] > 1 then
+                col = anchor[3] - 1
+            end
+            pos = { anchor[2], col }
+        end
+    end
     pending_yank = {
         win = win,
         buf = vim.api.nvim_win_get_buf(win),
-        pos = vim.api.nvim_win_get_cursor(win),
+        pos = pos,
     }
     return keys
 end
@@ -264,6 +277,26 @@ local function paste_keep_col(cmd, is_visual)
     local win = vim.api.nvim_get_current_win()
     local prev_pos = vim.api.nvim_win_get_cursor(win)
     local prev_virtcol = vim.fn.virtcol(".")
+
+    if is_visual then
+        local mode = vim.api.nvim_get_mode().mode
+        local mode_prefix = mode:sub(1, 1)
+        if mode_prefix == "v" or mode_prefix == "V" or mode_prefix == "\22" then
+            local anchor = vim.fn.getpos("v")
+            if type(anchor) == "table" and anchor[2] ~= nil and anchor[2] >= 1 then
+                local col = 0
+                if anchor[3] ~= nil and anchor[3] > 1 then
+                    col = anchor[3] - 1
+                end
+                prev_pos = { anchor[2], col }
+            end
+            local vcol = vim.fn.virtcol("v")
+            if type(vcol) == "number" and vcol >= 1 then
+                prev_virtcol = vcol
+            end
+        end
+    end
+
     local reg = vim.v.register
     if reg == nil or reg == "" then
         reg = '"'
@@ -309,13 +342,19 @@ local function paste_keep_col(cmd, is_visual)
         return
     end
 
-    if reg_info.regtype == "V" then
-        local mark = vim.api.nvim_buf_get_mark(0, "[")
-        local target_line = mark[1]
-        if target_line == nil or target_line < 1 then
-            target_line = prev_pos[1]
+    if is_visual or reg_info.regtype == "V" then
+        local target_line = prev_pos[1]
+        if not is_visual then
+            local mark = vim.api.nvim_buf_get_mark(0, "[")
+            if mark[1] ~= nil and mark[1] >= 1 then
+                target_line = mark[1]
+            end
         end
+
         local line_count = vim.api.nvim_buf_line_count(0)
+        if target_line < 1 then
+            target_line = 1
+        end
         if target_line > line_count then
             target_line = line_count
         end

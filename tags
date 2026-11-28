@@ -4644,7 +4644,7 @@ bar	emacs/elpaca/sources/php-mode/tests/issue-53.php	/^    private $bar;$/;"	v	l
 bar	emacs/elpaca/sources/php-mode/tests/issue-53.php	/^$bar = $foo->getBar();$/;"	v	language:PHP
 base	emacs/elpaca/sources/evil/doc/logo.svg	/^     inkscape:guide-bbox="true" \/>$/;"	i	language:XML
 baseline	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^        "baseline": 20.01953125,$/;"	n	language:JSON	object:preferences.fontPref.metrics
-bashrc.sh	bashrc/bashrc.sh	1;"	F	language:Sh	epoch:1795838776
+bashrc.sh	bashrc/bashrc.sh	1;"	F	language:Sh	epoch:1795838962
 basic.conf	tmux/plugins/tmux/assets/demos/basic.conf	1;"	F	language:Iniconf	epoch:1794739408
 batch	emacs/elpaca/sources/dash/Makefile	/^batch := $(EMACS) -Q -batch -L .$/;"	m	language:Make
 battery-echo-area-format	emacs/elpaca/sources/doom-modeline/doom-modeline-segments.el	/^(defvar battery-echo-area-format)$/;"	v	language:EmacsLisp
@@ -4825,6 +4825,7 @@ callback	nvim-pack/lua/pLAyME/setup-pack/data-viewer.lua	/^    callback = functi
 callback	nvim-pack/lua/pLAyME/setup-pack/mini.lua	/^        callback = function()$/;"	f	language:Lua
 callback	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^        callback = function(args)$/;"	f	language:Lua
 callback	nvim-pack/lua/pLAyME/setup-pack/nvim-lint.lua	/^    callback = function()$/;"	f	language:Lua
+callback	nvim-pack/lua/pLAyME/setup-pack/oil.lua	/^            callback = function()$/;"	f	language:Lua
 callback	nvim-pack/lua/pLAyME/setup-pack/oil.lua	/^    callback = function()$/;"	f	language:Lua
 callback	nvim-pack/lua/pLAyME/setup-pack/treesitter.lua	/^    callback = function(args)$/;"	f	language:Lua
 calls.php	emacs/elpaca/sources/php-mode/tests/lang/function/calls.php	1;"	F	language:PHP	epoch:1794739979
@@ -4971,7 +4972,7 @@ cleanup_session_rpc_dir	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local
 cleanup_wine_session	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function cleanup_wine_session(close_ui)$/;"	f	language:Lua
 clear-as-night	emacs/themes/clear-as-night-theme.el	/^(deftheme clear-as-night)$/;"	T	language:EmacsLisp
 clear-as-night-theme.el	emacs/themes/clear-as-night-theme.el	1;"	F	language:EmacsLisp	epoch:1793936995
-clear-as-night.lua	nvim-pack/colors/clear-as-night.lua	1;"	F	language:Lua	epoch:1795757818
+clear-as-night.lua	nvim-pack/colors/clear-as-night.lua	1;"	F	language:Lua	epoch:1795862927
 clear_screen_for_window	tmux/plugins/tmux-resurrect/tests/helpers/expect_helpers.exp	/^proc clear_screen_for_window {target} {$/;"	p	language:Tcl	signature:{target}
 clickpaste	bashrc/bashrc.sh	/^alias clickpaste='sleep 3; xdotool type "$(xclip -o -selection clipboard)"'$/;"	a	language:Sh
 clima.conf	tmux/plugins/tmux/status/clima.conf	1;"	F	language:Iniconf	epoch:1794739408
@@ -5102,7 +5103,7 @@ colors.css	matugen/templates/colors.css	1;"	F	language:CSS	epoch:1770540122
 colors.css	waybar/colors.css	1;"	F	language:CSS	epoch:1774591112
 colorscheme.lua	lazy-nvim/lua/colorscheme.lua	1;"	F	language:Lua	epoch:1778587222
 colorscheme.lua	lazy-nvim/lua/pLAyME/lazy/colorscheme.lua	1;"	F	language:Lua	epoch:1776427590
-colorscheme.lua	nvim-pack/lua/colorscheme.lua	1;"	F	language:Lua	epoch:1795778435
+colorscheme.lua	nvim-pack/lua/colorscheme.lua	1;"	F	language:Lua	epoch:1795862883
 colorscheme.lua	nvim-pack/lua/pLAyME/setup-pack/colorscheme.lua	1;"	F	language:Lua	epoch:1794738055
 column	lazy-nvim/lua/pLAyME/lazy/nvim-cmp.lua	/^		local column = function()$/;"	f	language:Lua
 columns	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^      "columns": 16,$/;"	n	language:JSON	object:preferences.imagePref
@@ -17682,7 +17683,7 @@ of a	emacs/elpaca/sources/magit/docs/magit.org	/^section, the hunk-internal regi
 of such commands and the several *variants* within each	emacs/elpaca/sources/magit/docs/magit.org	/^several *groups* of such commands and the several *variants* within each$/;"	p	language:Org
 of the	emacs/elpaca/sources/magit/docs/magit.org	/^sections than it is to act on the current section *instead* of the$/;"	p	language:Org
 offline_icon_default	tmux/plugins/tmux-online-status/scripts/online_status_icon.sh	/^offline_icon_default() {$/;"	f	language:Sh
-oil.lua	nvim-pack/lua/pLAyME/setup-pack/oil.lua	1;"	F	language:Lua	epoch:1795419861
+oil.lua	nvim-pack/lua/pLAyME/setup-pack/oil.lua	1;"	F	language:Lua	epoch:1795856063
 oil.nvim	nvim-pack/nvim-pack-lock.json	/^    "oil.nvim": {$/;"	o	language:JSON	object:plugins
 ok_sys	nvim-pack/lua/pLAyME/init.lua	/^                local ok_sys = pcall(vim.system, cmd, { cwd = tu_cwd, text = true }, function(_)$/;"	f	language:Lua
 on_attach	nvim-pack/lsp/clangd.lua	/^  on_attach = function(client, bufnr)$/;"	f	language:Lua
@@ -19267,7 +19268,7 @@ reload-profile	other/Microsoft.PowerShell_profile.ps1	/^function reload-profile 
 reload_sessions.sh	tmux/plugins/tmux-sessionx/scripts/reload_sessions.sh	1;"	F	language:Sh	epoch:1794739408
 reload_tmux_environment	tmux/plugins/tpm/scripts/helpers/tmux_utils.sh	/^reload_tmux_environment() {$/;"	f	language:Sh
 remap.lua	lazy-nvim/lua/pLAyME/remap.lua	1;"	F	language:Lua	epoch:1776683338
-remap.lua	nvim-pack/lua/pLAyME/remap.lua	1;"	F	language:Lua	epoch:1795697895
+remap.lua	nvim-pack/lua/pLAyME/remap.lua	1;"	F	language:Lua	epoch:1795862358
 remove_dir_recursive	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function remove_dir_recursive(dir_path)$/;"	f	language:Lua
 remove_first_char	tmux/plugins/tmux-resurrect/scripts/helpers.sh	/^remove_first_char() {$/;"	f	language:Sh
 remove_from_gitignore	tmux/plugins/tmux-resurrect/lib/tmux-test/setup	/^remove_from_gitignore() {$/;"	f	language:Sh
