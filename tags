@@ -1993,6 +1993,7 @@ Command properties	emacs/elpaca/sources/evil/doc/source/internals.rst	/^Command 
 Commands	emacs/elpaca/sources/doom-modeline/AGENTS.md	/^### Commands$/;"	S	language:Markdown	section:doom-modeline AGENTS.md""Build, Lint, and Test Commands
 Commands Available in Diffs	emacs/elpaca/sources/magit/docs/magit.org	/^*** Commands Available in Diffs$/;"	s	language:Org
 Commands for Buffers Visiting Files	emacs/elpaca/sources/magit/docs/magit.org	/^** Commands for Buffers Visiting Files$/;"	c	language:Org
+Commands to Run After Setup Finishes	other/colibri-arch-setup.md	/^### Commands to Run After Setup Finishes$/;"	S	language:Markdown	section:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)""Step 4: Model Selection & Download
 Commit Message Conventions	emacs/elpaca/sources/magit/docs/magit.org	/^**** Commit Message Conventions$/;"	u	language:Org
 Commit Mode and Hooks	emacs/elpaca/sources/magit/docs/magit.org	/^**** Commit Mode and Hooks$/;"	u	language:Org
 Commit Pseudo Headers	emacs/elpaca/sources/magit/docs/magit.org	/^**** Commit Pseudo Headers$/;"	u	language:Org
@@ -2346,6 +2347,7 @@ File Header Format	emacs/elpaca/sources/doom-modeline/AGENTS.md	/^### File Heade
 File face	emacs/elpaca/sources/all-the-icons-dired/README.org	/^*** File face$/;"	s	language:Org
 Filing an issue	emacs/elpaca/sources/elpaca/.agents/skills/elpaca-support/SKILL.md	/^## Filing an issue$/;"	s	language:Markdown	chapter:Elpaca support
 Filter groups	emacs/elpaca/sources/dired-hacks/README.md	/^### Filter groups$/;"	S	language:Markdown	section:Packages""dired-filter
+Final Notes & Cleanup	other/colibri-arch-setup.md	/^## Final Notes & Cleanup$/;"	s	language:Markdown	chapter:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)
 Find / pop definition	emacs/elpaca/sources/evil-collection/README.org	/^*** Find \/ pop definition$/;"	s	language:Org
 Find file	emacs/elpaca/sources/evil-collection/README.org	/^*** Find file$/;"	s	language:Org
 Find usages	emacs/elpaca/sources/evil-collection/README.org	/^*** Find usages$/;"	s	language:Org
@@ -3547,6 +3549,7 @@ Risk of Reverting Automatically	emacs/elpaca/sources/magit/docs/magit.org	/^****
 Roadmap	emacs/elpaca/sources/general/README.org	/^** Roadmap$/;"	c	language:Org
 Routing	emacs/elpaca/sources/elpaca/.agents/skills/elpaca-support/SKILL.md	/^## Routing$/;"	s	language:Markdown	chapter:Elpaca support
 Run your tests	emacs/elpaca/sources/f/CONTRIBUTING.org	/^*** Run your tests$/;"	s	language:Org
+Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)	other/colibri-arch-setup.md	/^# Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)$/;"	c	language:Markdown
 Running Git	emacs/elpaca/sources/magit/docs/magit.org	/^** Running Git$/;"	c	language:Org
 Running Git Manually	emacs/elpaca/sources/magit/docs/magit.org	/^*** Running Git Manually$/;"	s	language:Org
 Running Tests in Emacs Manually	emacs/elpaca/sources/doom-modeline/AGENTS.md	/^### Running Tests in Emacs Manually$/;"	S	language:Markdown	section:doom-modeline AGENTS.md""Build, Lint, and Test Commands
@@ -3703,9 +3706,22 @@ Status Log Sections	emacs/elpaca/sources/magit/docs/magit.org	/^*** Status Log S
 Status Module Sections	emacs/elpaca/sources/magit/docs/magit.org	/^*** Status Module Sections$/;"	s	language:Org
 Status Options	emacs/elpaca/sources/magit/docs/magit.org	/^*** Status Options$/;"	s	language:Org
 Status Sections	emacs/elpaca/sources/magit/docs/magit.org	/^*** Status Sections$/;"	s	language:Org
+Step 1 Findings	other/colibri-arch-setup.md	/^### Step 1 Findings$/;"	S	language:Markdown	section:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)""Step 1: Hardware & Driver Audit
 Step 1: Clone this repository	tmux/plugins/tmux/docs/tutorials/01-getting-started.md	/^## Step 1: Clone this repository$/;"	s	language:Markdown
+Step 1: Hardware & Driver Audit	other/colibri-arch-setup.md	/^## Step 1: Hardware & Driver Audit$/;"	s	language:Markdown	chapter:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)
+Step 2 Findings	other/colibri-arch-setup.md	/^### Step 2 Findings$/;"	S	language:Markdown	section:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)""Step 2: Dependencies & GPU Setup
+Step 2: Dependencies & GPU Setup	other/colibri-arch-setup.md	/^## Step 2: Dependencies & GPU Setup$/;"	s	language:Markdown	chapter:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)
 Step 2: Edit your tmux configuration file	tmux/plugins/tmux/docs/tutorials/01-getting-started.md	/^## Step 2: Edit your tmux configuration file$/;"	s	language:Markdown
+Step 3 Findings	other/colibri-arch-setup.md	/^### Step 3 Findings$/;"	S	language:Markdown	section:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)""Step 3: Clone & Inspect Colibri
+Step 3: Clone & Inspect Colibri	other/colibri-arch-setup.md	/^## Step 3: Clone & Inspect Colibri$/;"	s	language:Markdown	chapter:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)
 Step 3: Customize	tmux/plugins/tmux/docs/tutorials/01-getting-started.md	/^## Step 3: Customize$/;"	s	language:Markdown
+Step 4 Findings	other/colibri-arch-setup.md	/^### Step 4 Findings$/;"	S	language:Markdown	section:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)""Step 4: Model Selection & Download
+Step 4: Model Selection & Download	other/colibri-arch-setup.md	/^## Step 4: Model Selection & Download$/;"	s	language:Markdown	chapter:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)
+Step 5 Findings	other/colibri-arch-setup.md	/^### Step 5 Findings$/;"	S	language:Markdown	section:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)""Step 5: First Inference & Benchmark Results
+Step 5: First Inference & Benchmark Results	other/colibri-arch-setup.md	/^## Step 5: First Inference & Benchmark Results$/;"	s	language:Markdown	chapter:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)
+Step 6 Findings	other/colibri-arch-setup.md	/^### Step 6 Findings$/;"	S	language:Markdown	section:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)""Step 6: Agent & SKILL Integration
+Step 6: Agent & SKILL Integration	other/colibri-arch-setup.md	/^## Step 6: Agent & SKILL Integration$/;"	s	language:Markdown	chapter:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)
+Step 6a: Probe Tool Calling Format First	other/colibri-arch-setup.md	/^### Step 6a: Probe Tool Calling Format First$/;"	S	language:Markdown	section:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)""Step 6: Agent & SKILL Integration
 Steps to reproduce	emacs/elpaca/sources/company-mode/.github/ISSUE_TEMPLATE/bug-report.md	/^#### Steps to reproduce$/;"	t	language:Markdown
 Style dispatchers	emacs/elpaca/sources/orderless/README.org	/^*** Style dispatchers$/;"	s	language:Org
 Style modifiers	emacs/elpaca/sources/orderless/README.org	/^*** Style modifiers$/;"	s	language:Org
@@ -3727,6 +3743,7 @@ Switching away from php-mode	emacs/elpaca/sources/php-mode/README.md	/^### Switc
 Switching between host panes doesn't work when docker is running	tmux/plugins/vim-tmux-navigator/README.md	/^### Switching between host panes doesn't work when docker is running$/;"	S	language:Markdown	section:Vim Tmux Navigator""Troubleshooting
 Switching out of Vim Is Slow	tmux/plugins/vim-tmux-navigator/README.md	/^### Switching out of Vim Is Slow$/;"	S	language:Markdown	section:Vim Tmux Navigator""Troubleshooting
 Symbols are not displaying	tmux/plugins/tmux/docs/guides/troubleshooting.md	/^## Symbols are not displaying$/;"	s	language:Markdown	chapter:Frequently Asked Questions
+System Specs & Environment	other/colibri-arch-setup.md	/^## System Specs & Environment$/;"	s	language:Markdown	chapter:Running Colibri MoE LLMs on Arch Linux (Asus 16 GB RAM + GTX 1060 Mobile)
 Systemd	tmux/plugins/tmux-continuum/docs/automatic_start.md	/^#### Systemd$/;"	t	language:Markdown	subsection:Automatic Tmux start""Linux
 Systemd automatic start for tmux	tmux/plugins/tmux-continuum/docs/systemd_details.md	/^# Systemd automatic start for tmux$/;"	c	language:Markdown
 TAG	emacs/elpaca/sources/evil/Makefile	/^TAG =$/;"	m	language:Make
@@ -4248,7 +4265,6 @@ a	emacs/elpaca/sources/php-mode/tests/lang/function/calls.php	/^$a = a();$/;"	v	
 a	emacs/elpaca/sources/php-mode/tests/namespace-block.php	/^            function a(    \/\/ ###php-mode-test### ((indent (* 3 c-basic-offset)))$/;"	f	language:PHP	class:FooBar\\Fizz	typeref:unknown:string	access:public	signature:(array $v)
 a blue	emacs/elpaca/sources/magit/docs/magit.org	/^  shown in blue, not green).  There can only be a green *and* a blue$/;"	p	language:Org
 a package.	emacs/elpaca/sources/elpaca/doc/manual.org	/^Note that rebuilding a package does not *reload* a package.$/;"	p	language:Org
-a.py	other/a.py	1;"	F	language:Python	epoch:1794899124
 a1c	emacs/elpaca/sources/php-mode/tests/lang/function/calls.php	/^$a1c = a1c();$/;"	v	language:PHP
 a[rel="next"] :before	emacs/elpaca/sources/haskell-mode/doc/haskell-mode.css	/^a[rel="next"]:before {$/;"	s	language:CSS
 a[rel="prev"] :before	emacs/elpaca/sources/haskell-mode/doc/haskell-mode.css	/^a[rel="prev"]:before {$/;"	s	language:CSS
@@ -4628,7 +4644,7 @@ bar	emacs/elpaca/sources/php-mode/tests/issue-53.php	/^    private $bar;$/;"	v	l
 bar	emacs/elpaca/sources/php-mode/tests/issue-53.php	/^$bar = $foo->getBar();$/;"	v	language:PHP
 base	emacs/elpaca/sources/evil/doc/logo.svg	/^     inkscape:guide-bbox="true" \/>$/;"	i	language:XML
 baseline	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^        "baseline": 20.01953125,$/;"	n	language:JSON	object:preferences.fontPref.metrics
-bashrc.sh	bashrc/bashrc.sh	1;"	F	language:Sh	epoch:1793942512
+bashrc.sh	bashrc/bashrc.sh	1;"	F	language:Sh	epoch:1795838776
 basic.conf	tmux/plugins/tmux/assets/demos/basic.conf	1;"	F	language:Iniconf	epoch:1794739408
 batch	emacs/elpaca/sources/dash/Makefile	/^batch := $(EMACS) -Q -batch -L .$/;"	m	language:Make
 battery-echo-area-format	emacs/elpaca/sources/doom-modeline/doom-modeline-segments.el	/^(defvar battery-echo-area-format)$/;"	v	language:EmacsLisp
@@ -4955,7 +4971,7 @@ cleanup_session_rpc_dir	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local
 cleanup_wine_session	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function cleanup_wine_session(close_ui)$/;"	f	language:Lua
 clear-as-night	emacs/themes/clear-as-night-theme.el	/^(deftheme clear-as-night)$/;"	T	language:EmacsLisp
 clear-as-night-theme.el	emacs/themes/clear-as-night-theme.el	1;"	F	language:EmacsLisp	epoch:1793936995
-clear-as-night.lua	nvim-pack/colors/clear-as-night.lua	1;"	F	language:Lua	epoch:1795685024
+clear-as-night.lua	nvim-pack/colors/clear-as-night.lua	1;"	F	language:Lua	epoch:1795757818
 clear_screen_for_window	tmux/plugins/tmux-resurrect/tests/helpers/expect_helpers.exp	/^proc clear_screen_for_window {target} {$/;"	p	language:Tcl	signature:{target}
 clickpaste	bashrc/bashrc.sh	/^alias clickpaste='sleep 3; xdotool type "$(xclip -o -selection clipboard)"'$/;"	a	language:Sh
 clima.conf	tmux/plugins/tmux/status/clima.conf	1;"	F	language:Iniconf	epoch:1794739408
@@ -5074,6 +5090,8 @@ code	emacs/elpaca/sources/haskell-mode/doc/haskell-mode.css	/^code, pre, samp {$
 codecompanion.nvim	lazy-nvim/lazy-lock.json	/^  "codecompanion.nvim": { "branch": "main", "commit": "e003fac48f8af4fc2d4ece3ee2f6f1897f71b912"/;"	o	language:JSON
 codecompanion.nvim.branch	lazy-nvim/lazy-lock.json	/^  "codecompanion.nvim": { "branch": "main", "commit": "e003fac48f8af4fc2d4ece3ee2f6f1897f71b912"/;"	s	language:JSON	object:codecompanion.nvim
 codecompanion.nvim.commit	lazy-nvim/lazy-lock.json	/^  "codecompanion.nvim": { "branch": "main", "commit": "e003fac48f8af4fc2d4ece3ee2f6f1897f71b912"/;"	s	language:JSON	object:codecompanion.nvim
+colibri-arch-setup.md	other/colibri-arch-setup.md	1;"	F	language:Markdown	epoch:1795838127
+colibri_ask	bashrc/bashrc.sh	/^colibri_ask() {$/;"	f	language:Sh
 collect_bins_in_dir	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function collect_bins_in_dir(dir, max_depth, platform_kind, marker, root, out, seen)$/;"	f	language:Lua
 collect_vmmap	nvim-pack/scripts/gdb_wine_tools.py	/^def collect_vmmap():$/;"	f	language:Python	access:public	signature:()
 color	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^      "color": 0,$/;"	n	language:JSON	object:preferences.imagePref
@@ -5084,7 +5102,7 @@ colors.css	matugen/templates/colors.css	1;"	F	language:CSS	epoch:1770540122
 colors.css	waybar/colors.css	1;"	F	language:CSS	epoch:1774591112
 colorscheme.lua	lazy-nvim/lua/colorscheme.lua	1;"	F	language:Lua	epoch:1778587222
 colorscheme.lua	lazy-nvim/lua/pLAyME/lazy/colorscheme.lua	1;"	F	language:Lua	epoch:1776427590
-colorscheme.lua	nvim-pack/lua/colorscheme.lua	1;"	F	language:Lua	epoch:1795685030
+colorscheme.lua	nvim-pack/lua/colorscheme.lua	1;"	F	language:Lua	epoch:1795778435
 colorscheme.lua	nvim-pack/lua/pLAyME/setup-pack/colorscheme.lua	1;"	F	language:Lua	epoch:1794738055
 column	lazy-nvim/lua/pLAyME/lazy/nvim-cmp.lua	/^		local column = function()$/;"	f	language:Lua
 columns	emacs/elpaca/sources/all-the-icons/fonts/all-the-icons-project.json	/^      "columns": 16,$/;"	n	language:JSON	object:preferences.imagePref
@@ -6072,7 +6090,7 @@ compile.yml	emacs/elpaca/sources/llama/.github/workflows/compile.yml	1;"	F	langu
 compile.yml	emacs/elpaca/sources/magit/.github/workflows/compile.yml	1;"	F	language:Yaml	epoch:1794739994
 compile.yml	emacs/elpaca/sources/with-editor/.github/workflows/compile.yml	1;"	F	language:Yaml	epoch:1794739999
 compile_langs.lua	lazy-nvim/lua/pLAyME/compile_langs.lua	1;"	F	language:Lua	epoch:1780308698
-compile_langs.lua	nvim-pack/lua/pLAyME/compile_langs.lua	1;"	F	language:Lua	epoch:1795697575
+compile_langs.lua	nvim-pack/lua/pLAyME/compile_langs.lua	1;"	F	language:Lua	epoch:1795754667
 compile_perf_component	nvim-pack/lua/pLAyME/compile_langs.lua	/^function _G.compile_perf_component()$/;"	f	language:Lua	unknown:_G
 completion-lazy-hilit	emacs/elpaca/sources/company-mode/company.el	/^(defvar completion-lazy-hilit)$/;"	v	language:EmacsLisp
 completion-lazy-hilit-fn	emacs/elpaca/sources/company-mode/company.el	/^(defvar completion-lazy-hilit-fn)$/;"	v	language:EmacsLisp
@@ -6770,7 +6788,6 @@ dash-register-info-lookup	emacs/elpaca/sources/dash/dash.el	/^(defun dash-regist
 dash-unload-function	emacs/elpaca/sources/dash/dash.el	/^(defun dash-unload-function ()$/;"	f	language:EmacsLisp
 dash.el	emacs/elpaca/sources/dash/dash.el	1;"	F	language:EmacsLisp	epoch:1794739984
 dashboard-mode-map	emacs/elpaca/sources/evil-collection/modes/dashboard/evil-collection-dashboard.el	/^(defvar dashboard-mode-map)$/;"	v	language:EmacsLisp
-data	other/a.py	/^data = open('GL502VML-AS.306', 'rb').read()$/;"	v	language:Python	access:public
 data-alltheicons.el	emacs/elpaca/sources/all-the-icons/data/data-alltheicons.el	1;"	F	language:EmacsLisp	epoch:1794739978
 data-faicons.el	emacs/elpaca/sources/all-the-icons/data/data-faicons.el	1;"	F	language:EmacsLisp	epoch:1794739978
 data-fileicons.el	emacs/elpaca/sources/all-the-icons/data/data-fileicons.el	1;"	F	language:EmacsLisp	epoch:1794739978
@@ -6790,7 +6807,6 @@ deadgrep-mode-map	emacs/elpaca/sources/evil-collection/modes/deadgrep/README.org
 debug	emacs/elpaca/sources/evil-collection/modes/debug/README.org	/^* debug$/;"	p	language:Org
 debug.disassemblyView.showSourceCode	other/attemp_catppuccine_setting.json	/^    "debug.disassemblyView.showSourceCode": false,$/;"	b	language:JSON
 debug.disassemblyView.showSourceCode	other/settings.json	/^    "debug.disassemblyView.showSourceCode": false,$/;"	b	language:JSON
-dec	other/a.py	/^        dec = lzma.decompress(data[offset:], format=lzma.FORMAT_ALONE)$/;"	v	language:Python	access:public
 dec_digits_to_hex	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function dec_digits_to_hex(digits)$/;"	f	language:Lua
 decode_f32_le	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function decode_f32_le(b1, b2, b3, b4)$/;"	f	language:Lua
 decode_f64_le	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^    local function decode_f64_le(b1, b2, b3, b4, b5, b6, b7, b8)$/;"	f	language:Lua
@@ -11453,8 +11469,6 @@ gpull	other/Microsoft.PowerShell_profile.ps1	/^function gpull { git pull }$/;"	f
 gpush	other/Microsoft.PowerShell_profile.ps1	/^function gpush { git push }$/;"	f	language:PowerShell
 gravatar-size	emacs/elpaca/sources/magit/lisp/magit-diff.el	/^(defvar gravatar-size)$/;"	v	language:EmacsLisp
 greet	emacs/elpaca/sources/php-mode/tests/issue-66.php	/^$greet = function($name)$/;"	f	language:PHP	signature:($name)
-grep	bashrc/bashrc.sh	/^  alias grep="\/usr\/bin\/grep $GREP_OPTIONS"$/;"	a	language:Sh
-grep	bashrc/bashrc.sh	/^  alias grep='rg'$/;"	a	language:Sh
 grep	emacs/elpaca/sources/evil-collection/modes/grep/README.org	/^* grep$/;"	p	language:Org
 grep	other/Microsoft.PowerShell_profile.ps1	/^function grep($regex, $dir) {$/;"	f	language:PowerShell	signature:($regex, $dir)
 grep-edit-mode-map	emacs/elpaca/sources/evil-collection/modes/grep/evil-collection-grep.el	/^(defvar grep-edit-mode-map) ;; might be missing if it's older Emacs$/;"	v	language:EmacsLisp
@@ -17598,7 +17612,7 @@ nvim-dap-virtual-text.commit	lazy-nvim/lazy-lock.json	/^  "nvim-dap-virtual-text
 nvim-dap.branch	lazy-nvim/lazy-lock.json	/^  "nvim-dap": { "branch": "master", "commit": "45a69eba683a2c448dd9ecfc4de89511f0646b5f" },$/;"	s	language:JSON	object:nvim-dap
 nvim-dap.commit	lazy-nvim/lazy-lock.json	/^  "nvim-dap": { "branch": "master", "commit": "45a69eba683a2c448dd9ecfc4de89511f0646b5f" },$/;"	s	language:JSON	object:nvim-dap
 nvim-dap.lua	lazy-nvim/lua/pLAyME/lazy/nvim-dap.lua	1;"	F	language:Lua	epoch:1776427590
-nvim-dap.lua	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	1;"	F	language:Lua	epoch:1795698457
+nvim-dap.lua	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	1;"	F	language:Lua	epoch:1795757022
 nvim-emmet	lazy-nvim/lazy-lock.json	/^  "nvim-emmet": { "branch": "main", "commit": "cde4fb2968704aae5c18b7f8a9bc2508767bb78d" },$/;"	o	language:JSON
 nvim-emmet	nvim-pack/nvim-pack-lock.json	/^    "nvim-emmet": {$/;"	o	language:JSON	object:plugins
 nvim-emmet.branch	lazy-nvim/lazy-lock.json	/^  "nvim-emmet": { "branch": "main", "commit": "cde4fb2968704aae5c18b7f8a9bc2508767bb78d" },$/;"	s	language:JSON	object:nvim-emmet
@@ -17668,8 +17682,6 @@ of a	emacs/elpaca/sources/magit/docs/magit.org	/^section, the hunk-internal regi
 of such commands and the several *variants* within each	emacs/elpaca/sources/magit/docs/magit.org	/^several *groups* of such commands and the several *variants* within each$/;"	p	language:Org
 of the	emacs/elpaca/sources/magit/docs/magit.org	/^sections than it is to act on the current section *instead* of the$/;"	p	language:Org
 offline_icon_default	tmux/plugins/tmux-online-status/scripts/online_status_icon.sh	/^offline_icon_default() {$/;"	f	language:Sh
-offset	other/a.py	/^    offset = data.find(b'\\x5d\\x00\\x00', offset)$/;"	v	language:Python	access:public
-offset	other/a.py	/^offset = 0$/;"	v	language:Python	access:public
 oil.lua	nvim-pack/lua/pLAyME/setup-pack/oil.lua	1;"	F	language:Lua	epoch:1795419861
 oil.nvim	nvim-pack/nvim-pack-lock.json	/^    "oil.nvim": {$/;"	o	language:JSON	object:plugins
 ok_sys	nvim-pack/lua/pLAyME/init.lua	/^                local ok_sys = pcall(vim.system, cmd, { cwd = tu_cwd, text = true }, function(_)$/;"	f	language:Lua
@@ -18754,7 +18766,6 @@ pomodoro_plus.conf	tmux/plugins/tmux/status/pomodoro_plus.conf	1;"	F	language:In
 popup	emacs/elpaca/sources/evil-collection/modes/popup/README.org	/^* popup$/;"	p	language:Org
 popup-menu-keymap	emacs/elpaca/sources/evil-collection/modes/popup/README.org	/^*** popup-menu-keymap$/;"	s	language:Org
 port	nvim-pack/lua/pLAyME/setup-pack/nvim-dap.lua	/^            port = function()$/;"	f	language:Lua
-pos	other/a.py	/^    pos = data.find(target)$/;"	v	language:Python	access:public
 posframe	emacs/elpaca/sources/posframe/posframe.el	/^(defgroup posframe nil$/;"	G	language:EmacsLisp
 posframe--accept-focus	emacs/elpaca/sources/posframe/posframe.el	/^(defvar-local posframe--accept-focus nil$/;"	v	language:EmacsLisp
 posframe--calculate-new-position	emacs/elpaca/sources/posframe/posframe.el	/^(defun posframe--calculate-new-position (info position ref-position)$/;"	f	language:EmacsLisp
@@ -20268,7 +20279,6 @@ tailwindcss-colorizer-cmp.nvim	nvim-pack/nvim-pack-lock.json	/^    "tailwindcss-
 tailwindcss-colorizer-cmp.nvim.branch	lazy-nvim/lazy-lock.json	/^  "tailwindcss-colorizer-cmp.nvim": { "branch": "main", "commit": "3d3cd95e4a4135c250faf83dd5ed6/;"	s	language:JSON	object:tailwindcss-colorizer-cmp.nvim
 tailwindcss-colorizer-cmp.nvim.commit	lazy-nvim/lazy-lock.json	/^  "tailwindcss-colorizer-cmp.nvim": { "branch": "main", "commit": "3d3cd95e4a4135c250faf83dd5ed6/;"	s	language:JSON	object:tailwindcss-colorizer-cmp.nvim
 tar-mode	emacs/elpaca/sources/evil-collection/modes/tar-mode/README.org	/^* tar-mode$/;"	p	language:Org
-targets	other/a.py	/^targets = [b'PCIR\\xde\\x10\\x20\\x1c', b'GP106', b'NVIDIA']$/;"	v	language:Python	access:public
 teardown_helper	tmux/plugins/tmux-resurrect/lib/tmux-test/tests/helpers/helpers.sh	/^teardown_helper() {$/;"	f	language:Sh
 telega-chatbuf-fastnav-map	emacs/elpaca/sources/evil-collection/modes/telega/evil-collection-telega.el	/^(defvar telega-chatbuf-fastnav-map)$/;"	v	language:EmacsLisp
 telega-describe-map	emacs/elpaca/sources/evil-collection/modes/telega/evil-collection-telega.el	/^(defvar telega-describe-map)$/;"	v	language:EmacsLisp
@@ -20528,7 +20538,7 @@ tree	bashrc/bashrc.sh	/^alias tree='tree -CAhF --dirsfirst'$/;"	a	language:Sh
 tree_mode	tmux/plugins/tmux-sessionx/scripts/preview.sh	/^tree_mode() {$/;"	f	language:Sh
 treed	bashrc/bashrc.sh	/^alias treed='tree -CAFd'$/;"	a	language:Sh
 treesitter.lua	lazy-nvim/lua/pLAyME/lazy/treesitter.lua	1;"	F	language:Lua	epoch:1776670908
-treesitter.lua	nvim-pack/lua/pLAyME/setup-pack/treesitter.lua	1;"	F	language:Lua	epoch:1795671268
+treesitter.lua	nvim-pack/lua/pLAyME/setup-pack/treesitter.lua	1;"	F	language:Lua	epoch:1795757564
 trim	bashrc/bashrc.sh	/^trim() {$/;"	f	language:Sh
 troble.lua	lazy-nvim/lua/pLAyME/lazy/troble.lua	1;"	F	language:Lua	epoch:1776427590
 trouble.nvim	lazy-nvim/lazy-lock.json	/^  "trouble.nvim": { "branch": "main", "commit": "bd67efe408d4816e25e8491cc5ad4088e708a69a" },$/;"	o	language:JSON

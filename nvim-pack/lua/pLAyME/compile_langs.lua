@@ -205,6 +205,12 @@ local function compile()
     active_compile_id = active_compile_id + 1
     local my_compile_id = active_compile_id
 
+    for _, old_buf in ipairs(old_bufs) do
+        if vim.api.nvim_buf_is_valid(old_buf) then
+            pcall(vim.api.nvim_buf_delete, old_buf, { force = true })
+        end
+    end
+
     local compile_dirs = { cwd }
     if marker == "CMakeLists.txt" and root ~= nil then
         compile_dirs = { root .. "/build", root }
@@ -218,12 +224,6 @@ local function compile()
     vim.b[new_buf].is_compile_output = true
     vim.b[new_buf].compile_dir = cwd
     vim.b[new_buf].compile_dirs = compile_dirs
-
-    for _, old_buf in ipairs(old_bufs) do
-        if old_buf ~= new_buf and vim.api.nvim_buf_is_valid(old_buf) then
-            pcall(vim.api.nvim_buf_delete, old_buf, { force = true })
-        end
-    end
 
     vim.api.nvim_create_autocmd("BufWipeout", {
         buffer = new_buf,

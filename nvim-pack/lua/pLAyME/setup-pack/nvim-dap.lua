@@ -1208,8 +1208,8 @@ vim.schedule(function()
             dapview_register  = true,
             dapview           = {
                 keymap        = "D",
-                label         = "Disassembly [D]",
-                short_label   = "󰒓 [D]",
+                label         = "Disassembly",
+                short_label   = "󰒓 ",
             },
             sign              = "DapStopped",
             ins_before_memref = 16,
@@ -3685,6 +3685,7 @@ vim.schedule(function()
         dap.step_out(step_opts())
     end, { desc = "Debug: Step Out (statement/instruction)" })
 
+    vim.keymap.set("n", "<leader>db", ":DapClearBreakpoints<CR>", { desc = "DAP: delete breakpoints"})
     vim.keymap.set("n", "<leader>dr", dap.repl.open, { desc = "DAP: REPL open" })
     vim.keymap.set("n", "<leader>dl", dap.run_last, { desc = "DAP: Run last" })
     vim.keymap.set("n", "<leader>du", function()

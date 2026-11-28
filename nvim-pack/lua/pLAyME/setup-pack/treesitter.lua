@@ -9,7 +9,30 @@ local ts_pack_dir = vim.fs.joinpath(
 local ts_runtime_dir = vim.fs.joinpath(ts_pack_dir, "runtime")
 
 if vim.fn.isdirectory(ts_runtime_dir) == 1 then
-    vim.opt.runtimepath:append(ts_runtime_dir)
+    local rtp = vim.opt.runtimepath:get()
+    local norm_ts_runtime = vim.fs.normalize(ts_runtime_dir)
+    local vimruntime = vim.fs.normalize(vim.env.VIMRUNTIME or "")
+    local has_ts_runtime = false
+    for _, entry in ipairs(rtp) do
+        if vim.fs.normalize(entry) == norm_ts_runtime then
+            has_ts_runtime = true
+            break
+        end
+    end
+    if not has_ts_runtime then
+        local inserted = false
+        for idx, entry in ipairs(rtp) do
+            if vim.fs.normalize(entry) == vimruntime then
+                table.insert(rtp, idx, ts_runtime_dir)
+                inserted = true
+                break
+            end
+        end
+        if not inserted then
+            table.insert(rtp, ts_runtime_dir)
+        end
+        vim.opt.runtimepath = rtp
+    end
 end
 
 local parser_dir = vim.fs.joinpath(vim.fn.stdpath("data"), "site")

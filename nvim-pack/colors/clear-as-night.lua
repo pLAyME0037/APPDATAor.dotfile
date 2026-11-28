@@ -133,7 +133,7 @@ local groups = {
     ["@function.macro"]       = { fg = colors.func },
     ["@function.method"]      = { fg = colors.func },
     ["@function.method.call"] = { fg = colors.func },
-    ["@constructor"]          = { fg = colors.type },
+    ["@constructor"]          = { fg = colors.func },
 
     -- Tree-sitter: Keywords
     ["@keyword"]              = { fg = colors.keyword },
